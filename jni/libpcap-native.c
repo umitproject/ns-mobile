@@ -5,19 +5,21 @@
 
 #define DEBUG_TAG "Sample_LIBPCAP_DEBUGGING"
 
-void Java_com_umit_android_libpcap_libpcap_testLog(JNIEnv * env, jobject this, jstring logThis)  
+void Java_org_umit_android_libpcaptest_libpcaptest_testLog(JNIEnv *env, jclass clazz, jstring message) 
 {  
-    jboolean isCopy;  
-    char *dev, errbuf[100];
-	char * szLogThis;
+    char errbuf[1024];
+    errbuf[0] = '\0';
 	
-	dev = pcap_lookupdev(errbuf);
-		if (dev == NULL) {
-			szLogThis = "Couldn't find default device";		
-		}
-		else szLogThis = dev;
-		
-    __android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "NDK:LC: [%s]", szLogThis);  
+	char *szLogThis;
+	char *dev = pcap_lookupdev(errbuf);
+	
+	if (dev == NULL) {
+		szLogThis = "Couldn't find default device";		
+	}
+	else szLogThis = dev;
+
+    __android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "Device : [%s]", szLogThis);  
+  	__android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "Error buffer [%s]", errbuf);  
   
-    (*env)->ReleaseStringUTFChars(env, logThis, szLogThis);  
+    (*env)->ReleaseStringUTFChars(env, message, szLogThis);  
 }

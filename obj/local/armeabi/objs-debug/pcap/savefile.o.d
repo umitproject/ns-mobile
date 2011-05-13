@@ -1,4 +1,4 @@
-/Users/angadsg/Documents/workspace/libpcap-t/obj/local/armeabi/objs-debug/pcap/savefile.o: \
+/Users/angadsg/Documents/workspace/libpcaptest/obj/local/armeabi/objs-debug/pcap/savefile.o: \
  /Users/angadsg/android-ndk-r5b/external/libpcap/savefile.c \
  /Users/angadsg/android-ndk-r5b/external/libpcap/config.h \
  /Users/angadsg/android-ndk-r5b/platforms/android-8/arch-arm/usr/include/errno.h \

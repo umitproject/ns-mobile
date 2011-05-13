@@ -1,4 +1,4 @@
-/Users/angadsg/Documents/workspace/libpcap-t/obj/local/armeabi/objs-debug/pcap/nametoaddr.o: \
+/Users/angadsg/Documents/workspace/libpcaptest/obj/local/armeabi/objs-debug/pcap/nametoaddr.o: \
  /Users/angadsg/android-ndk-r5b/external/libpcap/nametoaddr.c \
  /Users/angadsg/android-ndk-r5b/external/libpcap/config.h \
  /Users/angadsg/android-ndk-r5b/platforms/android-8/arch-arm/usr/include/sys/param.h \
