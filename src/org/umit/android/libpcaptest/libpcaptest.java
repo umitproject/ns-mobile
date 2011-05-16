@@ -1,5 +1,7 @@
 package org.umit.android.libpcaptest;
 
+import java.io.IOException;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
@@ -10,12 +12,22 @@ public class libpcaptest extends Activity {
     /** Called when the activity is first created. */
 	@Override
     public void onCreate(Bundle savedInstanceState) {
+		
+		final Runtime runtime = Runtime.getRuntime();
+		try {
+		    runtime.exec("su"); //or whatever command.
+		}
+		catch (IOException e) { 
+		    e.printStackTrace(); 
+		}
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);    
         // Capture our button from layout
         Button button = (Button)findViewById(R.id.button1);
         // Register the onClick listener with the implementation above
         button.setOnClickListener(mCorkyListener);
+        
+        
 	}
 
 	static {
