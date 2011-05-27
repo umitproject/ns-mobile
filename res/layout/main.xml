@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-    <TextView android:id="@+id/textView1" android:layout_height="wrap_content" android:layout_width="fill_parent" android:text="@string/hello"></TextView>
-    <Button android:text="Button" android:id="@+id/button1" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+    android:layout_height="fill_parent" android:orientation="vertical">
+<EditText android:id="@+id/ip" 
+android:text="67.195.160.76" 
+android:layout_width="match_parent" 
+android:layout_height="wrap_content" android:layout_weight="1">
+</EditText>
+<TextView  android:id="@+id/msg"
+    android:layout_width="fill_parent" 
+    android:layout_height="100dip" 
+    android:text="Debug" android:layout_weight="1" android:isScrollContainer="true"/>
+<Button android:id="@+id/network_interfaces" android:layout_weight="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Network Interfaces"></Button>
+<Button android:id="@+id/ping_reachable" android:layout_weight="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="isReachable"></Button>
+<Button android:text="Echo Ping"
+    android:id="@+id/echo_ping" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" android:layout_weight="1"/>
+<Button android:text="Socket Ping"
+    android:id="@+id/socket_ping" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" android:layout_weight="1"/>
+<Button android:text="Commandline ping"
+    android:id="@+id/command_ping" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" android:layout_weight="1"/>
+<Button android:text="TCP Socket"
+    android:id="@+id/tcp_socket" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" android:layout_weight="1"/>
 </LinearLayout>
