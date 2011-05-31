@@ -3,30 +3,27 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" android:orientation="vertical">
 <EditText android:id="@+id/ip" 
-android:text="67.195.160.76" 
+android:text="74.207.244.221" 
 android:layout_width="match_parent" 
-android:layout_height="wrap_content" android:layout_weight="1">
+android:layout_weight="1" android:layout_height="50dip">
 </EditText>
 <TextView  android:id="@+id/msg"
     android:layout_width="fill_parent" 
-    android:layout_height="100dip" 
-    android:text="Debug" android:layout_weight="1" android:isScrollContainer="true"/>
-<Button android:id="@+id/network_interfaces" android:layout_weight="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Network Interfaces"></Button>
-<Button android:id="@+id/ping_reachable" android:layout_weight="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="isReachable"></Button>
-<Button android:text="Echo Ping"
-    android:id="@+id/echo_ping" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content" android:layout_weight="1"/>
-<Button android:text="Socket Ping"
-    android:id="@+id/socket_ping" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content" android:layout_weight="1"/>
-<Button android:text="Commandline ping"
-    android:id="@+id/command_ping" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content" android:layout_weight="1"/>
-<Button android:text="TCP Socket"
-    android:id="@+id/tcp_socket" 
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content" android:layout_weight="1"/>
+    android:text="Debug" android:layout_weight="1" android:isScrollContainer="true" android:layout_height="200dip"/>
+<TableLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableLayout1">
+    <TableRow android:layout_height="wrap_content" android:id="@+id/tableRow2" android:layout_width="wrap_content">
+        <Button android:layout_weight="1" android:text="Wifi Info" android:id="@+id/wifi_info" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+        <Button android:layout_weight="1" android:text="Network Interfaces" android:id="@+id/network_interfaces" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+    </TableRow>
+    <TableRow android:id="@+id/tableRow1" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Port 13 TCP" android:layout_weight="1" android:id="@+id/socket_ping"></Button>
+        <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Port 8 UDP" android:layout_weight="1" android:id="@+id/echo_ping"></Button>
+        <Button android:layout_weight="1" android:text="Port 80 TCP" android:id="@+id/tcp_socket" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+    </TableRow>
+    <TableRow android:id="@+id/tableRow3" android:layout_height="wrap_content" android:layout_width="wrap_content">
+        <Button android:layout_weight="1" android:text="isReachable" android:id="@+id/ping_reachable" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+        <Button android:layout_weight="1" android:text="Commandline ping" android:id="@+id/command_ping" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+    </TableRow>
+</TableLayout>
+    
 </LinearLayout>
