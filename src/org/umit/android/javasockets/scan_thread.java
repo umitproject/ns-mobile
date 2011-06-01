@@ -20,48 +20,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
  */
 
-
 package org.umit.android.javasockets;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-public class ping_thread implements Runnable{
+public class scan_thread implements Runnable{
 
 	String address;
-	Process p;
-	
-	public ping_thread(String address)
+	int method;
+	public scan_thread(String address, int method)
 	{
 		this.address = address;
+		this.method = method;
 	}
 	
 	@Override
-	public void run() 
-	{
-		String pingCmd = "ping " + address;
-    	//String pingResult = "";
-    	
-    	try{
-    		Runtime r = Runtime.getRuntime();    		
-    		p = r.exec(pingCmd);
-    		BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-    		String inputLine;
-    		int i=0;
-    		while ((inputLine = in.readLine()) != null) 
-    		{
-    			i++;
-    			if(i==5) break; 
-    			javasockets.showResult("shell ping", inputLine);
-    			//pingResult += inputLine;
-    		}
-    		in.close();
-    		p.destroy();
-    	}
-    	catch(IOException e)
-    	{
-    		e.printStackTrace();
-    	}
+	public void run() {
+		
+		switch(method)
+		{
+			case 1:	javasockets.checkReachable(address); break;
+			case 2: javasockets.ping_socket(address); break;
+			case 3: javasockets.ping_echo(address); break;
+			case 4: javasockets.ping_shell(address); break;
+			case 5: javasockets.socket_tcp(address); break;
+			default:javasockets.checkReachable(address); break;
+		}
+		
 	}
+
 }

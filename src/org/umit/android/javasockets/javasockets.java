@@ -1,5 +1,7 @@
 /*
 Various methods of Android Ping
+Network Information, Host Discovery
+
 Copyright (C) 2011 Angad Singh
 angad@angad.sg
 
@@ -34,16 +36,20 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Enumeration;
 
+import org.umit.android.javasockets.SubnetUtils.SubnetInfo;
+
 import android.app.Activity;
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -55,10 +61,13 @@ public class javasockets extends Activity {
 	public static TextView t;
 	EditText ip;
    	Process p;
+   	//public static ProgressBar progress;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        
         setContentView(R.layout.main);
         
         ip = (EditText)findViewById(R.id.ip);
@@ -69,6 +78,8 @@ public class javasockets extends Activity {
         
         t = (TextView)findViewById(R.id.msg);
         t.setText(macaddr);
+        
+        //progress = (ProgressBar)findViewById(R.id.progress);
         
         //isReachable
         Button reachable = (Button)findViewById(R.id.ping_reachable);
@@ -94,10 +105,21 @@ public class javasockets extends Activity {
         Button socket_tcp = (Button)findViewById(R.id.tcp_socket);
         socket_tcp.setOnClickListener(tcp_socket);
         
-        Button hosts = (Button)findViewById(R.id.wifi_info);
-        hosts.setOnClickListener(wifi_info);
+        Button wifi = (Button)findViewById(R.id.wifi_info);
+        wifi.setOnClickListener(wifi_info);
+        
+        Button hosts = (Button)findViewById(R.id.host_discovery);
+        hosts.setOnClickListener(discovery);
     }
     
+    /*
+    public static void updateProgressBar(int l)
+    {
+    	progress.setProgress(progress.getProgress() + l);
+    }
+    */
+    
+    //Gets WIFI MAC address
     private String getMACaddr() 
     {
     	WifiManager wifiMan = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
@@ -107,41 +129,39 @@ public class javasockets extends Activity {
     }
 
 	//isReachable
-    private void checkReachable(String address)
+    public static boolean checkReachable(String address)
     {
+    	boolean reachable = false;
     	try {
-    		showResult("Pinging " + address, "");
         	InetAddress addr = InetAddress.getByName(address);
-        	boolean reachable = addr.isReachable(10000);
-        	showResult("isReachable", " " + reachable);
+        	reachable = addr.isReachable(1000);
         }
         catch (Exception e)
         {
         	e.printStackTrace();
         }
+		return reachable;
     }
     
     //Socket Ping - Port 13
-    private void ping_socket(String addr)
+    public static boolean ping_socket(String addr)
     {
-    	showResult("Pinging " + addr, "");
     	InetSocketAddress address;
     	SocketChannel channel = null;
+    	boolean connected = false;
+    	
     	try {
 			address = new InetSocketAddress(InetAddress.getByName(addr), 13);
 			try {
 				channel = SocketChannel.open();
 				channel.configureBlocking(false);
-				boolean connected = channel.connect(address);
+				connected = channel.connect(address);
 				
 				try {
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				}
-								
-				showResult("socket_ping", connected + "");
-				
+				}				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -149,13 +169,14 @@ public class javasockets extends Activity {
     	catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+    	return connected;
     }    
     
     //Echo ping using datagram channel - port 7
-    private void ping_echo(String address)
+    public static boolean ping_echo(String address)
     {
+    	boolean r = false;
     	try {
-    		showResult("Pinging " + address, "");
     		ByteBuffer msg = ByteBuffer.wrap("Hello".getBytes());
     		ByteBuffer response = ByteBuffer.allocate("Hello".getBytes().length);
     		
@@ -168,39 +189,40 @@ public class javasockets extends Activity {
     		dgc.receive(response);
     		
     		String received = new String(response.array());
-			showResult("echo_ping", received);
+    		if(received == "")
+    			r = false;
+    		else r = true;
     		}
     	catch (Exception e)
     	{
     		e.printStackTrace();
     	}
+    	return r;
     }
 
     //ping using the shell command
-    private void ping_shell(String address)
+    public static void ping_shell(String address)
     {
-    	showResult("Pinging " + address, "");
     	ping_thread t = new ping_thread(address);
     	t.run();
     }
     
-    private void socket_tcp(String address)
+    //port 80 TCP connect
+    public static boolean socket_tcp(String address)
     {
-    	showResult("TCP Socket to ", address);
+    	boolean connected = false;
     	try{
     		Socket s = new Socket(address, 80);
-    		if(s.isConnected())
-    		{
-    			showResult("socket_tcp", "connected");
-    		}
-    		else showResult("socket_tcp", "not connected");
+    		connected = s.isConnected();
     	}
-    	
     	catch(Exception e){
     		e.printStackTrace();
     	}
+    	
+    	return connected;
     }
     
+    //get network interface information
     private void interfaces()
     {
     	try {
@@ -213,8 +235,6 @@ public class javasockets extends Activity {
 				{
 					String address = addresses.nextElement().toString().substring(1);
 					showResult("InetAddress", address);
-					
-					
 				}
 			}
 		} catch (SocketException e) {
@@ -222,6 +242,7 @@ public class javasockets extends Activity {
 		}
     }
     
+    //get dhcp wifi information
     private void getWifiInfo()
     {
     	WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -243,23 +264,97 @@ public class javasockets extends Activity {
     	showResult("lease Duration ", leaseDuration);
     	showResult("netmask ", netmask);
     	showResult("serverAddress ", serverAddress);
+    	
+    	SubnetUtils su = new SubnetUtils(getIP(), getNetmask());
+    	SubnetInfo si = su.getInfo();
+    	
+    	showResult("High Address", si.getHighAddress());
+    	showResult("Low Address", si.getLowAddress());
+    	
     }
     
-    public String intToIp(int i) {
-
-    String t1 = ((i >> 24 ) & 0xFF ) + "";
-    String t2 = ((i >> 16 ) & 0xFF) + ".";
-    String t3 = ((i >> 8 ) & 0xFF) + ".";
-    String t4 = ( i & 0xFF) + ".";
+    //converts integer to IP
+    public String intToIp(int i) 
+    {
+    	String t1 = ((i >> 24 ) & 0xFF ) + "";
+    	String t2 = ((i >> 16 ) & 0xFF) + ".";
+    	String t3 = ((i >> 8 ) & 0xFF) + ".";
+    	String t4 = ( i & 0xFF) + ".";
     
-    return t4+t3+t2+t1;
-    
+    	return t4+t3+t2+t1;
     }
     
+    //reverses a string
     public String reverse(String str)
     {
     	StringBuffer sb = new StringBuffer(str);
     	return sb.reverse().toString();
+    }
+    
+    private String getNetmask()
+    {
+    	WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+    	DhcpInfo d = w.getDhcpInfo();
+    	return intToIp(d.netmask);	
+    }
+    
+    private String getIP()
+    {
+    	WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+    	DhcpInfo d = w.getDhcpInfo();
+    	return intToIp(d.ipAddress);
+    }
+    
+/*    private int getNetmaskLength()
+    {
+    	String[] netmask = getNetmask().split("\\.");
+    	
+    	String[] netmask_bin = { Integer.toBinaryString(Integer.parseInt(netmask[0])), 
+    			Integer.toBinaryString(Integer.parseInt(netmask[1])),
+    			Integer.toBinaryString(Integer.parseInt(netmask[2])),
+    			Integer.toBinaryString(Integer.parseInt(netmask[3]))
+    		};
+    	
+    	String bin = netmask_bin[0] + netmask_bin[1] + netmask_bin[2] + netmask_bin[3];
+    	int c = 0;
+    	for(int i=0; i<bin.length(); i++)
+    	{
+    		if(bin.charAt(i)=='1')
+    			c++;
+    	}
+    	
+    	showResult("netmask_length", c + "");
+    	return c;
+    }
+*/    
+    
+    private void host_discovery()
+    {
+    	SubnetUtils su = new SubnetUtils(getIP(), getNetmask());
+    	SubnetInfo si = su.getInfo();
+    	
+    	showResult("High Address", si.getHighAddress());
+    	showResult("Low Address", si.getLowAddress());
+    	
+    	String[] all = si.getAllAddresses();
+ 
+    	for(int i=0; i<all.length; i++)
+    	{
+    		try {
+    			//If a lot of threads are requested immediately, they are rejected by AsyncTask.
+    			//Need to have some rate controller
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    		scan(all[i]);
+    	}	
+    }
+    
+    private void scan(String ip)
+    {
+    	AsyncTask<String, Void, String> sa = new scan_async();
+    	sa.execute(ip);
     }
     
     //---------onClick Event Handlers-----------//
@@ -267,7 +362,9 @@ public class javasockets extends Activity {
         public void onClick(View v) {
             Editable host = ip.getText();
             serverip = host.toString();
-        	checkReachable(serverip);
+    		showResult("Pinging " + serverip, "");
+    		boolean success = checkReachable(serverip);
+    		showResult("isReachable ", success + "");
         }
     };
         
@@ -275,7 +372,9 @@ public class javasockets extends Activity {
         public void onClick(View v) {
             Editable host = ip.getText();
             serverip = host.toString();
-        	ping_socket(serverip);
+            showResult("Pinging " + serverip, "");
+        	boolean success = ping_socket(serverip);
+        	showResult("Socket Ping", success + "");
         }
     };
         
@@ -289,8 +388,9 @@ public class javasockets extends Activity {
         public void onClick(View v) {
             Editable host = ip.getText();
             serverip = host.toString();
-
-        	ping_echo(serverip);
+            showResult("Pinging " + serverip, "");
+            boolean success = ping_echo(serverip);
+            showResult("Echo ping ", success + "");
         }
     };
     
@@ -298,7 +398,7 @@ public class javasockets extends Activity {
         public void onClick(View v) {
             Editable host = ip.getText();
             serverip = host.toString();
-
+            showResult("Pinging " + serverip, "");
         	ping_shell(serverip);
         }
     };
@@ -307,7 +407,9 @@ public class javasockets extends Activity {
         public void onClick(View v) {
             Editable host = ip.getText();
             serverip = host.toString();
-            socket_tcp(serverip);
+            showResult("Pinging " + serverip, "");
+        	boolean success = socket_tcp(serverip);
+        	showResult("TCP Socket", success + "");
         }
     };
     
@@ -317,11 +419,17 @@ public class javasockets extends Activity {
         }
     };
     
+    private OnClickListener discovery = new OnClickListener() {
+        public void onClick(View v) {
+        	host_discovery();
+        }
+    };
+    
     private static int line_count = 0;
     private static boolean isFull = false;
     public static void showResult(String method, String msg)
     {
-    	if(line_count == 10 || isFull)
+    	if(line_count == 11	 || isFull)
     	{
     		String txt = t.getText().toString();
     		txt = txt.substring(txt.indexOf('\n') + 1);
