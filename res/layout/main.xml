@@ -9,7 +9,9 @@
         <Button android:text="Interfaces" android:id="@+id/network_interfaces" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
     </TableRow>
 </TableLayout>
-	
+<ProgressBar android:layout_height="wrap_content" style="@android:style/Widget.ProgressBar.Horizontal" android:id="@+id/progress" android:layout_width="match_parent"></ProgressBar>
+<TableRow android:layout_height="wrap_content" android:id="@+id/progress_bar" android:layout_width="wrap_content">
+</TableRow>	
 <TextView  android:id="@+id/msg"
     android:layout_width="fill_parent" 
     android:text="Debug" android:layout_weight="1" android:isScrollContainer="true" android:layout_height="230dip"/>

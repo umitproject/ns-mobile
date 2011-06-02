@@ -52,6 +52,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class javasockets extends Activity {
@@ -61,7 +62,7 @@ public class javasockets extends Activity {
 	public static TextView t;
 	EditText ip;
    	Process p;
-   	//public static ProgressBar progress;
+   	public static ProgressBar progress;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,7 +80,7 @@ public class javasockets extends Activity {
         t = (TextView)findViewById(R.id.msg);
         t.setText(macaddr);
         
-        //progress = (ProgressBar)findViewById(R.id.progress);
+        progress = (ProgressBar)findViewById(R.id.progress);
         
         //isReachable
         Button reachable = (Button)findViewById(R.id.ping_reachable);
@@ -112,12 +113,15 @@ public class javasockets extends Activity {
         hosts.setOnClickListener(discovery);
     }
     
-    /*
     public static void updateProgressBar(int l)
     {
-    	progress.setProgress(progress.getProgress() + l);
+    	progress.setProgress(l);
     }
-    */
+    
+    public static void resetProgressBar()
+    {
+    	progress.setProgress(0);
+    }
     
     //Gets WIFI MAC address
     private String getMACaddr() 
@@ -142,7 +146,7 @@ public class javasockets extends Activity {
         }
 		return reachable;
     }
-    
+
     //Socket Ping - Port 13
     public static boolean ping_socket(String addr)
     {
@@ -158,7 +162,7 @@ public class javasockets extends Activity {
 				connected = channel.connect(address);
 				
 				try {
-					Thread.sleep(10000);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}				
@@ -170,7 +174,7 @@ public class javasockets extends Activity {
 			e.printStackTrace();
 		}
     	return connected;
-    }    
+    }
     
     //Echo ping using datagram channel - port 7
     public static boolean ping_echo(String address)
@@ -218,7 +222,6 @@ public class javasockets extends Activity {
     	catch(Exception e){
     		e.printStackTrace();
     	}
-    	
     	return connected;
     }
     
@@ -270,7 +273,6 @@ public class javasockets extends Activity {
     	
     	showResult("High Address", si.getHighAddress());
     	showResult("Low Address", si.getLowAddress());
-    	
     }
     
     //converts integer to IP
@@ -333,14 +335,14 @@ public class javasockets extends Activity {
     	SubnetUtils su = new SubnetUtils(getIP(), getNetmask());
     	SubnetInfo si = su.getInfo();
     	
-    	showResult("High Address", si.getHighAddress());
-    	showResult("Low Address", si.getLowAddress());
-    	
     	String[] all = si.getAllAddresses();
- 
+
+    	scan_all_async(all);
+    	
+    	/*
     	for(int i=0; i<all.length; i++)
     	{
-    		try {
+       		try{
     			//If a lot of threads are requested immediately, they are rejected by AsyncTask.
     			//Need to have some rate controller
 				Thread.sleep(10);
@@ -348,19 +350,29 @@ public class javasockets extends Activity {
 				e.printStackTrace();
 			}
     		scan(all[i]);
-    	}	
+    		
+    	}
+    	*/	
     }
+    
     
     private void scan(String ip)
     {
-    	AsyncTask<String, Void, String> sa = new scan_async();
-    	sa.execute(ip);
+//    	AsyncTask<String, Void, String> sa = new scan_async();
+//    	sa.execute(ip);
+    }
+    
+    private void scan_all_async(String[] all)
+    {
+    	AsyncTask<Object[], Integer, String> sa = new scan_async();
+    	sa.execute((Object[])all);
     }
     
     //---------onClick Event Handlers-----------//
     private OnClickListener ping_reachable = new OnClickListener() {
         public void onClick(View v) {
-            Editable host = ip.getText();
+        	resetProgressBar();
+        	Editable host = ip.getText();
             serverip = host.toString();
     		showResult("Pinging " + serverip, "");
     		boolean success = checkReachable(serverip);
@@ -370,7 +382,8 @@ public class javasockets extends Activity {
         
     private OnClickListener socket_ping = new OnClickListener() {
         public void onClick(View v) {
-            Editable host = ip.getText();
+        	resetProgressBar();
+        	Editable host = ip.getText();
             serverip = host.toString();
             showResult("Pinging " + serverip, "");
         	boolean success = ping_socket(serverip);
@@ -380,13 +393,15 @@ public class javasockets extends Activity {
         
     private OnClickListener network_interfaces = new OnClickListener() {
         public void onClick(View v) {
+        	resetProgressBar();
         	interfaces();
         }
     };
     
     private OnClickListener echo_ping = new OnClickListener() {
         public void onClick(View v) {
-            Editable host = ip.getText();
+        	resetProgressBar();
+        	Editable host = ip.getText();
             serverip = host.toString();
             showResult("Pinging " + serverip, "");
             boolean success = ping_echo(serverip);
@@ -396,7 +411,8 @@ public class javasockets extends Activity {
     
     private OnClickListener command_ping = new OnClickListener() {
         public void onClick(View v) {
-            Editable host = ip.getText();
+        	resetProgressBar();
+        	Editable host = ip.getText();
             serverip = host.toString();
             showResult("Pinging " + serverip, "");
         	ping_shell(serverip);
@@ -405,7 +421,8 @@ public class javasockets extends Activity {
         
     private OnClickListener tcp_socket = new OnClickListener() {
         public void onClick(View v) {
-            Editable host = ip.getText();
+        	resetProgressBar();
+        	Editable host = ip.getText();
             serverip = host.toString();
             showResult("Pinging " + serverip, "");
         	boolean success = socket_tcp(serverip);
@@ -415,6 +432,7 @@ public class javasockets extends Activity {
     
     private OnClickListener wifi_info = new OnClickListener() {
         public void onClick(View v) {
+        	resetProgressBar();
         	getWifiInfo();
         }
     };
@@ -429,7 +447,7 @@ public class javasockets extends Activity {
     private static boolean isFull = false;
     public static void showResult(String method, String msg)
     {
-    	if(line_count == 11	 || isFull)
+    	if(line_count == 9 || isFull)
     	{
     		String txt = t.getText().toString();
     		txt = txt.substring(txt.indexOf('\n') + 1);
