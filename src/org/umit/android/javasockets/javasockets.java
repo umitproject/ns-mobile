@@ -57,8 +57,7 @@ import android.widget.TextView;
 
 public class javasockets extends Activity {
     
-	//yahoo's ip address
-	public static String serverip = "67.195.160.76";
+	public static String serverip;
 	public static TextView t;
 	EditText ip;
    	Process p;
@@ -138,7 +137,7 @@ public class javasockets extends Activity {
     	boolean reachable = false;
     	try {
         	InetAddress addr = InetAddress.getByName(address);
-        	reachable = addr.isReachable(1000);
+        	reachable = addr.isReachable(ttl.is_reachable);
         }
         catch (Exception e)
         {
@@ -162,7 +161,7 @@ public class javasockets extends Activity {
 				connected = channel.connect(address);
 				
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(ttl.socket_ping);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}				
@@ -189,7 +188,7 @@ public class javasockets extends Activity {
     		dgc.configureBlocking(false);
     		dgc.connect(sockaddr);
     		dgc.send(msg, sockaddr);
-    		Thread.sleep(5000);
+    		Thread.sleep(ttl.socket_ping);
     		dgc.receive(response);
     		
     		String received = new String(response.array());
@@ -307,59 +306,14 @@ public class javasockets extends Activity {
     	return intToIp(d.ipAddress);
     }
     
-/*    private int getNetmaskLength()
-    {
-    	String[] netmask = getNetmask().split("\\.");
-    	
-    	String[] netmask_bin = { Integer.toBinaryString(Integer.parseInt(netmask[0])), 
-    			Integer.toBinaryString(Integer.parseInt(netmask[1])),
-    			Integer.toBinaryString(Integer.parseInt(netmask[2])),
-    			Integer.toBinaryString(Integer.parseInt(netmask[3]))
-    		};
-    	
-    	String bin = netmask_bin[0] + netmask_bin[1] + netmask_bin[2] + netmask_bin[3];
-    	int c = 0;
-    	for(int i=0; i<bin.length(); i++)
-    	{
-    		if(bin.charAt(i)=='1')
-    			c++;
-    	}
-    	
-    	showResult("netmask_length", c + "");
-    	return c;
-    }
-*/    
-    
     private void host_discovery()
     {
     	SubnetUtils su = new SubnetUtils(getIP(), getNetmask());
     	SubnetInfo si = su.getInfo();
-    	
     	String[] all = si.getAllAddresses();
-
-    	scan_all_async(all);
     	
-    	/*
-    	for(int i=0; i<all.length; i++)
-    	{
-       		try{
-    			//If a lot of threads are requested immediately, they are rejected by AsyncTask.
-    			//Need to have some rate controller
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-    		scan(all[i]);
-    		
-    	}
-    	*/	
-    }
-    
-    
-    private void scan(String ip)
-    {
-//    	AsyncTask<String, Void, String> sa = new scan_async();
-//    	sa.execute(ip);
+    	showResult("Scanning ", all.length + " hosts...");
+    	scan_all_async(all);		
     }
     
     private void scan_all_async(String[] all)
@@ -447,7 +401,7 @@ public class javasockets extends Activity {
     private static boolean isFull = false;
     public static void showResult(String method, String msg)
     {
-    	if(line_count == 9 || isFull)
+    	if(line_count == constants.debug_lines || isFull)
     	{
     		String txt = t.getText().toString();
     		txt = txt.substring(txt.indexOf('\n') + 1);
