@@ -4,9 +4,10 @@
     android:layout_height="fill_parent" android:orientation="vertical">
 <TableLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableLayout2">
 <TableRow android:layout_height="wrap_content" android:id="@+id/tableRow2" android:layout_width="wrap_content">
-        <Button android:layout_width="wrap_content" android:id="@+id/host_discovery" android:layout_height="wrap_content" android:text="Host Discovery"></Button>
-        <Button android:layout_width="wrap_content" android:id="@+id/wifi_info" android:layout_weight="1" android:layout_height="wrap_content" android:text="Wifi Info"></Button>
+        <Button android:layout_width="wrap_content" android:id="@+id/host_discovery" android:layout_height="wrap_content" android:text="Discover"></Button>
+        <Button android:layout_width="wrap_content" android:id="@+id/wifi_info" android:layout_height="wrap_content" android:text="WifiInfo"></Button>
         <Button android:text="Interfaces" android:id="@+id/network_interfaces" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+        <Button android:text="ARP" android:id="@+id/read_arp" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
     </TableRow>
 </TableLayout>
 <ProgressBar android:layout_height="wrap_content" style="@android:style/Widget.ProgressBar.Horizontal" android:id="@+id/progress" android:layout_width="match_parent"></ProgressBar>

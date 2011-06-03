@@ -21,9 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
  */
 
-
 package org.umit.android.javasockets;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -62,6 +64,8 @@ public class javasockets extends Activity {
 	EditText ip;
    	Process p;
    	public static ProgressBar progress;
+   	
+   	public static int hosts_found = 0;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -110,6 +114,9 @@ public class javasockets extends Activity {
         
         Button hosts = (Button)findViewById(R.id.host_discovery);
         hosts.setOnClickListener(discovery);
+        
+        Button arp = (Button)findViewById(R.id.read_arp);
+        arp.setOnClickListener(read_arp);
     }
     
     public static void updateProgressBar(int l)
@@ -120,6 +127,12 @@ public class javasockets extends Activity {
     public static void resetProgressBar()
     {
     	progress.setProgress(0);
+    }
+    
+    public static void progressBar_isFull()
+    {
+    	if(progress.getProgress() == 100)
+        	javasockets.showResult("Discovered", javasockets.hosts_found + " hosts");
     }
     
     //Gets WIFI MAC address
@@ -308,18 +321,60 @@ public class javasockets extends Activity {
     
     private void host_discovery()
     {
+    	hosts_found = 0;
     	SubnetUtils su = new SubnetUtils(getIP(), getNetmask());
     	SubnetInfo si = su.getInfo();
     	String[] all = si.getAllAddresses();
     	
     	showResult("Scanning ", all.length + " hosts...");
-    	scan_all_async(all);		
+    	scan_all_async(all);
     }
     
     private void scan_all_async(String[] all)
     {
-    	AsyncTask<Object[], Integer, String> sa = new scan_async();
+    	AsyncTask<Object[], Integer, Void> sa = new scan_async();
     	sa.execute((Object[])all);
+    }
+    
+    //Host discovery using arp cache at /proc/net/arp
+    public static void read_arp()
+    {
+    	hosts_found = 0;
+    	try {
+			BufferedReader br = new BufferedReader(new FileReader("/proc/net/arp"));
+			String line;
+			try 
+			{
+				while((line = br.readLine()) != null)
+				{
+					 String[] splitted = line.split(" +");
+					 if (splitted != null && splitted.length >= 4) 
+					 {
+						 // Basic sanity check
+						 String mac = splitted[3];
+						 String ip = splitted[0];
+						 if (mac.matches("..:..:..:..:..:..") && !mac.equals("00:00:00:00:00:00")) 
+						 {
+							 hosts_found ++;
+							 showResult(ip, mac);
+						 }
+					 }
+				}
+			}
+			catch (IOException e) 
+			{
+				e.printStackTrace();
+			}
+		} 
+    	catch (FileNotFoundException e) 
+    	{
+			e.printStackTrace();
+		}
+		showResult("ARP", hosts_found + " hosts found");
+    }
+    
+    private void getMAC_arpcache(String ip)
+    {
     }
     
     //---------onClick Event Handlers-----------//
@@ -397,6 +452,11 @@ public class javasockets extends Activity {
         }
     };
     
+    private OnClickListener read_arp = new OnClickListener() {
+        public void onClick(View v) {
+        	read_arp();
+        }
+    };
     private static int line_count = 0;
     private static boolean isFull = false;
     public static void showResult(String method, String msg)

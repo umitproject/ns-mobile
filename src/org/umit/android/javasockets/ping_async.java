@@ -16,7 +16,9 @@ public class ping_async extends AsyncTask<String, String, String> {
 		
 		protected void onPostExecute(String successIp)
 		{
-			if(!successIp.equals(""))
+			if(!successIp.equals("")){
 				javasockets.showResult("isReachable ", successIp + "");
+				javasockets.hosts_found++;
+			}
 		}
 }

@@ -1,8 +1,8 @@
 package org.umit.android.javasockets;
 
 interface constants {
-	public static final int thread_sleep = 5;
-	public static final int debug_lines = 10;
+	public static final int thread_sleep = 10;
+	public static final int debug_lines = 9;
 }
 
 interface ttl {

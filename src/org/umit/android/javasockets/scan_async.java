@@ -2,15 +2,13 @@ package org.umit.android.javasockets;
 
 import android.os.AsyncTask;
 
-public class scan_async extends AsyncTask<Object[], Integer, String> {
+public class scan_async extends AsyncTask<Object[], Integer, Void> {
 	String[] all;
 	
 	@Override
-	protected String doInBackground(Object[]... params)
+	protected Void doInBackground(Object[]... params)
 	{
-		
 		all = (String[])params[0];
-		String success = "scanned";
     	
 		for(int i = 0; i < all.length; i++)
 		{
@@ -24,12 +22,12 @@ public class scan_async extends AsyncTask<Object[], Integer, String> {
 			AsyncTask<String, String, String> sa = new ping_async();
 	    	sa.execute(all[i]);
 		}
-		return success;
+		return null;
 	}
-	
+
 	protected void onProgressUpdate(Integer... progress) 
 	{
 		javasockets.updateProgressBar(progress[0]);
+		javasockets.progressBar_isFull();
 	}
-	
 }
