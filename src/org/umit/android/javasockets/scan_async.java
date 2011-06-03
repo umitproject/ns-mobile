@@ -28,6 +28,9 @@ public class scan_async extends AsyncTask<Object[], Integer, Void> {
 	protected void onProgressUpdate(Integer... progress) 
 	{
 		javasockets.updateProgressBar(progress[0]);
-		javasockets.progressBar_isFull();
+		if(progress[0] == 99)
+		{
+			javasockets.showResult("Discovered", javasockets.hosts_found + " hosts");
+		}
 	}
 }

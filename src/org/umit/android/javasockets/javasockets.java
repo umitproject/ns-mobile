@@ -23,9 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.android.javasockets;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -60,13 +57,16 @@ import android.widget.TextView;
 public class javasockets extends Activity {
     
 	public static String serverip;
+	public static int time_to_live;
+	
 	public static TextView t;
 	EditText ip;
    	Process p;
    	public static ProgressBar progress;
    	
    	public static int hosts_found = 0;
-	
+	EditText ttl_t;
+   	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +77,10 @@ public class javasockets extends Activity {
         ip = (EditText)findViewById(R.id.ip);
         Editable host = ip.getText();
         serverip = host.toString();	
+        
+        ttl_t = (EditText)findViewById(R.id.ttl);
+        Editable time = ttl_t.getText();
+        time_to_live = Integer.parseInt(time.toString());
         
         String macaddr = "MAC Address : " + getMACaddr() + "\n";
         
@@ -131,8 +135,14 @@ public class javasockets extends Activity {
     
     public static void progressBar_isFull()
     {
-    	if(progress.getProgress() == 100)
+    	if(progress.getProgress() > 99)
         	javasockets.showResult("Discovered", javasockets.hosts_found + " hosts");
+    }
+    
+    public static void fillProgressBar()
+    {
+    	resetProgressBar();
+    	updateProgressBar(100);
     }
     
     //Gets WIFI MAC address
@@ -150,7 +160,7 @@ public class javasockets extends Activity {
     	boolean reachable = false;
     	try {
         	InetAddress addr = InetAddress.getByName(address);
-        	reachable = addr.isReachable(ttl.is_reachable);
+        	reachable = addr.isReachable(time_to_live);
         }
         catch (Exception e)
         {
@@ -174,7 +184,7 @@ public class javasockets extends Activity {
 				connected = channel.connect(address);
 				
 				try {
-					Thread.sleep(ttl.socket_ping);
+					Thread.sleep(time_to_live);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}				
@@ -201,7 +211,7 @@ public class javasockets extends Activity {
     		dgc.configureBlocking(false);
     		dgc.connect(sockaddr);
     		dgc.send(msg, sockaddr);
-    		Thread.sleep(ttl.socket_ping);
+    		Thread.sleep(time_to_live);
     		dgc.receive(response);
     		
     		String received = new String(response.array());
@@ -223,16 +233,25 @@ public class javasockets extends Activity {
     	t.run();
     }
     
-    //port 80 TCP connect
+    //TCP Connect test on multiple ports
     public static boolean socket_tcp(String address)
-    {
+    {    	
     	boolean connected = false;
-    	try{
-    		Socket s = new Socket(address, 80);
-    		connected = s.isConnected();
-    	}
-    	catch(Exception e){
-    		e.printStackTrace();
+    
+    	for(int i = 0; i < ports.port.length; i++)
+    	{
+    		try
+    		{
+    			Socket s = new Socket();
+    			s.bind(null);
+    			s.connect(new InetSocketAddress(address, ports.port[i]), time_to_live);
+    			connected = s.isConnected();
+    			s.close();
+    		}
+    		catch(Exception e){
+    			e.printStackTrace();
+    		}
+    		if(connected) return connected;
     	}
     	return connected;
     }
@@ -339,44 +358,11 @@ public class javasockets extends Activity {
     //Host discovery using arp cache at /proc/net/arp
     public static void read_arp()
     {
-    	hosts_found = 0;
-    	try {
-			BufferedReader br = new BufferedReader(new FileReader("/proc/net/arp"));
-			String line;
-			try 
-			{
-				while((line = br.readLine()) != null)
-				{
-					 String[] splitted = line.split(" +");
-					 if (splitted != null && splitted.length >= 4) 
-					 {
-						 // Basic sanity check
-						 String mac = splitted[3];
-						 String ip = splitted[0];
-						 if (mac.matches("..:..:..:..:..:..") && !mac.equals("00:00:00:00:00:00")) 
-						 {
-							 hosts_found ++;
-							 showResult(ip, mac);
-						 }
-					 }
-				}
-			}
-			catch (IOException e) 
-			{
-				e.printStackTrace();
-			}
-		} 
-    	catch (FileNotFoundException e) 
-    	{
-			e.printStackTrace();
-		}
-		showResult("ARP", hosts_found + " hosts found");
+    	AsyncTask<Void, String, Integer> aa = new arp_async();
+    	aa.execute();
     }
     
-    private void getMAC_arpcache(String ip)
-    {
-    }
-    
+    	
     //---------onClick Event Handlers-----------//
     private OnClickListener ping_reachable = new OnClickListener() {
         public void onClick(View v) {
