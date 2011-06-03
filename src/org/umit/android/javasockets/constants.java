@@ -4,7 +4,7 @@ interface constants
 {
 	//now overridden by the UI element ttl (EditText)
 	public static final int thread_sleep = 11;
-	public static final int debug_lines = 9;
+	public static final int debug_lines = 15;
 }
 
 interface ttl {

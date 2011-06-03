@@ -89,29 +89,13 @@ public class javasockets extends Activity {
         
         progress = (ProgressBar)findViewById(R.id.progress);
         
-        //isReachable
-        Button reachable = (Button)findViewById(R.id.ping_reachable);
-        reachable.setOnClickListener(ping_reachable);
+        //Ping shell command
+        Button ping = (Button)findViewById(R.id.ping);
+        ping.setOnClickListener(ping_using_all_methods);
         
-        //network interfaces
-        Button getNetwork = (Button)findViewById(R.id.network_interfaces);
-        getNetwork.setOnClickListener(network_interfaces);
-        
-        //Echo Port 7 Ping (Datagram channel)
-        Button echoping = (Button)findViewById(R.id.echo_ping);
-        echoping.setOnClickListener(echo_ping);
-        
-        //Ping port 13 (Socket Channel)
-        Button sockping = (Button)findViewById(R.id.socket_ping);
-        sockping.setOnClickListener(socket_ping);
-                
         //Ping shell command
         Button pingshell = (Button)findViewById(R.id.command_ping);
         pingshell.setOnClickListener(command_ping);
-               
-        //C code ping
-        Button socket_tcp = (Button)findViewById(R.id.tcp_socket);
-        socket_tcp.setOnClickListener(tcp_socket);
         
         Button wifi = (Button)findViewById(R.id.wifi_info);
         wifi.setOnClickListener(wifi_info);
@@ -241,17 +225,18 @@ public class javasockets extends Activity {
     	for(int i = 0; i < ports.port.length; i++)
     	{
     		try
-    		{
-    			Socket s = new Socket();
+    		{	Socket s = new Socket();
     			s.bind(null);
-    			s.connect(new InetSocketAddress(address, ports.port[i]), time_to_live);
+    			s.connect(new InetSocketAddress(address, ports.port[i]));
     			connected = s.isConnected();
-    			s.close();
+    			//s.close();
+    			if(connected) return connected;
     		}
-    		catch(Exception e){
-    			e.printStackTrace();
+    		catch(Exception e)
+    		{
+    			//e.printStackTrace();
     		}
-    		if(connected) return connected;
+    		
     	}
     	return connected;
     }
@@ -304,6 +289,7 @@ public class javasockets extends Activity {
     	
     	showResult("High Address", si.getHighAddress());
     	showResult("Low Address", si.getLowAddress());
+    	interfaces();
     }
     
     //converts integer to IP
@@ -364,43 +350,35 @@ public class javasockets extends Activity {
     
     	
     //---------onClick Event Handlers-----------//
-    private OnClickListener ping_reachable = new OnClickListener() {
+    private OnClickListener ping_using_all_methods = new OnClickListener() {
         public void onClick(View v) {
         	resetProgressBar();
+
         	Editable host = ip.getText();
             serverip = host.toString();
+         	AsyncTask<String, String, String> sa = new pingall_async();
+	    	sa.execute(serverip);
+       
+            /*
+         	boolean success;
     		showResult("Pinging " + serverip, "");
-    		boolean success = checkReachable(serverip);
+            
+            showResult("Method", "isReachable");
+    		success = checkReachable(serverip);
     		showResult("isReachable ", success + "");
-        }
-    };
-        
-    private OnClickListener socket_ping = new OnClickListener() {
-        public void onClick(View v) {
-        	resetProgressBar();
-        	Editable host = ip.getText();
-            serverip = host.toString();
-            showResult("Pinging " + serverip, "");
-        	boolean success = ping_socket(serverip);
-        	showResult("Socket Ping", success + "");
-        }
-    };
-        
-    private OnClickListener network_interfaces = new OnClickListener() {
-        public void onClick(View v) {
-        	resetProgressBar();
-        	interfaces();
-        }
-    };
-    
-    private OnClickListener echo_ping = new OnClickListener() {
-        public void onClick(View v) {
-        	resetProgressBar();
-        	Editable host = ip.getText();
-            serverip = host.toString();
-            showResult("Pinging " + serverip, "");
-            boolean success = ping_echo(serverip);
+    		
+            showResult("Method", "SocketChannel Port 13");
+        	success = ping_socket(serverip);
+        	showResult("Port 13 Ping", success + "");
+
+            showResult("Method", "UDP Channel");
+            success = ping_echo(serverip);
             showResult("Echo ping ", success + "");
+
+            showResult("Method", "TCP Socket");
+            success = socket_tcp(serverip);
+        	showResult("TCP Socket", success + "");
+        	*/
         }
     };
     
@@ -411,17 +389,6 @@ public class javasockets extends Activity {
             serverip = host.toString();
             showResult("Pinging " + serverip, "");
         	ping_shell(serverip);
-        }
-    };
-        
-    private OnClickListener tcp_socket = new OnClickListener() {
-        public void onClick(View v) {
-        	resetProgressBar();
-        	Editable host = ip.getText();
-            serverip = host.toString();
-            showResult("Pinging " + serverip, "");
-        	boolean success = socket_tcp(serverip);
-        	showResult("TCP Socket", success + "");
         }
     };
     
@@ -443,6 +410,9 @@ public class javasockets extends Activity {
         	read_arp();
         }
     };
+    
+    
+    //The Debug TextView controller
     private static int line_count = 0;
     private static boolean isFull = false;
     public static void showResult(String method, String msg)
