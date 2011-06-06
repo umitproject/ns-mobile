@@ -40,6 +40,62 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.core;
 
-public class hostDiscovery {
+import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.view.UIController;
+
+import android.os.AsyncTask;
+
+public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
+
+    String[] range;
+    int method;
+    @Override
+    protected Void doInBackground(Object[]... params) {
+    
+        range = (String[]) params[0];
+        method = (Integer) params[1][0];
+        
+        switch(method) {
+        case 0: speed(range); break;
+        case 1: normal(range); break;
+        case 2: insane(range); break;
+        }
+        return null;
+    }
+    
+    
+    /**
+     * 
+     * 
+     * @param r
+     * Range of the IP addresses to do the scanning.
+     * Calls publishProgress.
+     *  
+     * @return void
+     * 
+     */
+    
+    private void insane(String[] r) {
+        
+    }
+    
+    private void normal(String[] r) {
+        
+    }
+    
+    private void speed(String[] r) {
+        
+    }
+    
+    protected void onProgressUpdate(Integer... progress) 
+    {
+        UIController.updateProgressBar(progress[0]);
+        nsandroid.hosts++;
+        
+        if(progress[0] > 99){
+            UIController.resultDiscovery("Discovered " + nsandroid.hosts + " hosts");
+        }
+    }
+    
 
 }

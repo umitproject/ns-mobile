@@ -44,4 +44,15 @@ public class UIController {
         
     }
 
+    public static void updateProgressBar(Integer progress) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public static void resultDiscovery(String string) {
+        // TODO Auto-generated method stub
+        
+    }
+
+
 }
