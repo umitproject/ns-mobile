@@ -39,4 +39,9 @@ package org.umit.ns.mobile.view;
 
 public class UIController {
 
+    public static void updateDiscovery(String successIp) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

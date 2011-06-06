@@ -21,18 +21,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 /**
- * @author angadsg 
- * Saves all the Constants - TTL, default settings
+ * @author angadsg
+ * 
+ * Implements various methods of pinging a host.
+ * Returns true/false if host is reachable.
+ * 
+ * Each ping is implemented in its Async Task class.
+ * This class serves as the controller for various methods.
+ * 
  */
 
-package org.umit.ns.mobile;
 
-public interface Constants {
+package org.umit.ns.mobile.api.discovery;
 
-    public static final int[] TCPport = {
-        139,
-        445,
-        22,
-        80
-    };
+public class Ping {
+	
 }
