@@ -4,9 +4,15 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
+    <TableLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/tableLayout1">
+        <TableRow android:id="@+id/row1" android:layout_width="wrap_content" android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content" android:text="Discovery" android:layout_height="wrap_content" android:id="@+id/title"></TextView>
+            <Button android:layout_height="wrap_content" android:id="@+id/modeSelect" android:layout_width="wrap_content" android:text="Mode"></Button>
+            <Button android:layout_width="wrap_content" android:text="Discover" android:layout_height="wrap_content" android:id="@+id/discover"></Button>
+            
+        </TableRow>
+        <ProgressBar android:layout_height="wrap_content" style="@android:style/Widget.ProgressBar.Horizontal" android:id="@+id/progress" android:layout_width="match_parent"></ProgressBar>
+        
+    </TableLayout>
+    <TextView android:text="Results" android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/results"></TextView>
 </LinearLayout>

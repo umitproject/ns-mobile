@@ -66,7 +66,6 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
     
     /**
      * 
-     * 
      * @param r
      * Range of the IP addresses to do the scanning.
      * Calls publishProgress.
@@ -75,7 +74,20 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
      * 
      */
     
+    
+    /**
+     * Insane mode - 
+     * isReachable
+     * ARP Scan
+     * TCP Sockets
+     * TCP 13
+     * UDP 7
+     * Shell 
+     * 
+     */
     private void insane(String[] r) {
+        
+        
         
     }
     
