@@ -24,14 +24,21 @@ package org.umit.ns.mobile;
 
 import org.umit.ns.mobile.api.networkInfo;
 import org.umit.ns.mobile.core.hostDiscovery;
-import org.umit.ns.mobile.view.UIController;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
@@ -45,21 +52,30 @@ import android.widget.TextView;
 
 public class nsandroid extends Activity {
     
-    public static int hosts;
+    public static int hosts = 0;
+    public static String[] discovered;
+    public static ProgressBar progress;
+    public static TextView results;
+
     public int mode;
     
     networkInfo ni;
-    public TextView results;
-    
+    ArrayAdapter<CharSequence> adapter;
+    Builder select;
+        
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        //Initialize UI
-        UIController ui = new UIController(this);
+        discovered = new String[254];
         
+        select = new AlertDialog.Builder(this);
+        adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
+        
+        progress = (ProgressBar)findViewById(R.id.progress);
+
         //Initialize API
         WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         ni = new networkInfo(w);
@@ -69,37 +85,102 @@ public class nsandroid extends Activity {
         //Attach event handlers
         //modeSelect
         Button mode = (Button)findViewById(R.id.modeSelect);
-        mode.setOnClickListener(ui.modeSelect);
+        mode.setOnClickListener(modeSelect);
         
         //Discover
         Button discover = (Button)findViewById(R.id.discover);
-        discover.setOnClickListener(ui.startDiscovery);
+        discover.setOnClickListener(discoverHosts);
         
         //Initialize API
     }
     
     //Set Discovery mode
-    public void setMode(int mode)
-    {
+    public void setMode(int mode) {
         this.mode = mode;
     }
     
-    public int getMode()
-    {
+    public int getMode() {
         return mode;
     }
-
-    public void discoverHosts() {
-        //Use networkInfo to get IP address details
-        //Use SubnetUtils to convert IP addresses
-        
-        
-        
-        String[] range = ni.getRange();
-        String[] mode = {Integer.toString(getMode())};
-        
-        AsyncTask<Object[], Integer, Void> hd = new hostDiscovery();
-        hd.execute((Object[])range, (Object[])mode);
+    
+    public void resetDiscovery()
+    {
+        hosts = 0;
+        discovered = new String[254];
     }
     
+    public OnClickListener modeSelect = new OnClickListener() {
+        public void onClick(View v) {
+            select.setTitle(R.string.discovery_prompt)
+            .setAdapter(adapter, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    setMode(which);
+                    resetDiscovery();
+                    dialog.dismiss();
+                    nsandroid.resultPublish(Integer.toString(which));
+                }
+            }).create().show();
+        }
+    };
+
+    public OnClickListener discoverHosts = new OnClickListener() {
+        public void onClick(View v) {
+            //Use networkInfo to get IP address details
+            //Use SubnetUtils to convert IP addresses
+            
+            String[] range = ni.getRange();
+            String[] mode = {Integer.toString(getMode())};
+            
+            AsyncTask<Object[], Integer, Void> hd = new hostDiscovery();
+            hd.execute((Object[])range, (Object[])mode);
+        }
+    };
+    
+
+    //private static int line_count = 0;
+    //private static boolean isFull = false;
+    public static void resultPublish(String string) {
+        Log.v("nsandroid", string);
+        /*
+        if(line_count == 10 || isFull) {
+            String txt = results.getText().toString();
+            txt = txt.substring(txt.indexOf('\n') + 1);
+            results.setText(txt);
+            isFull=true;
+            line_count = 0;
+        }
+        line_count++;
+        results.append(string + "\n");
+        */
+    }
+
+    public static void updateProgressBar(int l) {
+        progress.setProgress(l);
+    }
+    
+    public static void resetProgressBar() {
+        progress.setProgress(0);
+    }
+    
+    public static void fillProgressBar() {
+        resetProgressBar();
+        updateProgressBar(100);
+    }
+    
+    public static void addHosts(String ipaddress) {
+        int flag = 0;
+        for(int i=0; i<hosts; i++)
+        {
+            if(ipaddress.equals(discovered[i]))
+                flag = 1;
+        }
+        
+        if(flag == 0){
+            discovered[hosts] = ipaddress;
+            resultPublish(ipaddress);
+            hosts++;
+        }
+    }
 }

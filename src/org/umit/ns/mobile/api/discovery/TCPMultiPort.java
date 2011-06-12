@@ -35,8 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * 
  * @see isReachable
  */
+
 package org.umit.ns.mobile.api.discovery;
-import org.umit.ns.mobile.view.*;
 import org.umit.ns.mobile.*;
 
 import java.net.InetSocketAddress;
@@ -46,7 +46,7 @@ import android.os.AsyncTask;
 
 public class TCPMultiPort extends AsyncTask<String, String, String>{
 
-    String ipAddress;
+    String ipAddress = "";
     int timeout;
     
     @Override
@@ -54,19 +54,20 @@ public class TCPMultiPort extends AsyncTask<String, String, String>{
 
         ipAddress = params[0];
         timeout = Integer.parseInt(params[1]);
-        
+
         if(TCPSocket(ipAddress,timeout)) {
             return ipAddress;
         }
-        else return null;
+        else return "";
     }
+    
     
     private boolean TCPSocket(String ip, int time) {
         boolean connected = false;
         
         for(int i = 0; i < Constants.TCPport.length; i++)
         {
-            try {   
+            try {
                 Socket s = new Socket();
                 s.bind(null);
                 s.connect(new InetSocketAddress(ip, Constants.TCPport[i]));
@@ -82,6 +83,12 @@ public class TCPMultiPort extends AsyncTask<String, String, String>{
     }
 
     protected void onPostExecute(String successIp) {
-        UIController.updateDiscovery(successIp);
+        if(!successIp.equals(""))
+            nsandroid.addHosts(successIp);
     }
+    
+    protected void onProgressUpdate(String... params){
+        nsandroid.resultPublish(params[0]);
+    }
+    
 }

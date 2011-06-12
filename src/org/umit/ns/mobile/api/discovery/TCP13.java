@@ -43,7 +43,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 
-import org.umit.ns.mobile.view.UIController;
+import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -58,37 +58,34 @@ public class TCP13 extends AsyncTask<String, String, String>{
         ipAddress = params[0];
         timeout = Integer.parseInt(params[1]);
         
-        if(tcpSocket(ipAddress,timeout)) {
+        if(tcpSocket(ipAddress, timeout)) {
             return ipAddress;
         }
-        else return null;
+        else return "";
     
     }
     
-    protected void onPostExecute(String successIp)
-    {
-        UIController.updateDiscovery(successIp);
+    protected void onPostExecute(String successIp) {
+        if(!successIp.equals(""))
+            nsandroid.addHosts(successIp);
+    }
+    
+    protected void onPublishProgress(String... params) {
+        nsandroid.resultPublish(params[0]);
     }
 
     private boolean tcpSocket(String ip, int time) {
 
         InetSocketAddress address;
         SocketChannel channel = null;
-        boolean connected = false;
         
         try {
             address = new InetSocketAddress(InetAddress.getByName(ip), 13);
             try {
                 channel = SocketChannel.open();
                 channel.configureBlocking(false);
-                connected = channel.connect(address);
-                
-                try {
-                    Thread.sleep(time);
-                } 
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }               
+                channel.connect(address);
+                return channel.isConnected();
             } catch (IOException e) {
                 return false;
             }
@@ -96,6 +93,5 @@ public class TCP13 extends AsyncTask<String, String, String>{
         catch (UnknownHostException e) {
             return false;
         }
-        return connected;
     }
 }

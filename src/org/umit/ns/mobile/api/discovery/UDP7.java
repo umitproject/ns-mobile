@@ -39,7 +39,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-import org.umit.ns.mobile.view.UIController;
+import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -58,13 +58,16 @@ public class UDP7 extends AsyncTask<String, String, String>{
         if(udpEcho(ipAddress,timeout)) {
             return ipAddress;
         }
-        else return null;
-    
+        else return "";
     }
 
-    protected void onPostExecute(String successIp)
-    {
-        UIController.updateDiscovery(successIp);
+    protected void onPostExecute(String successIp) {
+        if(!successIp.equals(""))
+            nsandroid.addHosts(successIp);
+    }
+    
+    protected void onProgressUpdate(String... params) {
+        nsandroid.resultPublish(params[0]);
     }
     
     private boolean udpEcho(String ip, int time) {
@@ -82,9 +85,9 @@ public class UDP7 extends AsyncTask<String, String, String>{
             dgc.receive(response);
             
             String received = new String(response.array());
-            if(received == "")
-                r = false;
-            else r = true;
+            if(received.contains("Hello"))
+                r = true;
+            else r = false;
             }
         catch (Exception e){
             return false;

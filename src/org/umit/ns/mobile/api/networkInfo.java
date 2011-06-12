@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.api;
 
+import org.umit.ns.mobile.nsandroid;
 import org.umit.ns.mobile.api.SubnetUtils.SubnetInfo;
 
 import android.net.DhcpInfo;
@@ -47,18 +48,61 @@ import android.net.wifi.WifiManager;
  *
  */
 
-
 public class networkInfo {
 
-    WifiManager w;
-    DhcpInfo d;
-    SubnetUtils su;
-    SubnetInfo si;
+    WifiManager w = null;
+    DhcpInfo d = null;
+    SubnetUtils su = null;
+    SubnetInfo si = null;
+    
+    String networkInterface;
+    String ipAddress;
+    String serverAddress;
+    String subnet;
+    
+    boolean isWifi = false;
 
-    public networkInfo(WifiManager w)
-    {
+    public networkInfo(WifiManager w) {
         this.w = w;
-        this.d = w.getDhcpInfo();
+        if(w.isWifiEnabled()) {
+            this.d = w.getDhcpInfo();
+            isWifi = true;
+            
+            networkInterface = "eth0";
+            ipAddress = intToIp(d.ipAddress);
+            serverAddress = intToIp(d.serverAddress);
+            subnet = intToIp(d.netmask);
+        }
+        else {
+            String output = shellUtils.runCommand("netcfg");
+            for(int i=4; i<output.length(); i+=57)
+            {
+                //first 4 characters = null
+                // next 9 char contain interface name
+                // next 6 contain status - DOWN, UP
+                // next 17 contain IP address
+                // next 16 contain subnet address
+                // next 10 contain hex
+                
+                String line = output.substring(i, i+57);
+                if(line.substring(9,15).trim().equals("UP"))
+                {
+                    networkInterface = line.substring(0,9).trim();
+                    ipAddress = line.substring(15,31).trim();
+                    subnet = line.substring(31,47).trim();
+                    //nsandroid.resultPublish(networkInterface + " " + ipAddress + " " + subnet);
+                }
+                
+                /*
+                nsandroid.resultPublish("interface: " + line.substring(0,9));
+                nsandroid.resultPublish("status: " + line.substring(9,15));
+                nsandroid.resultPublish("ipaddress: " + line.substring(15,31));
+                nsandroid.resultPublish("subnet: " + line.substring(31,47));
+                nsandroid.resultPublish("hex: " + line.substring(47,57));
+                nsandroid.resultPublish(output.substring(i, i+57));
+                */
+            }
+        }
         this.su = new SubnetUtils(getIp(), getSubnet());
         this.si = su.getInfo();
     }
@@ -81,36 +125,44 @@ public class networkInfo {
     
     public String getDNS1()
     {
-        return intToIp(d.dns1);
+        if(d != null)
+            return intToIp(d.dns1);
+        else return null;
     }
     
     public String getDNS2()
     {
-        return intToIp(d.dns2);
+        if(d != null)
+            return intToIp(d.dns2);
+        else return null;
     }
     
     public String getSubnet()
     {
-        return intToIp(d.gateway);
+        return subnet;
     }
     
     public int getLease()
     {
-        return d.leaseDuration;
+        if(d != null)
+            return d.leaseDuration;
+        else return 0;
+
     }
     public String getServerAddres()
     {
-        return intToIp(d.serverAddress);
+        return serverAddress;
     }
     
     public String getIp()
     {
-        return intToIp(d.ipAddress);
+        return ipAddress;
     }
     
     public String[] getRange()
     {
-        return si.getAllAddresses();
+        if(si != null)
+            return si.getAllAddresses();
+        else return null;
     }
-    
 }

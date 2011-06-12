@@ -35,4 +35,6 @@ public interface Constants {
         22,
         80
     };
+    
+    public static final int timeout = 1000;
 }

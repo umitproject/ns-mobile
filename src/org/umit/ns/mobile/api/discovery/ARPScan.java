@@ -35,12 +35,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * 
  * @see isReachable
  */
+
 package org.umit.ns.mobile.api.discovery;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+
+import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -83,8 +86,8 @@ public class ARPScan extends AsyncTask<Void, String, String>{
         return null;
     }
 
-    protected void onProgressUpdate(String... params) 
-    {   
+    protected void onProgressUpdate(String... params) {
+        nsandroid.addHosts(params[0]);
     }
 
 }

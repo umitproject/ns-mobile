@@ -38,35 +38,33 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.umit.ns.mobile.view.UIController;
+import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
 public class ShellPing extends AsyncTask<String, String, String>{
 
     String ipAddress;
-    int timeout;
     
     @Override
     protected String doInBackground(String... params) {
 
         ipAddress = params[0];
-        timeout = Integer.parseInt(params[1]);
         
-        if(cmdPing(ipAddress,timeout))
+        if(cmdPing(ipAddress))
             return ipAddress;
-        else return null;
+        else return "";
     }
     
     protected void onPostExecute(String successIp) {
-        UIController.updateDiscovery(successIp);
+        if(!successIp.equals(""))
+            nsandroid.addHosts(successIp);
     }
 
-    private boolean cmdPing(String ip, int time) {
+    private boolean cmdPing(String ip) {
         
         String pingCmd = "ping " + ip;
         Process p;
-        //String pingResult = "";
         
         try{
             Runtime r = Runtime.getRuntime();           
@@ -78,9 +76,8 @@ public class ShellPing extends AsyncTask<String, String, String>{
             {
                 i++;
                 if(i==5) break;
-                if(ShellPing.parseOutput(inputLine));
+                if(parseOutput(inputLine))
                     return true;
-                //pingResult += inputLine;
             }
             in.close();
             p.destroy();
@@ -92,9 +89,16 @@ public class ShellPing extends AsyncTask<String, String, String>{
         return false;
     }
     
-    public static boolean parseOutput(String output) {
+    public boolean parseOutput(String output) {
         //Parse output to check if ping successful
-        //TODO Unimplemented
-        return false;
+        if(output.contains("from"))
+            return true;
+        else return false;
     }
+    
+    protected void onProgressUpdate(String... params)
+    {
+        nsandroid.resultPublish(params[0]);
+    }
+    
 }
