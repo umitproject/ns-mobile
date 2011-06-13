@@ -42,15 +42,22 @@ package org.umit.ns.mobile.core;
 
 import org.umit.ns.mobile.api.discovery.*;
 import org.umit.ns.mobile.Constants;
-import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
 public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
 
     String[] range;
-    
     int method;
+    int total;
+    
+    AsyncTask<String, String, String> ir;
+    AsyncTask<Void, String, String> arp;
+    AsyncTask<String, String, String> sp;
+    AsyncTask<String, String, String> tcp13;
+    AsyncTask<String, String, String> udp7;
+    AsyncTask<String, String, String> multiport;
+    
     @Override
     protected Void doInBackground(Object[]... params) {
     
@@ -58,14 +65,18 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
         method = Integer.parseInt(params[1][0].toString());
         
         switch(method) {
-        case 0: speed(range); break;
-        case 1: normal(range); break;
-        case 2: insane(range); break;
+        case 0: 
+            speed(range); 
+            break;
+        case 1: 
+            normal(range);
+            break;
+        case 2: 
+            insane(range);
+            break;
         }
-        
         return null;
     }
-    
     
     /**
      * 
@@ -94,17 +105,43 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
         {
             isReachable(r[i]);
             sleep(50);
+            if(isCancelled()) {
+                ir.cancel(true);
+                return;
+            }
         }
+        
         ARPScan();
+        if(isCancelled()){
+            arp.cancel(true);
+            return;
+        }
+        
         for(i=0; i<r.length; i++)
         {
             tcp13(r[i]);
+            if(isCancelled()) {
+                tcp13.cancel(true);
+                return;
+            }
             sleep(50);
             udp7(r[i]);
+            if(isCancelled()) {
+                udp7.cancel(true);
+                return;
+            }
             sleep(50);
             multiport(r[i]);
+            if(isCancelled()) {
+                multiport.cancel(true);
+                return;
+            }
             sleep(50);
             shellping(r[i]);
+            if(isCancelled()) {
+                sp.cancel(true);
+                return;
+            }
             sleep(50);
         }
     }
@@ -120,12 +157,27 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
         for(i=0; i<r.length; i++)
         {
             isReachable(r[i]);
+            if(isCancelled()) {
+                ir.cancel(true);
+                return;
+            }
             sleep(50);
         }
+        
         ARPScan();
+        if(isCancelled()) {
+            arp.cancel(true);
+            return;
+        }
+
+        if(isCancelled()) return;
         for(i=0; i<r.length; i++)
         {
             multiport(r[i]);
+            if(isCancelled()) {
+                multiport.cancel(true);
+                return;
+            }
             sleep(50);
         }
     }
@@ -140,8 +192,16 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
         for(i=0; i<r.length; i++) {
             isReachable(r[i]);
             sleep(50);
+            if(isCancelled()) {
+                ir.cancel(true);
+                return;
+            }
         }
         ARPScan();
+        if(isCancelled()) {
+            arp.cancel(true);
+            return;
+        }
     }
     
     private void sleep(int time)
@@ -155,47 +215,37 @@ public class hostDiscovery extends AsyncTask<Object[], Integer, Void>{
     
     private void isReachable(String ip)
     {
-        AsyncTask<String, String, String> ir = new isReachable();
+        ir = new isReachable();
         ir.execute(ip, Integer.toString(Constants.timeout));   
     }
     
     private void ARPScan()
     {
-        AsyncTask<Void, String, String> arp = new ARPScan();
+        arp = new ARPScan();
         arp.execute();
     }
     
     private void shellping(String ip)
     {
-        AsyncTask<String, String, String> sp = new ShellPing();
+        sp = new ShellPing();
         sp.execute(ip);
     }
     
     private void tcp13(String ip)
     {
-        AsyncTask<String, String, String> tcp13 = new TCP13();
+        tcp13 = new TCP13();
         tcp13.execute(ip, Integer.toString(Constants.timeout));
     }
     
     private void udp7(String ip)
     {
-        AsyncTask<String, String, String> udp7 = new UDP7();
+        udp7 = new UDP7();
         udp7.execute(ip, Integer.toString(Constants.timeout));
     }
     
     private void multiport(String ip)
     {
-        AsyncTask<String, String, String> multiport = new TCPMultiPort();
+        multiport = new TCPMultiPort();
         multiport.execute(ip, Integer.toString(Constants.timeout));        
-    }
-    
-    protected void onProgressUpdate(Integer... progress) 
-    {
-        nsandroid.updateProgressBar(progress[0]);
-        nsandroid.hosts++;
-        
-        if(progress[0] > 99) {
-            nsandroid.resultPublish("Discovered " + nsandroid.hosts + " hosts");
-        }
     }
 }

@@ -40,6 +40,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * @author angadsg
@@ -56,13 +57,22 @@ public class nsandroid extends Activity {
     public static String[] discovered;
     public static ProgressBar progress;
     public static TextView results;
+    public static int possibleNodes;
 
     public int mode;
     
     networkInfo ni;
     ArrayAdapter<CharSequence> adapter;
     Builder select;
+    AsyncTask<Object[], Integer, Void> hd;
         
+    public static nsandroid defaultInstance = null;
+    
+    public nsandroid()
+    {
+        defaultInstance = this;
+    }
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,14 +83,13 @@ public class nsandroid extends Activity {
         
         select = new AlertDialog.Builder(this);
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
-        
+        results = (TextView)findViewById(R.id.results);
         progress = (ProgressBar)findViewById(R.id.progress);
 
         //Initialize API
         WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         ni = new networkInfo(w);
-        
-        results = (TextView)findViewById(R.id.results);
+        possibleNodes = ni.getNodes();
         
         //Attach event handlers
         //modeSelect
@@ -91,7 +100,21 @@ public class nsandroid extends Activity {
         Button discover = (Button)findViewById(R.id.discover);
         discover.setOnClickListener(discoverHosts);
         
-        //Initialize API
+        //Stop
+        Button stop = (Button)findViewById(R.id.stop);
+        stop.setOnClickListener(stopDiscovery);
+        
+        //Info
+        Button info = (Button)findViewById(R.id.info);
+        info.setOnClickListener(networkInfo);
+    }
+    
+    public void resetApp()
+    {
+        WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        ni = new networkInfo(w);
+        possibleNodes = ni.getNodes();
+        resetDiscovery();
     }
     
     //Set Discovery mode
@@ -103,10 +126,10 @@ public class nsandroid extends Activity {
         return mode;
     }
     
-    public void resetDiscovery()
-    {
+    public void resetDiscovery() {
         hosts = 0;
         discovered = new String[254];
+        resetProgressBar();
     }
     
     public OnClickListener modeSelect = new OnClickListener() {
@@ -117,10 +140,11 @@ public class nsandroid extends Activity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     setMode(which);
+                    setPossibleNodes(which);
                     resetDiscovery();
                     dialog.dismiss();
-                    nsandroid.resultPublish(Integer.toString(which));
                 }
+
             }).create().show();
         }
     };
@@ -133,17 +157,51 @@ public class nsandroid extends Activity {
             String[] range = ni.getRange();
             String[] mode = {Integer.toString(getMode())};
             
-            AsyncTask<Object[], Integer, Void> hd = new hostDiscovery();
-            hd.execute((Object[])range, (Object[])mode);
+            if(range!=null) {   
+                hd = new hostDiscovery();
+                hd.execute((Object[])range, (Object[])mode);
+            }
+            else {
+                String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
+                resultPublish(result);
+                Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG);
+            }
         }
     };
     
 
-    //private static int line_count = 0;
-    //private static boolean isFull = false;
+    public OnClickListener stopDiscovery = new OnClickListener() {
+        public void onClick(View v) {
+            hd.cancel(true);
+            String result = "Host Discovery interrupted\nDiscovered " + hosts + " hosts.";
+            resultPublish(result);
+            Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG).show();
+        }
+    };
+            
+    
+    public OnClickListener networkInfo = new OnClickListener() {
+        public void onClick(View v) {
+            
+            String i = "Interface: " + ni.getInterface() + "\nIP Address: " + ni.getIp() + "\nSubnet: " + ni.getSubnet();
+            Toast.makeText(getApplicationContext(), i, Toast.LENGTH_LONG).show();
+        }
+    };
+    
+
+    private void setPossibleNodes(int which) {
+        switch(which){
+        case 0: break;
+        case 1: possibleNodes *=2; break;
+        case 2: possibleNodes *=5; break;
+        }
+    }
+    
+    //Static UI Methods
+    private static int line_count = 0;
+    private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        /*
         if(line_count == 10 || isFull) {
             String txt = results.getText().toString();
             txt = txt.substring(txt.indexOf('\n') + 1);
@@ -152,35 +210,46 @@ public class nsandroid extends Activity {
             line_count = 0;
         }
         line_count++;
-        results.append(string + "\n");
-        */
+        results.append("\n" + string);
     }
-
+    
     public static void updateProgressBar(int l) {
         progress.setProgress(l);
     }
     
-    public static void resetProgressBar() {
+    public void resetProgressBar() {
         progress.setProgress(0);
     }
     
-    public static void fillProgressBar() {
+    public void fillProgressBar() {
         resetProgressBar();
         updateProgressBar(100);
     }
     
     public static void addHosts(String ipaddress) {
         int flag = 0;
-        for(int i=0; i<hosts; i++)
-        {
+        for(int i=0; i<hosts; i++) {
             if(ipaddress.equals(discovered[i]))
                 flag = 1;
         }
         
-        if(flag == 0){
+        if(flag == 0) {
             discovered[hosts] = ipaddress;
             resultPublish(ipaddress);
+            updateProgress();
             hosts++;
+        }
+    }
+
+    public static int i=0;
+    public static void updateProgress() {
+        i++;
+        updateProgressBar((int)(i*100.0/(float)possibleNodes));
+                
+        if(i==possibleNodes) {
+            String result = "Done Host Discovery\nFound " + hosts + " hosts.";
+            resultPublish(result);
+            Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
         }
     }
 }

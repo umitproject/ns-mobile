@@ -51,7 +51,7 @@ public class isReachable extends AsyncTask<String, String, String>{
     protected String doInBackground(String... params) {
         ipAddress = params[0];
         timeout = Integer.parseInt(params[1]);
-        
+                
         if(checkReachable(ipAddress, timeout)) {
             return ipAddress;
         }
@@ -61,6 +61,12 @@ public class isReachable extends AsyncTask<String, String, String>{
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
             nsandroid.addHosts(successIp);
+        else  
+            nsandroid.updateProgress();
+    }
+    
+    protected void onPublishProgress(String... params) {
+        nsandroid.resultPublish(params[0]);
     }
 	
     private boolean checkReachable(String address, int timeout) {

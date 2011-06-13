@@ -59,6 +59,7 @@ public class ShellPing extends AsyncTask<String, String, String>{
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
             nsandroid.addHosts(successIp);
+        else nsandroid.updateProgress();
     }
 
     private boolean cmdPing(String ip) {
@@ -96,8 +97,7 @@ public class ShellPing extends AsyncTask<String, String, String>{
         else return false;
     }
     
-    protected void onProgressUpdate(String... params)
-    {
+    protected void onProgressUpdate(String... params) {
         nsandroid.resultPublish(params[0]);
     }
     

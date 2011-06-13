@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.api;
 
-import org.umit.ns.mobile.nsandroid;
 import org.umit.ns.mobile.api.SubnetUtils.SubnetInfo;
 
 import android.net.DhcpInfo;
@@ -118,6 +117,11 @@ public class networkInfo {
         return t4+t3+t2+t1;
     }
     
+    public String getInterface()
+    {
+        return networkInterface;
+    }
+    
     public String getMACAddress()
     {
         return w.getConnectionInfo().getMacAddress();
@@ -165,4 +169,12 @@ public class networkInfo {
             return si.getAllAddresses();
         else return null;
     }
+    
+    public int getNodes()
+    {
+        if(getRange() != null)
+            return getRange().length;
+        else return 0;
+    }
+
 }
