@@ -31,6 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.api;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import org.umit.ns.mobile.api.SubnetUtils.SubnetInfo;
 
 import android.net.DhcpInfo;
@@ -168,6 +172,29 @@ public class networkInfo {
         if(si != null)
             return si.getAllAddresses();
         else return null;
+    }
+    
+    public String[] getRange(String low, String high)
+    {
+        if(si!=null)
+            return si.getAllAddressess(si.toInteger(low), si.toInteger(high));
+        else return null;
+    }
+    
+    public boolean isValid(String ip)
+    {
+        if (ip == null) return false;
+        ip = ip.trim();
+        if ((ip.length() < 6) & (ip.length() > 15)) return false;
+
+        try {
+            Pattern pattern = Pattern.compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+            Matcher matcher = pattern.matcher(ip);
+            if(matcher.matches() && si!=null) return si.isInRange(ip);
+        } catch (PatternSyntaxException ex) {
+            return false;
+        }
+        return false;
     }
     
     public int getNodes()

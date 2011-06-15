@@ -167,6 +167,15 @@ public class SubnetUtils {
                 addresses[j] = format(toArray(add));
             }
             return addresses;
+        }   
+        
+        public String[] getAllAddressess(int low, int high)
+        {
+            String[] addresses = new String[high-low];
+            for(int add = low, j=0; add <high; ++add, ++j) {
+                addresses[j] = format(toArray(add));
+            }
+            return addresses;
         }
 
         /**
@@ -184,6 +193,15 @@ public class SubnetUtils {
                  .append("Last Address:\t[").append(getHighAddress()).append("]\n")
                  .append("# Addresses:\t[").append(getAddressCount()).append("]\n");
             return buf.toString();
+        }
+        
+        public int toInteger(String address) {
+            Matcher matcher = addressPattern.matcher(address);
+            if (matcher.matches()) {
+                return matchAddress(matcher);
+            }
+            else
+                throw new IllegalArgumentException("Could not parse [" + address + "]");
         }
     }
 

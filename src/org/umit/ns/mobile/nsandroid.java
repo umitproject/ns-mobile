@@ -65,6 +65,9 @@ public class nsandroid extends Activity {
     ArrayAdapter<CharSequence> adapter;
     Builder select;
     AsyncTask<Object[], Integer, Void> hd;
+    TextView from;
+    TextView to;
+    boolean started = false;
         
     public static nsandroid defaultInstance = null;
     
@@ -85,11 +88,22 @@ public class nsandroid extends Activity {
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
         results = (TextView)findViewById(R.id.results);
         progress = (ProgressBar)findViewById(R.id.progress);
+        from = (TextView)findViewById(R.id.from);
+        to = (TextView)findViewById(R.id.to);
 
         //Initialize API
         WifiManager w = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         ni = new networkInfo(w);
-        possibleNodes = ni.getNodes();
+        if(ni==null) {
+            String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
+            resultPublish(result);
+            Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG);
+        }
+        else {
+            possibleNodes = ni.getNodes();
+            from.setText(ni.getRange()[0]);
+            to.setText(ni.getRange()[possibleNodes-1]);   
+        }
         
         //Attach event handlers
         //modeSelect
@@ -107,6 +121,7 @@ public class nsandroid extends Activity {
         //Info
         Button info = (Button)findViewById(R.id.info);
         info.setOnClickListener(networkInfo);
+                
     }
     
     public void resetApp()
@@ -130,6 +145,7 @@ public class nsandroid extends Activity {
         hosts = 0;
         discovered = new String[254];
         resetProgressBar();
+        started = false;
     }
     
     public OnClickListener modeSelect = new OnClickListener() {
@@ -150,29 +166,60 @@ public class nsandroid extends Activity {
     };
 
     public OnClickListener discoverHosts = new OnClickListener() {
+        @SuppressWarnings("unused")
         public void onClick(View v) {
             //Use networkInfo to get IP address details
             //Use SubnetUtils to convert IP addresses
-            
-            String[] range = ni.getRange();
-            String[] mode = {Integer.toString(getMode())};
-            
-            if(range!=null) {   
-                hd = new hostDiscovery();
-                hd.execute((Object[])range, (Object[])mode);
+            if(started == true)
+            {
+                String result = "Please wait for the current scan to finish or press stop.";
+                Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG).show();
+                return;
             }
-            else {
-                String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
-                resultPublish(result);
-                Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG);
+            
+            resetDiscovery();
+            
+            String[] range = null;
+            
+            String low = from.getText().toString();
+            String high = to.getText().toString();
+            if(ni.isValid(low) && ni.isValid(high)){
+                range = ni.getRange(from.getText().toString(), to.getText().toString());
+                possibleNodes = range.length;
+                if(range!=null) {
+                    String[] mode = {Integer.toString(getMode())};
+                    hd = new hostDiscovery();
+                    started = true;
+                    hd.execute((Object[])range, (Object[])mode);
+                }
+                else {
+                    String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
+                    resultPublish(result);
+                    Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG);
+                }
             }
+            else{
+                String result = "Invalid IP. Please re-enter";
+                Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG).show();
+                return;
+            }
+            
+            
         }
     };
     
 
     public OnClickListener stopDiscovery = new OnClickListener() {
         public void onClick(View v) {
+            if(started == false)
+            {
+                String result = "Discovery not running";
+                Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG).show();
+                return;
+            }
+            
             hd.cancel(true);
+            started = false;
             String result = "Host Discovery interrupted\nDiscovered " + hosts + " hosts.";
             resultPublish(result);
             Toast.makeText(defaultInstance, result, Toast.LENGTH_LONG).show();
@@ -182,7 +229,7 @@ public class nsandroid extends Activity {
     
     public OnClickListener networkInfo = new OnClickListener() {
         public void onClick(View v) {
-            
+                        
             String i = "Interface: " + ni.getInterface() + "\nIP Address: " + ni.getIp() + "\nSubnet: " + ni.getSubnet();
             Toast.makeText(getApplicationContext(), i, Toast.LENGTH_LONG).show();
         }
