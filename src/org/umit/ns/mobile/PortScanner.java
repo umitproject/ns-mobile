@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile;
 
+import org.umit.ns.mobile.core.Scanning;
+
+import android.os.AsyncTask;
+
 public class PortScanner {
     public static int open = 0;
     int all = 0;
@@ -29,26 +33,33 @@ public class PortScanner {
     int high = 0;
     int low = 0;
     int[] portsOpen = null;
-    int[] allPorts = null;
+    Integer[] allPorts = null;
+    String host = null;
+    boolean started = false;
     
-    public PortScanner() {
-        init();
-    }
-
-    public void init() {
-        
+    AsyncTask<Object[], Integer, Void> scan;
+    
+    public PortScanner(String host, Integer[] ports) {
+        //verify host
+        this.allPorts = ports;
+        this.host = host;
     }
     
     public void start() {
-        
+        scan = new Scanning();
+        Object[] arg = {(Object)scannerMode, (Object)host};
+        started = true;
+        scan.execute((Object[])allPorts, arg);
     }
     
     public void stop() {
+        if(started == false)
+        {
+            //already stopped
+        }
         
-    }
-    
-    public void addPorts() {
-        
+        started = false;
+        scan.cancel(true);
     }
     
     public void reset() {

@@ -57,7 +57,7 @@ public class ScanTCP extends AsyncTask<String, String, String> {
     }
     
     protected void onPublishProgress(String... params) {
-        
+
     }
     
     protected void onPostExecute(String port) {

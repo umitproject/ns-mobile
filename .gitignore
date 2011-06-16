@@ -9,8 +9,9 @@ tmp/**/*
 Thumbs.db
 Desktop.ini
 *~
-*.apk
-bin
+*.class
+*.ap_
+*.dex
 gen
 local.properties
 *.jar

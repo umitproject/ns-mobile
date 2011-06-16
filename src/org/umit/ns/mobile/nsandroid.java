@@ -205,7 +205,7 @@ public class nsandroid extends Activity {
     private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        if(line_count == 4 || isFull) {
+        if(line_count == 10 || isFull) {
             String txt = results.getText().toString();
             txt = txt.substring(txt.indexOf('\n') + 1);
             results.setText(txt);
