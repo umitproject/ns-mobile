@@ -36,18 +36,39 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 import org.umit.ns.mobile.Constants;
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.PortScanner;
 
 import android.os.AsyncTask;
 
-public class ScanTCP extends AsyncTask<String, String, Boolean> {
+public class ScanTCP extends AsyncTask<String, String, String> {
 
+    String host;
+    String port;
     @Override
-    protected Boolean doInBackground(String... params) {
+    protected String doInBackground(String... params) {
         
-        String host = params[0];
-        String port = params[1];
+        host = params[0];
+        port = params[1];
         
+        if(portscan(host, port)) {
+            return port;
+        }
+        else return "";
+    }
+    
+    protected void onPublishProgress(String... params) {
+        
+    }
+    
+    protected void onPostExecute(String port) {
+        if(!port.equals(""))
+            PortScanner.addPort(host, port);
+        else 
+            PortScanner.updateProgress();
+    }
+    
+    private boolean portscan(String host, String port){
+
         Socket s = new Socket();
         try {
             s.connect(new InetSocketAddress(host, Integer.parseInt(port)), Constants.timeout);
@@ -61,20 +82,9 @@ public class ScanTCP extends AsyncTask<String, String, Boolean> {
         } catch (IOException e) {
             return false;
         } 
-        
-        //if got this far, its open
-        publishProgress(host, port);
+    
+        //  if got this far, its open
         return true;
-    }
-    
-    protected void onPublishProgress(String host, String port)
-    {
-        nsandroid.resultPublish(host + ":" + port);
-    }
-    
-    protected void onPostExecute(Boolean...booleans)
-    {
-        
     }
 
 }

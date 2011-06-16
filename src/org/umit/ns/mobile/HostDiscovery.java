@@ -198,6 +198,7 @@ public class HostDiscovery {
         if(flag == 0) {
             discoveredHosts[hosts] = ipaddress;
             nsandroid.resultPublish(ipaddress);
+            nsandroid.addToList(ipaddress);
             updateProgress();
             hosts++;
         }

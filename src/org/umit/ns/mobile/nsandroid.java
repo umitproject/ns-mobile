@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.umit.ns.mobile.api.networkInfo;
 
 import android.app.Activity;
@@ -36,7 +40,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 /**
@@ -55,18 +61,15 @@ public class nsandroid extends Activity {
     static TextView results;
     static TextView from;
     static TextView to;
-
-    //API Objects
-    HostDiscovery hd;
-    
-    //Port scanning parameters
-    public static int ports = 0;
-    public int scanning_mode = 0;
-    
-        //General parameters
-    networkInfo ni;
     ArrayAdapter<CharSequence> adapter;
     Builder select;
+    ListView lv;
+    static SimpleAdapter sa;
+    static List<HashMap<String, String>> fillMaps;
+    
+    //API Objects
+    HostDiscovery hd;
+    networkInfo ni;
     
     //instance required for Toast
     public static nsandroid defaultInstance = null;
@@ -84,8 +87,18 @@ public class nsandroid extends Activity {
         setContentView(R.layout.main);
         
         //Initialize UI Elements
+        //setting up list View
+        lv = (ListView) findViewById(R.id.listView1);
+        String[] f = new String[] {"host"};
+        int[] t = new int[] { R.id.host };
+        fillMaps = new ArrayList<HashMap<String, String>>();
+        sa = new SimpleAdapter(this, fillMaps, R.layout.list_item, f, t);
+        lv.setAdapter(sa);
+        
+        //setting up mode selection popup
         select = new AlertDialog.Builder(this);
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
+        
         results = (TextView)findViewById(R.id.results);
         progress = (ProgressBar)findViewById(R.id.progress);
         from = (TextView)findViewById(R.id.from);
@@ -192,7 +205,7 @@ public class nsandroid extends Activity {
     private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        if(line_count == 10 || isFull) {
+        if(line_count == 4 || isFull) {
             String txt = results.getText().toString();
             txt = txt.substring(txt.indexOf('\n') + 1);
             results.setText(txt);
@@ -223,5 +236,13 @@ public class nsandroid extends Activity {
     public static void setTo(String t)
     {
         to.setText(t);
+    }
+    
+    public static void addToList(String str)
+    {
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("host", str);
+        fillMaps.add(map);
+        sa.notifyDataSetChanged();
     }
 }

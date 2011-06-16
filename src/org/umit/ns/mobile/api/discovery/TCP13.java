@@ -62,7 +62,6 @@ public class TCP13 extends AsyncTask<String, String, String>{
             return ipAddress;
         }
         else return "";
-    
     }
     
     protected void onPostExecute(String successIp) {
