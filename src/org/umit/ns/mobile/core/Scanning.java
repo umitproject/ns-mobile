@@ -20,8 +20,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
  */
 
-package org.umit.ns.movile.api.scanner;
+/**
+ * @author angadsg
+ * Implements port scanning
+ * 
+ * 3 methods
+ * 1. TCP Connect - Java
+ * 2. UDP Connect - Java
+ * 3. TCP SYN - Native code
+ * 
+ * 2 Modes
+ * 1. Connect mode - TCP and UDP connect
+ * 2. Stealth mode - TCP SYN
+ * 
+ */
 
-public class ScanUDP{
+package org.umit.ns.mobile.core;
+
+import android.os.AsyncTask;
+
+public class Scanning extends AsyncTask<Integer[], Integer, Void>{
+
+    @Override
+    protected Void doInBackground(Integer[]... params) {
+        
+        Integer[] ports = params[0];
+        
+
+        return null;
+    }
 
 }

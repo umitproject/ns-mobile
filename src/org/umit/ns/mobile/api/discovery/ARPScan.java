@@ -43,7 +43,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.HostDiscovery;
 
 import android.os.AsyncTask;
 
@@ -87,7 +87,7 @@ public class ARPScan extends AsyncTask<Void, String, String>{
     }
 
     protected void onProgressUpdate(String... params) {
-        nsandroid.addHosts(params[0]);
+        HostDiscovery.addHosts(params[0]);
     }
 
 }

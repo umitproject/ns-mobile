@@ -38,6 +38,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.umit.ns.mobile.HostDiscovery;
 import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
@@ -58,8 +59,13 @@ public class ShellPing extends AsyncTask<String, String, String>{
     
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
-            nsandroid.addHosts(successIp);
-        else nsandroid.updateProgress();
+            HostDiscovery.addHosts(successIp);
+        else  
+            HostDiscovery.updateProgress();
+    }
+    
+    protected void onPublishProgress(String... params) {
+        HostDiscovery.publishHost(params[0]);
     }
 
     private boolean cmdPing(String ip) {

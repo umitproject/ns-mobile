@@ -39,7 +39,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.HostDiscovery;
 
 import android.os.AsyncTask;
 
@@ -63,11 +63,13 @@ public class UDP7 extends AsyncTask<String, String, String>{
 
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
-            nsandroid.addHosts(successIp);
+            HostDiscovery.addHosts(successIp);
+        else  
+            HostDiscovery.updateProgress();
     }
     
-    protected void onProgressUpdate(String... params) {
-        nsandroid.resultPublish(params[0]);
+    protected void onPublishProgress(String... params) {
+        HostDiscovery.publishHost(params[0]);
     }
     
     private boolean udpEcho(String ip, int time) {

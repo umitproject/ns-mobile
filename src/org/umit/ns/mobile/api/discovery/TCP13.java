@@ -43,7 +43,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.HostDiscovery;
 
 import android.os.AsyncTask;
 
@@ -67,12 +67,15 @@ public class TCP13 extends AsyncTask<String, String, String>{
     
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
-            nsandroid.addHosts(successIp);
+            HostDiscovery.addHosts(successIp);
+        else  
+            HostDiscovery.updateProgress();
     }
     
     protected void onPublishProgress(String... params) {
-        nsandroid.resultPublish(params[0]);
+        HostDiscovery.publishHost(params[0]);
     }
+
 
     private boolean tcpSocket(String ip, int time) {
 

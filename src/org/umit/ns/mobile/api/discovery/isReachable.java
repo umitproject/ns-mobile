@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * @see isReachable
  */
 package org.umit.ns.mobile.api.discovery;
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.HostDiscovery;
 
 import java.net.InetAddress;
 
@@ -60,13 +60,13 @@ public class isReachable extends AsyncTask<String, String, String>{
     
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
-            nsandroid.addHosts(successIp);
+            HostDiscovery.addHosts(successIp);
         else  
-            nsandroid.updateProgress();
+            HostDiscovery.updateProgress();
     }
     
     protected void onPublishProgress(String... params) {
-        nsandroid.resultPublish(params[0]);
+        HostDiscovery.publishHost(params[0]);
     }
 	
     private boolean checkReachable(String address, int timeout) {

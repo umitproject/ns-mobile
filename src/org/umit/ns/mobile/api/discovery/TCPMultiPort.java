@@ -81,14 +81,16 @@ public class TCPMultiPort extends AsyncTask<String, String, String>{
         }
         return connected;
     }
-
+    
     protected void onPostExecute(String successIp) {
         if(!successIp.equals(""))
-            nsandroid.addHosts(successIp);
+            HostDiscovery.addHosts(successIp);
+        else  
+            HostDiscovery.updateProgress();
     }
     
-    protected void onProgressUpdate(String... params){
-        nsandroid.resultPublish(params[0]);
+    protected void onPublishProgress(String... params) {
+        HostDiscovery.publishHost(params[0]);
     }
     
 }
