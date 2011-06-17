@@ -38,6 +38,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -50,7 +52,6 @@ import android.widget.Toast;
  * 
  * The main controller. Initializes the UI.
  * Initializes the API for various functions.
- * Manages tasks and other threads.
  *
  */
 
@@ -66,10 +67,12 @@ public class nsandroid extends Activity {
     ListView lv;
     static SimpleAdapter sa;
     static List<HashMap<String, String>> fillMaps;
+    TextView list_host;
     
     //API Objects
-    HostDiscovery hd;
     networkInfo ni;
+    HostDiscovery hd;
+    PortScanner ps;
     
     //instance required for Toast
     public static nsandroid defaultInstance = null;
@@ -94,6 +97,7 @@ public class nsandroid extends Activity {
         fillMaps = new ArrayList<HashMap<String, String>>();
         sa = new SimpleAdapter(this, fillMaps, R.layout.list_item, f, t);
         lv.setAdapter(sa);
+        lv.setOnItemClickListener(startPortScan);
         
         //setting up mode selection popup
         select = new AlertDialog.Builder(this);
@@ -156,6 +160,7 @@ public class nsandroid extends Activity {
             }).create().show();
         }
     };
+        
 
     /**
      * Event Handler for Host Discovery button
@@ -167,6 +172,7 @@ public class nsandroid extends Activity {
         }
     };
     
+    
     /**
      * Event Handler for Stop Discovery button
      * modifies started
@@ -176,6 +182,7 @@ public class nsandroid extends Activity {
             hd.stop();
         }
     };
+    
             
     /**
      * Event handler for Network Info button
@@ -184,8 +191,7 @@ public class nsandroid extends Activity {
         public void onClick(View v) {
 
             String info;
-            if(ni==null)
-            {
+            if(ni == null) {
                 info = "Cannot get information";
             }
             else {
@@ -194,9 +200,27 @@ public class nsandroid extends Activity {
                 String subnet = ni.getSubnet();
                 info = "Interface: " + networkInterface + "\nIP Address: " + ip + "\nSubnet: " + subnet;    
             }
-            Toast.makeText(getApplicationContext(), info, Toast.LENGTH_LONG).show();
+            makeToast(info);
         }
     };
+    
+    
+    /**
+     * Event Listener of listItem click
+     * Starts port scan
+     */
+    public OnItemClickListener startPortScan = new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+                long arg3) {
+            String host = ((TextView)arg1).getText().toString();
+            Integer[] ports = {8085, 8080};
+            ps = new PortScanner(host, ports);
+            makeToast(host);
+            ps.start();
+        }
+    };
+
     
     /**
      * Static UI methods
@@ -233,16 +257,23 @@ public class nsandroid extends Activity {
         from.setText(f);
     }
     
-    public static void setTo(String t)
-    {
+    public static void setTo(String t) {
         to.setText(t);
     }
     
-    public static void addToList(String str)
-    {
+    public static void addToList(String str) {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put("host", str);
         fillMaps.add(map);
         sa.notifyDataSetChanged();
+    }
+    
+    public static void resetList() {
+        fillMaps.clear();
+        sa.notifyDataSetChanged();
+    }
+    
+    public static void makeToast(String str) {
+        Toast.makeText(nsandroid.defaultInstance, str, Toast.LENGTH_LONG).show();
     }
 }

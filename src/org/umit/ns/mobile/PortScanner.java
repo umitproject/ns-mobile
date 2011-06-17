@@ -37,7 +37,7 @@ public class PortScanner {
     String host = null;
     boolean started = false;
     
-    AsyncTask<Object[], Integer, Void> scan;
+    AsyncTask<Object[], String, Void> scan;
     
     public PortScanner(String host, Integer[] ports) {
         //verify host
@@ -53,8 +53,7 @@ public class PortScanner {
     }
     
     public void stop() {
-        if(started == false)
-        {
+        if(started == false) {
             //already stopped
         }
         
@@ -100,7 +99,7 @@ public class PortScanner {
 
     public static void addPort(String host, String port) {
         // TODO Auto-generated method stub
-        
+        nsandroid.resultPublish(port);
     }
 
     public static void updateProgress() {

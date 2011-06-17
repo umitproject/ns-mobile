@@ -35,9 +35,12 @@ import android.os.AsyncTask;
 import android.widget.Toast;
 
 public class HostDiscovery {
-    static int hosts = 0;
+
+    static int countDiscoveredhosts = 0;
     static String[] discoveredHosts = null;
     static int countPossibleHosts = 0;
+    
+    //the total number of hosts to be checked for using one particular method
     static int totalHosts = 0;
     
     String[] possibleHosts= null;
@@ -49,10 +52,9 @@ public class HostDiscovery {
     static boolean started = false;
     networkInfo ni;
 
+    
     /**
-     * 
-     * @param w
-     * 
+     * Constructor
      * @param ni
      */
     public HostDiscovery(networkInfo ni) {
@@ -60,6 +62,11 @@ public class HostDiscovery {
         init();
     }
     
+    
+    /**
+     * Initializes host discovery
+     * modifies countPossibleHosts, possibleHosts, totalHosts, low, high 
+     */
     public void init()
     {
         reset();
@@ -79,6 +86,7 @@ public class HostDiscovery {
         }
     }
     
+    
     /**
      * @param mode
      * Sets the discovery_mode
@@ -88,30 +96,34 @@ public class HostDiscovery {
         setTotalHosts(mode);
     }
     
+    
     /**
      * @return discovery_mode
      */
-    public int getMode() {
-        return discoveryMode;
-    }
-    
-    public String getLow()
-    {
-        return low;
-    }
-    
-    public String getHigh()
-    {
-        return high;
-    }
+    public int getMode() { return discoveryMode; }
+    /**
+     * @return low
+     */
+    public String getLow() { return low; }
+    /**
+     * @return high
+     */
+    public String getHigh() { return high; }
+    /**
+     * @return started
+     */
+    public boolean isStarted(){ return started; }
 
-    public void start()
-    {
+
+    /**
+     * Starts host discovery
+     * modifies started, possibleHosts, countPossibleHosts, hd
+     */
+    public void start() {
         init();
-        if(started == true)
-        {
+        if(started == true) {
             String result = "Please wait for the current scan to finish or press stop.";
-            Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
+            nsandroid.makeToast(result);
             return;
         }
         
@@ -128,19 +140,23 @@ public class HostDiscovery {
             else {
                 String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
                 nsandroid.resultPublish(result);
-                Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG);
+                nsandroid.makeToast(result);
             }
         }
         else{
             String result = "Invalid IP. Please re-enter";
-            Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
+            nsandroid.makeToast(result);
             return;
         }
 
     }
     
-    public void stop()
-    {
+    
+    /**
+     * Stop host discovery.
+     * Modifies started, hd
+     */
+    public void stop() {
         if(started == false) {
             String result = "Discovery not running";
             Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
@@ -149,17 +165,17 @@ public class HostDiscovery {
         
         hd.cancel(true);
         started = false;
-        String result = "Host Discovery interrupted\nDiscovered " + hosts + " hosts.";
+        String result = "Host Discovery interrupted\nDiscovered " + countDiscoveredhosts + " hosts.";
         nsandroid.resultPublish(result);
-        Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();    
+        nsandroid.makeToast(result);
     }
     
-    public boolean isStarted(){
-        return started;
-    }
 
+    /**
+     * Resets host discovery
+     */
     public void reset() {
-        hosts = 0;
+        countDiscoveredhosts = 0;
         possibleHosts = null;
         countPossibleHosts = 0;
         discoveredHosts = null;
@@ -168,7 +184,9 @@ public class HostDiscovery {
         hd = null;
         started = false;
         progress = 0;
+        nsandroid.resetList(); 
     }
+    
     
     /**
      * @param which
@@ -182,41 +200,51 @@ public class HostDiscovery {
         case 2: totalHosts = countPossibleHosts *5; break;
         }
     }
+    
 
     /**
      * @param ipaddress
+     * Stati method.
      * If a host is discovered, this method is called
      * modifies discovered[], hosts
      */
     public static void addHosts(String ipaddress) {
         int flag = 0;
-        for(int i=0; i<hosts; i++) {
+        for(int i=0; i<countDiscoveredhosts; i++) {
             if(ipaddress.equals(discoveredHosts[i]))
                 flag = 1;
         }
         
         if(flag == 0) {
-            discoveredHosts[hosts] = ipaddress;
+            discoveredHosts[countDiscoveredhosts] = ipaddress;
             nsandroid.resultPublish(ipaddress);
             nsandroid.addToList(ipaddress);
             updateProgress();
-            hosts++;
+            countDiscoveredhosts++;
         }
     }
 
+    
+    /**
+     * To update the progress bar
+     */
     public static void updateProgress() {
         progress++;
         nsandroid.updateProgressBar((int)(progress*100.0/(float)totalHosts));
                 
         if(progress==totalHosts) {
-            String result = "Done Host Discovery\nFound " + hosts + " hosts.";
+            String result = "Done Host Discovery\nFound " + countDiscoveredhosts + " hosts.";
             started = false;
             nsandroid.resultPublish(result);
             nsandroid.resetProgressBar();
-            Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
+            nsandroid.makeToast(result);
         }
     }
     
+    
+    /**
+     * @param ip
+     */
     public static void publishHost(String ip){
         nsandroid.resultPublish(ip);
     }

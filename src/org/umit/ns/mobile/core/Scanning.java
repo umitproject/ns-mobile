@@ -37,12 +37,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.core;
 
+import org.umit.ns.mobile.nsandroid;
 import org.umit.ns.movile.api.scanner.ScanTCP;
 import org.umit.ns.movile.api.scanner.ScanUDP;
 
 import android.os.AsyncTask;
 
-public class Scanning extends AsyncTask<Object[], Integer, Void>{
+public class Scanning extends AsyncTask<Object[], String, Void>{
 
     AsyncTask<String, String, String> tcp;
     AsyncTask<String, String, String> udp;
@@ -56,11 +57,11 @@ public class Scanning extends AsyncTask<Object[], Integer, Void>{
         Integer[] ports = (Integer[])params[0];
         method = (Integer)params[1][0];
         String host = (String)params[1][1];
-        
-        switch(method)
-        {
-        case 0: speed(host, ports); break;
-        case 1: insane(host, ports); break;
+
+        publishProgress("Scanning " + host);
+        switch(method) {
+            case 0: speed(host, ports); break;
+            case 1: insane(host, ports); break;
         }
         
         return null;
@@ -69,11 +70,16 @@ public class Scanning extends AsyncTask<Object[], Integer, Void>{
     private void insane(String host, Integer[] ports) {
         //TODO
     }
+    
+    protected void onPublishProgress(String... params){
+        nsandroid.resultPublish(params[0]);
+    }
 
     
     private void speed(String host, Integer[] ports) {
         for(int i=0; i<ports.length; i++)
         {
+            publishProgress("TCP" + ports[i]);
             scanTCP(host, Integer.toString(ports[i]));
             sleep(50);
             if(isCancelled()) {
