@@ -38,8 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.umit.ns.mobile.core;
 
 import org.umit.ns.mobile.nsandroid;
-import org.umit.ns.movile.api.scanner.ScanTCP;
-import org.umit.ns.movile.api.scanner.ScanUDP;
+import org.umit.ns.mobile.api.scanner.ScanTCP;
+import org.umit.ns.mobile.api.scanner.ScanUDP;
 
 import android.os.AsyncTask;
 
@@ -58,7 +58,6 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
         method = (Integer)params[1][0];
         String host = (String)params[1][1];
 
-        publishProgress("Scanning " + host);
         switch(method) {
             case 0: speed(host, ports); break;
             case 1: insane(host, ports); break;
@@ -68,18 +67,21 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
     }
 
     private void insane(String host, Integer[] ports) {
-        //TODO
+        //TODO SocketChannel
     }
     
-    protected void onPublishProgress(String... params){
+    protected void onProgressUpdate(String... params){
         nsandroid.resultPublish(params[0]);
+    }
+    
+    protected void onPostExecute(Void a) {
+        nsandroid.resultPublish("DONE");
     }
 
     
     private void speed(String host, Integer[] ports) {
         for(int i=0; i<ports.length; i++)
         {
-            publishProgress("TCP" + ports[i]);
             scanTCP(host, Integer.toString(ports[i]));
             sleep(50);
             if(isCancelled()) {

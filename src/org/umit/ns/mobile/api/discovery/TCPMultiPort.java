@@ -89,7 +89,7 @@ public class TCPMultiPort extends AsyncTask<String, String, String>{
             HostDiscovery.updateProgress();
     }
     
-    protected void onPublishProgress(String... params) {
+    protected void onProgressUpdate(String... params) {
         HostDiscovery.publishHost(params[0]);
     }
     

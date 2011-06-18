@@ -138,7 +138,10 @@ public class nsandroid extends Activity {
      * modifies ni, possibleNodes
      */
     public void resetApp() {
-        hd.reset();
+        ni = new networkInfo((WifiManager) getSystemService(Context.WIFI_SERVICE));
+        hd = new HostDiscovery(ni);
+        from.setText(hd.getLow());
+        to.setText(hd.getHigh());
     }
     
     
@@ -195,6 +198,7 @@ public class nsandroid extends Activity {
                 info = "Cannot get information";
             }
             else {
+                resetApp();
                 String networkInterface = ni.getInterface();
                 String ip = ni.getIp();
                 String subnet = ni.getSubnet();
@@ -214,7 +218,7 @@ public class nsandroid extends Activity {
         public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                 long arg3) {
             String host = ((TextView)arg1).getText().toString();
-            Integer[] ports = {8085, 8080};
+            Integer[] ports = {80, 631, 8085, 8080, 26164};
             ps = new PortScanner(host, ports);
             makeToast(host);
             ps.start();
@@ -240,27 +244,48 @@ public class nsandroid extends Activity {
         results.append("\n" + string);
     }
     
+    /**
+     * @param l
+     * Sets Progress
+     */
     public static void updateProgressBar(int l) {
         progress.setProgress(l);
     }
     
+    /**
+     * Resets progress bar
+     */
     public static void resetProgressBar() {
         progress.setProgress(0);
     }
     
+    /**
+     * completely fill progress bar
+     */
     public void fillProgressBar() {
         resetProgressBar();
         updateProgressBar(100);
     }
     
+    /**
+     * set the From IP address in Text box
+     */
     public static void setFrom(String f) {
         from.setText(f);
     }
     
+    /**
+     * @param t
+     * Set the To IP address
+     */
     public static void setTo(String t) {
         to.setText(t);
     }
     
+    /**
+     * @param str
+     * Add IP to list
+     */
     public static void addToList(String str) {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put("host", str);
@@ -268,11 +293,18 @@ public class nsandroid extends Activity {
         sa.notifyDataSetChanged();
     }
     
+    /**
+     * Reset the list
+     */
     public static void resetList() {
         fillMaps.clear();
         sa.notifyDataSetChanged();
     }
     
+    /**
+     * @param str
+     * Shows a Toast
+     */
     public static void makeToast(String str) {
         Toast.makeText(nsandroid.defaultInstance, str, Toast.LENGTH_LONG).show();
     }

@@ -98,12 +98,10 @@ public class PortScanner {
     }
 
     public static void addPort(String host, String port) {
-        // TODO Auto-generated method stub
-        nsandroid.resultPublish(port);
+        nsandroid.resultPublish(port + "found!");
     }
 
     public static void updateProgress() {
-        // TODO Auto-generated method stub
         
     }
 }
