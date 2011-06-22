@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, nsandroid!</string>
+    <string name="app_name">nsandroid</string>
+    <string name="discovery_prompt">Discovery Method</string>
+    <string-array name="discovery_array">
+        <item>Speed</item>
+        <item>Normal</item>
+        <item>Insane</item>
+    </string-array>
+</resources>
