@@ -1,0 +1,2 @@
+set solib-search-path /Users/angadsg/Documents/workspace/ns-mobile/obj/local/armeabi
+directory /Users/angadsg/android-ndk-r5b/platforms/android-8/arch-arm/usr/include /Users/angadsg/Documents/workspace/ns-mobile/jni/libpcap /Users/angadsg/Documents/workspace/ns-mobile/jni /Users/angadsg/android-ndk-r5b/sources/cxx-stl/system
