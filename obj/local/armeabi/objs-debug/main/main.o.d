@@ -35,6 +35,7 @@
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/arpa/inet.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/netinet/tcp.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/linux/tcp.h \
+ /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/netdb.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/unistd.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/sys/select.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/sys/time.h \
@@ -133,6 +134,8 @@
 /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/netinet/tcp.h:
 
 /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/linux/tcp.h:
+
+/Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/netdb.h:
 
 /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/unistd.h:
 
