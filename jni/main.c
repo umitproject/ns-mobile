@@ -33,8 +33,7 @@ struct tcpheader {
 	u_short th_dport;               /* destination port */
 	tcp_seq th_seq;                 /* sequence number */
 	tcp_seq th_ack;                 /* acknowledgement number */
-	u_char  th_off;
-	u_char th_x2;             
+	u_char  th_offx2;
 #define TH_OFF(th)      (((th)->th_offx2 & 0xf0) >> 4)
 	u_char  th_flags;
 #define TH_FIN  0x01
@@ -144,7 +143,7 @@ void syn()
 	short dst_port = 80;
 	short th_sport = 1234;
 	
-	short tcp_flags = TH_SYN;
+	unsigned char tcp_flags = 0x02; //TH_SYN
 	
 	//Headers
 	struct ip *iph = (struct ip *) datagram;
@@ -173,7 +172,7 @@ void syn()
 	iph->ip_len = sizeof(struct ip) + sizeof(struct tcpheader);  //no data
 	iph->ip_id = htons(31337);		//id
 	iph->ip_off = 0;				//no fragmentation
-	iph->ip_ttl = 250;				//time to live
+	iph->ip_ttl = 255;				//time to live
 	iph->ip_p = IPPROTO_TCP;		//6
 	iph->ip_sum = 0;				//let kernel fill the checksum
 	
@@ -186,9 +185,9 @@ void syn()
 	tcph->th_dport = htons(dst_port);	//destination port
 	tcph->th_seq = htonl(31337);		//random
 	tcph->th_ack = htonl(0);			//ACK not needed
-	tcph->th_x2 = 0;					//
-	tcph->th_off = 0x50;	 				//data offset
-	tcph->th_flags = tcp_flags;			//SYN flag
+//	tcph->th_x2 = 0;					//
+	tcph->th_offx2 = 0x50;	 			//data offset
+	tcph->th_flags = 0x02;				//SYN flag
 	tcph->th_win = htons(65535);		//window size
 	tcph->th_sum = 0;					//later
 	tcph->th_urp = 0;					//no urgent pointer
@@ -201,7 +200,7 @@ void syn()
 	phdr->dst = iph->ip_dst.s_addr;
 	phdr->mbz = 0;
 	phdr->proto = IPPROTO_TCP;
-	phdr->len = ntohs(0x18); //size of tcp header
+	phdr->len = ntohs(0x14); //size of tcp header
 
 	tcph->th_sum = htons(csum((unsigned short *)tcph, sizeof(struct pseudo_hdr)+ sizeof(struct tcpheader)));
 		
