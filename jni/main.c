@@ -16,7 +16,7 @@
 
 char datagram[4096]; /* datagram buffer */
 
-//pcap_t *session;
+pcap_t *handle;
 
 struct pseudo_hdr {
 	u_int32_t src;			//src ip
@@ -77,6 +77,22 @@ struct ethernetheader {
 	u_short ether_type;                     /* IP? ARP? RARP? etc */
 };
 
+#define SIZE_ETHERNET 14
+
+char* getDevice()
+{
+	char *dev, errbuf[100];
+	char * szLogThis;
+
+	dev = pcap_lookupdev(errbuf);
+	if (dev == NULL) {
+		szLogThis = "Couldn't find default device";		
+	}
+	else szLogThis = dev;
+	
+	return szLogThis;
+}
+
 //Gets local IP
 char* getLocalIP()
 {
@@ -128,95 +144,239 @@ uint16_t csum (uint16_t *addr, int len) {
 	return checksum;
 }
 
+pcap_t* pcapSetup(char* dst_ip)
+{
+	//Setting up pcap
+	char *dev = getDevice();
+	char errbuf[100];
+	struct bpf_program fp;
+	
+	char filter_exp[30] = "host "; /* The filter expression */
+	strncpy((char *)filter_exp+5, dst_ip, 16);
+	bpf_u_int32 mask; /* The netmask of our sniffing device */
+	bpf_u_int32 net; /* The IP of our sniffing device */ 
+	
+	//printf("Device %s\n", dev);
+	//printf("Filter %s\n", filter_exp);
+	
+	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) 
+	{
+		printf("Can't get netmask for device %s\n", dev);
+		net = 0;
+		mask = 0;
+		exit(1);
+	}
+	
+	//printf("Netmask %d, IP %d\n", net, mask);
+	
+	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+	if (handle == NULL) 
+	{
+		printf("Couldn't open device %s: %s\n", dev, errbuf);
+		exit(1);
+	}
+	
+	if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) 
+	{          
+		printf("Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+		exit(1);
+	} 
+	
+	if (pcap_setfilter(handle, &fp) == -1) 
+	{
+		printf("Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle)); 
+		exit(1);
+	}
+	
+	return handle;
+	
+}
 
-void syn()
+void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+{
+	struct tcpheader *tcph;
+	struct ipheader *iph;
+	struct ethernetheader *eh;
+	
+	int size_ip;
+	int size_tcp;
+	
+	eh = (struct ethernetheader*) (packet);
+	iph = (struct ipheader*) (packet + SIZE_ETHERNET);
+	
+	size_ip = IP_HL(iph)*4;
+	
+	if(size_ip < 20)
+	{
+		printf("Invalid IP Header length %d bytes\n", size_ip);
+		return;
+	}
+	
+	if(iph->ip_p != IPPROTO_TCP) 
+	{
+		printf("Not TCP \n");
+		return;
+	}
+	
+	tcph = (struct tcpheader*) (packet + SIZE_ETHERNET + size_ip);
+	size_tcp = TH_OFF(tcph)*4;
+	
+	if(size_tcp < 20)
+	{
+		printf("Invalid TCP Header length %d bytes\n", size_tcp);
+		return;
+	}	
+	
+	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK) 
+	{
+		printf("Port open %d\n", (int)args);
+	}
+	
+	else if ((tcph->th_flags & 0x04) == TH_RST)
+	{
+		printf("Port closed %d\n", (int)args);
+	}
+}
+
+void sigfunc(int signum) {       /* signal handler */
+
+	pcap_breakloop(handle);
+
+}
+
+void syn(char* dst_ip, int low, int high)
 {
 	//	if(getuid())
 	//	{
 	//		printf("Run this program as root");
 	//	}
 	
+	int s_timeout = 5;
+	int timeout = 0;
+	
+	handle = (pcap_t *)pcapSetup(dst_ip);	
+	struct sigaction act;
+	act.sa_handler = sigfunc;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;               /* read man of libpcap -> SA_RESTART MUST BE OFF */
+
+	
+	printf("Scanning %s from %d to %d\n", dst_ip, low, high);
 	
 	char src_ip[17];
-	char dst_ip[17];
-	
-	short dst_port = 80;
+	short dst_port;
 	short th_sport = 1234;
-	
-	unsigned char tcp_flags = 0x02; //TH_SYN
 	
 	//Headers
 	struct ip *iph = (struct ip *) datagram;
 	struct tcpheader *tcph = (struct tcpheader *) (datagram + sizeof (struct ip));
 	
-	struct sockaddr_in servaddr;
-	
+	struct sockaddr_in servaddr;	
 	snprintf(src_ip,16,"%s", getLocalIP());  //src ip
-	snprintf(dst_ip,16,"%s","209.85.175.104"); //google's ip
+//	snprintf(dst_ip,16,"%s","209.85.175.104"); //google's ip
 	
 	printf("Source IP %s\nDestination IP %s\n", src_ip, dst_ip);
 	
-	memset(datagram, 0, 4096); //clearing the buffer
-	
-	int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
-	servaddr.sin_family = AF_INET;
-	inet_pton(AF_INET, dst_ip, &servaddr.sin_addr);
-	
-	int tcpheader_size = sizeof(struct tcpheader);
-	
-	printf("TCP Header Size %d\n", tcpheader_size);
-	
-	iph->ip_hl = 5;					//header length 5
-	iph->ip_v = 4;					//version 4
-	iph->ip_tos = 0;				//type of service
-	iph->ip_len = sizeof(struct ip) + sizeof(struct tcpheader);  //no data
-	iph->ip_id = htons(31337);		//id
-	iph->ip_off = 0;				//no fragmentation
-	iph->ip_ttl = 255;				//time to live
-	iph->ip_p = IPPROTO_TCP;		//6
-	iph->ip_sum = 0;				//let kernel fill the checksum
-	
-	printf("IP len %d\n", iph->ip_len);
-	
-	inet_pton(AF_INET, src_ip, &(iph->ip_src));	//local device ip
-	iph->ip_dst.s_addr = servaddr.sin_addr.s_addr;	//destination address
-	
-	tcph->th_sport = htons(th_sport);	//any port
-	tcph->th_dport = htons(dst_port);	//destination port
-	tcph->th_seq = htonl(31337);		//random
-	tcph->th_ack = htonl(0);			//ACK not needed
-//	tcph->th_x2 = 0;					//
-	tcph->th_offx2 = 0x50;	 			//data offset
-	tcph->th_flags = 0x02;				//SYN flag
-	tcph->th_win = htons(65535);		//window size
-	tcph->th_sum = 0;					//later
-	tcph->th_urp = 0;					//no urgent pointer
-	
-	struct pseudo_hdr *phdr = (struct pseudo_hdr *) (datagram + sizeof(struct ipheader) + sizeof(struct tcpheader));
-
-	memset(phdr, 0, sizeof(phdr));
-	
-	phdr->src = iph->ip_src.s_addr;
-	phdr->dst = iph->ip_dst.s_addr;
-	phdr->mbz = 0;
-	phdr->proto = IPPROTO_TCP;
-	phdr->len = ntohs(0x14); //size of tcp header
-
-	tcph->th_sum = htons(csum((unsigned short *)tcph, sizeof(struct pseudo_hdr)+ sizeof(struct tcpheader)));
-		
-	int one = 1;
-	const int *val = &one;
-	if(setsockopt(s, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
-		printf("Cannot set HDRINCL for port %d", th_sport);	
-	
-	if (sendto(s, datagram, iph->ip_len, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
+	int i =0;
+	for(i = low; i <= high; i++)
 	{
-		printf("Error in sending");
+		dst_port = i;
+	
+		memset(datagram, 0, 4096); //clearing the buffer
+		int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+		servaddr.sin_family = AF_INET;
+		inet_pton(AF_INET, dst_ip, &servaddr.sin_addr);
+
+		int tcpheader_size = sizeof(struct tcpheader);
+		
+		iph->ip_hl = 5;					//header length 5
+		iph->ip_v = 4;					//version 4
+		iph->ip_tos = 0;				//type of service
+		iph->ip_len = sizeof(struct ip) + sizeof(struct tcpheader);  //no data
+		iph->ip_id = htons(31337);		//id
+		iph->ip_off = 0;				//no fragmentation
+		iph->ip_ttl = 255;				//time to live
+		iph->ip_p = IPPROTO_TCP;		//6
+		iph->ip_sum = 0;				//let kernel fill the checksum
+		inet_pton(AF_INET, src_ip, &(iph->ip_src));	//local device ip
+		iph->ip_dst.s_addr = servaddr.sin_addr.s_addr;	//destination address
+		
+	
+		tcph->th_sport = htons(th_sport);	//any port
+		tcph->th_dport = htons(dst_port);	//destination port
+		tcph->th_seq = htonl(31337);		//random
+		tcph->th_ack = htonl(0);			//ACK not needed
+		tcph->th_offx2 = 0x50;	 			//data offset
+		tcph->th_flags = 0x02;				//SYN flag
+		tcph->th_win = htons(65535);		//window size
+		tcph->th_sum = 0;					//later
+		tcph->th_urp = 0;					//no urgent pointer
+	
+		struct pseudo_hdr *phdr = (struct pseudo_hdr *) (datagram + sizeof(struct ipheader) + sizeof(struct tcpheader));
+
+		memset(phdr, 0, sizeof(phdr));
+	
+		phdr->src = iph->ip_src.s_addr;
+		phdr->dst = iph->ip_dst.s_addr;
+		phdr->mbz = 0;
+		phdr->proto = IPPROTO_TCP;
+		phdr->len = ntohs(0x14); //size of tcp header
+
+		tcph->th_sum = htons(csum((unsigned short *)tcph, sizeof(struct pseudo_hdr)+ sizeof(struct tcpheader)));
+		
+		int one = 1;
+		const int *val = &one;
+		if(setsockopt(s, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
+		{
+			//printf("Cannot set HDRINCL for source port %d, dest port %d", th_sport, i);
+			continue;
+		}
+
+		if (sendto(s, datagram, iph->ip_len, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
+		{
+			printf("Error in sending");
+			continue;
+		}
+				
+		sigaction (SIGALRM, &act, 0);
+		alarm(s_timeout);
+
+		// give port as argument to callback function
+		timeout = pcap_dispatch(handle, -1, got_packet, (u_char *)i);
+		alarm(0);             /* trigger off alarm for this loop */
+
+		if (timeout == -2) {
+			printf("Timeout for port %d\n", i);
+		}
 	}
-	else printf("Sent\n");	
 }
 
 int main (int argc, const char * argv[]) {
-    syn();
+
+//	printf("Usage: syns victim_ip [low port] [high port]\n");
+	int low, high;
+
+	if(argc==1 || argc>3)
+	{
+		printf("Usage: syns victim_ip [low port] [high port]\n");
+		exit(1);
+	}
+	
+	if(argc==2) 
+	{
+		printf("Port range not specified. Scanning 1-1024\n");
+		low = 1;
+		high = 1024;
+	}
+	
+	if(argc==3)
+	{
+		printf("High port not specified. Scanning till 65536.\n");
+		low = atoi(argv[2]);
+		high = 65536;
+	}
+	
+	//pcapSetup(argv[1]);
+    syn(argv[1], low, high);
 	return 0;	
 }
