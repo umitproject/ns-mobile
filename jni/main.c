@@ -189,7 +189,6 @@ pcap_t* pcapSetup(char* dst_ip)
 	}
 	
 	return handle;
-	
 }
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
@@ -251,15 +250,14 @@ void syn(char* dst_ip, int low, int high)
 	//		printf("Run this program as root");
 	//	}
 	
-	int s_timeout = 5;
+	int s_timeout = 10;
 	int timeout = 0;
 	
 	handle = (pcap_t *)pcapSetup(dst_ip);	
 	struct sigaction act;
 	act.sa_handler = sigfunc;
 	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;               /* read man of libpcap -> SA_RESTART MUST BE OFF */
-
+	act.sa_flags = 0;
 	
 	printf("Scanning %s from %d to %d\n", dst_ip, low, high);
 	
@@ -341,9 +339,8 @@ void syn(char* dst_ip, int low, int high)
 		sigaction (SIGALRM, &act, 0);
 		alarm(s_timeout);
 
-		// give port as argument to callback function
 		timeout = pcap_dispatch(handle, -1, got_packet, (u_char *)i);
-		alarm(0);             /* trigger off alarm for this loop */
+		alarm(0);
 
 		if (timeout == -2) {
 			printf("Timeout for port %d\n", i);
@@ -351,12 +348,87 @@ void syn(char* dst_ip, int low, int high)
 	}
 }
 
+
+#define PING_TIMEOUT 2
+struct in_addr ouraddr = { 0 };
+unsigned long global_rtt = 0;
+
+//nmap isup() method 
+/* A relatively fast (or at least short ;) ping function.  Doesn't require a 
+   seperate checksum function */
+int isup(struct in_addr target) {
+  int res, retries = 3;
+  struct sockaddr_in sock;
+  /*type(8bit)=8, code(8)=0 (echo REQUEST), checksum(16)=34190, id(16)=31337 */
+#ifdef __LITTLE_ENDIAN_BITFIELD
+  unsigned char ping[64] = { 0x8, 0x0, 0x8e, 0x85, 0x69, 0x7A };
+#else
+  unsigned char ping[64] = { 0x8, 0x0, 0x85, 0x8e, 0x7A, 0x69 };
+#endif
+  int sd;
+  struct timeval tv;
+  struct timeval start, end;
+ fd_set fd_read;
+  struct {
+    struct iphdr ip;
+    unsigned char type;
+    unsigned char code;
+    unsigned short checksum;
+    unsigned short identifier;
+    char crap[16536];
+  }  response;
+
+sd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+bzero((char *)&sock,sizeof(struct sockaddr_in));
+sock.sin_family=AF_INET;
+sock.sin_addr = target;
+
+gettimeofday(&start, NULL);
+while(--retries) {
+  if ((res = sendto(sd,(char *) ping,64,0,(struct sockaddr *)&sock,
+		    sizeof(struct sockaddr))) != 64) {
+    printf("sendto in isup returned %d! skipping host.\n", res);
+    return 0;
+  }
+  FD_ZERO(&fd_read);
+  FD_SET(sd, &fd_read);
+  tv.tv_sec = 0; 
+  tv.tv_usec = 1e6 * (PING_TIMEOUT / 3.0);
+  while(1) {
+    if ((res = select(sd + 1, &fd_read, NULL, NULL, &tv)) != 1) 
+	{
+		printf("%d\n", res);
+		  break;
+	}
+    else {
+      read(sd,&response,sizeof(response));
+		printf("Response %d %d %d %d\n", response.ip.saddr, response.type, response.code, response.identifier);
+
+      if  (response.ip.saddr == target.s_addr &&  !response.type 
+	   && !response.code   && response.identifier == 31337) {
+	gettimeofday(&end, NULL);
+	global_rtt = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
+	ouraddr.s_addr = response.ip.daddr;
+	close(sd);
+	return 1;       
+      }
+    }
+  }
+}
+close(sd);
+printf("UNREACHABLE. SOCKET CLOSED \n");
+return 0;
+}
+
+
+
 int main (int argc, const char * argv[]) {
 
 //	printf("Usage: syns victim_ip [low port] [high port]\n");
 	int low, high;
 
-	if(argc==1 || argc>3)
+	if(argc==1 || argc>4)
 	{
 		printf("Usage: syns victim_ip [low port] [high port]\n");
 		exit(1);
@@ -375,6 +447,16 @@ int main (int argc, const char * argv[]) {
 		low = atoi(argv[2]);
 		high = 65536;
 	}
+	
+	if(argc == 4)
+	{
+		low = atoi(argv[2]);
+		high = atoi(argv[3]);
+	}
+	
+	struct in_addr target;
+	inet_aton(argv[1], &target.s_addr);
+	printf("isup %s %d rtt %d ip %s\n", argv[1], isup(target), global_rtt, inet_ntoa(ouraddr));
 	
 	//pcapSetup(argv[1]);
     syn(argv[1], low, high);
