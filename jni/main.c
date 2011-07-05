@@ -14,9 +14,16 @@
 #include <pcap.h>
 #include <signal.h>
 
+#include <pthread.h>
+
 char datagram[4096]; /* datagram buffer */
 
 pcap_t *handle;
+
+#define PING_TIMEOUT 2
+struct in_addr ouraddr = { 0 };
+unsigned long global_rtt = 0;
+
 
 struct pseudo_hdr {
 	u_int32_t src;			//src ip
@@ -151,8 +158,8 @@ pcap_t* pcapSetup(char* dst_ip)
 	char errbuf[100];
 	struct bpf_program fp;
 	
-	char filter_exp[30] = "host "; /* The filter expression */
-	strncpy((char *)filter_exp+5, dst_ip, 16);
+	char filter_exp[30] = "src host "; /* The filter expression */
+	strncpy((char *)filter_exp+9, dst_ip, 16);
 	bpf_u_int32 mask; /* The netmask of our sniffing device */
 	bpf_u_int32 net; /* The IP of our sniffing device */ 
 	
@@ -224,7 +231,9 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	{
 		printf("Invalid TCP Header length %d bytes\n", size_tcp);
 		return;
-	}	
+	}
+	
+	//printf("Port %d TCP %d\n", ntohs(tcph->th_sport), tcph->th_flags);
 	
 	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK) 
 	{
@@ -233,7 +242,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	
 	else if ((tcph->th_flags & 0x04) == TH_RST)
 	{
-		printf("Port closed %d\n", (int)args);
+		//printf("Port closed %d\n", (int)args);
 	}
 }
 
@@ -241,6 +250,19 @@ void sigfunc(int signum) {       /* signal handler */
 
 	pcap_breakloop(handle);
 
+}
+
+void captureThread()
+{
+	pcap_loop(handle, -1, got_packet, NULL);	
+}
+
+void packetCapture(void* port)
+{
+	//printf("Thread created, %d", (int) port);
+	pcap_dispatch(handle, -1, got_packet, (u_char *)port);\
+	alarm(0);
+	
 }
 
 void syn(char* dst_ip, int low, int high)
@@ -252,6 +274,8 @@ void syn(char* dst_ip, int low, int high)
 	
 	int s_timeout = 10;
 	int timeout = 0;
+	
+	pthread_t capture;
 	
 	handle = (pcap_t *)pcapSetup(dst_ip);	
 	struct sigaction act;
@@ -270,10 +294,12 @@ void syn(char* dst_ip, int low, int high)
 	struct tcpheader *tcph = (struct tcpheader *) (datagram + sizeof (struct ip));
 	
 	struct sockaddr_in servaddr;	
-	snprintf(src_ip,16,"%s", getLocalIP());  //src ip
+	snprintf(src_ip,16,"%s", inet_ntoa(ouraddr));  //src ip
 //	snprintf(dst_ip,16,"%s","209.85.175.104"); //google's ip
 	
 	printf("Source IP %s\nDestination IP %s\n", src_ip, dst_ip);
+	
+//	pthread_create(&capture, NULL, captureThread, NULL);
 	
 	int i =0;
 	for(i = low; i <= high; i++)
@@ -335,13 +361,15 @@ void syn(char* dst_ip, int low, int high)
 			printf("Error in sending");
 			continue;
 		}
-				
+						
 		sigaction (SIGALRM, &act, 0);
 		alarm(s_timeout);
-
-		timeout = pcap_dispatch(handle, -1, got_packet, (u_char *)i);
+		
+		//pthread_create(&capture, NULL, packetCapture, (void *)i);
+		
+		pcap_dispatch(handle, -1, got_packet, (u_char *)i);
 		alarm(0);
-
+		
 		if (timeout == -2) {
 			printf("Timeout for port %d\n", i);
 		}
@@ -349,9 +377,6 @@ void syn(char* dst_ip, int low, int high)
 }
 
 
-#define PING_TIMEOUT 2
-struct in_addr ouraddr = { 0 };
-unsigned long global_rtt = 0;
 
 //nmap isup() method 
 /* A relatively fast (or at least short ;) ping function.  Doesn't require a 
@@ -388,7 +413,7 @@ gettimeofday(&start, NULL);
 while(--retries) {
   if ((res = sendto(sd,(char *) ping,64,0,(struct sockaddr *)&sock,
 		    sizeof(struct sockaddr))) != 64) {
-    printf("sendto in isup returned %d! skipping host.\n", res);
+    //printf("sendto in isup returned %d! skipping host.\n", res);
     return 0;
   }
   FD_ZERO(&fd_read);
@@ -403,7 +428,7 @@ while(--retries) {
 	}
     else {
       read(sd,&response,sizeof(response));
-		printf("Response %d %d %d %d\n", response.ip.saddr, response.type, response.code, response.identifier);
+		//printf("Response %d %d %d %d\n", response.ip.saddr, response.type, response.code, response.identifier);
 
       if  (response.ip.saddr == target.s_addr &&  !response.type 
 	   && !response.code   && response.identifier == 31337) {
@@ -411,7 +436,7 @@ while(--retries) {
 	global_rtt = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
 	ouraddr.s_addr = response.ip.daddr;
 	close(sd);
-	return 1;       
+	return 1;	
       }
     }
   }
@@ -454,11 +479,18 @@ int main (int argc, const char * argv[]) {
 		high = atoi(argv[3]);
 	}
 	
+	
+	struct timeval start, end;
 	struct in_addr target;
 	inet_aton(argv[1], &target.s_addr);
 	printf("isup %s %d rtt %d ip %s\n", argv[1], isup(target), global_rtt, inet_ntoa(ouraddr));
 	
 	//pcapSetup(argv[1]);
+	
+	gettimeofday(&start, NULL);
     syn(argv[1], low, high);
+	gettimeofday(&end, NULL);
+	printf("Total time taken %d \n", end.tv_sec - start.tv_sec);
+	
 	return 0;	
 }
