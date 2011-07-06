@@ -16,19 +16,26 @@
 
 #include <pthread.h>
 
-#define THREAD_COUNT 1
+#define MAX_THREADS 300
+
+//#define THREAD_COUNT 
 
 char datagram[4096];
 struct ip *iph = (struct ip *) datagram;
 struct tcpheader *tcph = (struct tcpheader *) (datagram + sizeof (struct ip));
 struct sockaddr_in servaddr;
 struct sigaction act;
+
 pcap_t *handle;
 char *victim;
 
-int s_timeout = 10;
-int timeout = 0;
+int s_timeout = 5;
 unsigned short th_sport = 1234;
+
+int numports = 0;
+int progress = 0;
+
+int threadCount;
 
 void setVictim(char* v) { victim = v; }
 
@@ -96,6 +103,7 @@ struct ethernetheader {
 
 #define SIZE_ETHERNET 14
 
+//Gets the device to sniff packets on
 char* getDevice()
 {
 	char *dev, errbuf[100];
@@ -110,6 +118,7 @@ char* getDevice()
 	return szLogThis;
 }
 
+//Checksum for TCP header
 uint16_t csum (uint16_t *addr, int len) {   
 //RFC 1071
 
@@ -135,11 +144,12 @@ uint16_t csum (uint16_t *addr, int len) {
 	return checksum;
 }
 
+//Pcap setup
 pcap_t* pcapSetup(char* dst_ip)
 {
 	//Setting up pcap
 	char *dev = getDevice();
-	char errbuf[100];
+	char errbuf[PCAP_ERRBUF_SIZE];
 	struct bpf_program fp;
 	
 	char filter_exp[30] = "src host "; /* The filter expression */
@@ -178,10 +188,11 @@ pcap_t* pcapSetup(char* dst_ip)
 		printf("Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle)); 
 		exit(1);
 	}
-	
+		
 	return handle;
 }
 
+//Packet sniffer and the actual SYN scanner
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
 	struct tcpheader *tcph;
@@ -198,13 +209,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	
 	if(size_ip < 20)
 	{
-		printf("Invalid IP Header length %d bytes\n", size_ip);
+		//printf("Invalid IP Header length %d bytes\n", size_ip);
 		return;
 	}
 	
 	if(iph->ip_p != IPPROTO_TCP) 
 	{
-		printf("Not TCP \n");
+		//printf("Not TCP \n");
 		return;
 	}
 	
@@ -213,13 +224,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	
 	if(size_tcp < 20)
 	{
-		printf("Invalid TCP Header length %d bytes\n", size_tcp);
+		//printf("Invalid TCP Header length %d bytes\n", size_tcp);
 		return;
 	}
 	
 	//printf("Port %d TCP %d\n", ntohs(tcph->th_sport), tcph->th_flags);
 	
-	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK) 
+	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK)
 	{
 		printf("Port open %d\n", ntohs(tcph->th_sport));
 	}
@@ -230,13 +241,20 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	}
 }
 
+//Pcap break loop signal function
 void sigfunc(int signum) 
 {
 	pcap_breakloop(handle);
+	printf("BREAKLOOP!\n");
+}
+
+void testfunc()
+{
+	printf("YESS!");
 }
 
 void* scanport(void* port)
-{
+{	
 	int dst_port = (int)port;
 	char* dst_ip = victim;
 	char src_ip[17];
@@ -246,7 +264,9 @@ void* scanport(void* port)
 	int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
 	inet_pton(AF_INET, dst_ip, &servaddr.sin_addr);
 
+
 	int tcpheader_size = sizeof(struct tcpheader);
+	int timeout = 0;
 
 	iph->ip_hl = 5;					//header length 5
 	iph->ip_v = 4;					//version 4
@@ -288,6 +308,11 @@ void* scanport(void* port)
 	{
 		printf("Cannot set HDRINCL for dest_port %d socket %d", dst_port, s);
 	}
+	
+	act.sa_handler = sigfunc;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	
 
 	if (sendto(s, datagram, iph->ip_len, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
 	{
@@ -295,10 +320,13 @@ void* scanport(void* port)
 	}
 	close(s);
 	
-	sigaction (SIGALRM, &act, 0);
+    if (sigaction(SIGALRM, &act, NULL) < 0)
+		{
+			printf("sigaction error\n");
+		}
 	alarm(s_timeout);
-
-	pcap_dispatch(handle, -1, got_packet, (u_char *)NULL);
+	
+	timeout = pcap_dispatch(handle, -1, got_packet, (u_char *)NULL);
 	alarm(0);
 
 	if (timeout == -2) {
@@ -307,36 +335,34 @@ void* scanport(void* port)
 }
 
 
-//
-void synScanSetup()
-{
-	//incomplete
-	//move global assignment statements from scanport to this function
-	act.sa_handler = sigfunc;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-}
-
 void syn(int low, int high)
-{
-	//Setup Syn scanning
-	synScanSetup();
-	
-	pthread_t scanVictim[THREAD_COUNT];
+{	
+	pthread_t scanVictim[MAX_THREADS];
 	handle = (pcap_t *)pcapSetup(victim);
-	 	
-	int i=0, j=0;
+		
+	struct timeval start, end;
+	unsigned long timeTaken = 0;
+	
+	int newThreadCount = 0;
+	
+	int i=0, j=0, t=0;
 	for(i=low; i<=high; i++)
 	{
-		pthread_create(&scanVictim[i%THREAD_COUNT], NULL, scanport, (void *)i);
-		if(i%THREAD_COUNT==0)
+		if(i%threadCount == 1)
 		{
-			for(j=0; j<THREAD_COUNT; j++)
-			{
-				int t = pthread_join(&scanVictim[j], NULL); 
-			}
+			gettimeofday(&start, NULL);
 		}
-		//scanport((void*)i);
+		
+		pthread_create(&scanVictim[i%threadCount], NULL, scanport, (void *)i);
+		if(i%threadCount==0)
+		{
+			for(j=0; j<threadCount; j++)
+			{
+				t = pthread_join(scanVictim[j], NULL);
+				if(t!=0) printf("%d\n",t);
+			}
+			gettimeofday(&end, NULL);
+			timeTaken = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
 	}
 }
 
@@ -438,17 +464,29 @@ int main (int argc, const char * argv[]) {
 		high = atoi(argv[3]);
 	}
 	
+	numports = high - low + 1;
+	
 	struct timeval start, end;
 	struct in_addr target;
 	inet_aton(argv[1], &target.s_addr);
 
-	printf("isup %s %d rtt %d ip %s\n", argv[1], isup(target), global_rtt, inet_ntoa(ouraddr));
+	if(isup(target)==0)
+	{
+		printf("Host %s seems to be down. Exiting.\n", argv[1]);
+		exit(1);
+	}
 		
+	printf("RTT %d microseconds\n", global_rtt);
+	threadCount = 5 * 1e6 / global_rtt;
+	printf("Number of threads %d\n", threadCount);
+	
+	unsigned long t;
 	gettimeofday(&start, NULL);
 	setVictim(argv[1]);
     syn(low, high);
 	gettimeofday(&end, NULL);
-	printf("Total time taken %d \n", end.tv_sec - start.tv_sec);
+	t = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
+	printf("Total time taken %d microseconds\n", t);
 	
-	return 0;	
+	return 0;
 }
