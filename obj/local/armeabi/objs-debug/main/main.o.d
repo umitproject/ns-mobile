@@ -64,6 +64,7 @@
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/stdio.h \
  /Users/angadsg/Documents/workspace/ns-mobile/jni/libpcap/pcap.h \
  /Users/angadsg/Documents/workspace/ns-mobile/jni/libpcap/pcap-bpf.h \
+ /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/ctype.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/pthread.h \
  /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/sched.h
 
@@ -194,6 +195,8 @@
 /Users/angadsg/Documents/workspace/ns-mobile/jni/libpcap/pcap.h:
 
 /Users/angadsg/Documents/workspace/ns-mobile/jni/libpcap/pcap-bpf.h:
+
+/Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/ctype.h:
 
 /Users/angadsg/android-ndk-r5c/platforms/android-8/arch-arm/usr/include/pthread.h:
 
