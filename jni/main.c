@@ -20,7 +20,7 @@
 #define MAX_THREADS 300
 
 //Number of tries for a port if a response is not received within timeout
-#define NUM_TRIES 2
+#define NUM_TRIES 1
 
 #define ONE_SECOND 1000000
 #define DEFAULT_RATE 30
@@ -141,7 +141,10 @@ char* getDevice()
 	if (dev == NULL) {
 		szLogThis = "Couldn't find default device";		
 	}
-	else szLogThis = dev;
+	else {
+		printf("Listening on Device %s\n", dev);
+		szLogThis = dev;
+	}
 	
 	return szLogThis;
 }
@@ -447,12 +450,7 @@ void syn(struct ports* head, int retry)
 		printf("AWAITED %d\n", num_awaited);
 		return;
 	}
-	
-	if(probeSent!=NULL)
-	{
-		num_awaited = 0;
-		syn(probeSent, 2);
-	}
+	syn(probeSent, retry);
 }
 
 //A ping function
@@ -528,7 +526,8 @@ int isup(struct in_addr target)
 }
 
 int main (int argc, const char * argv[]) {
-
+		
+	int i;	
 	int low, high;
 
 	if(argc==1 || argc>4)
@@ -556,7 +555,7 @@ int main (int argc, const char * argv[]) {
 		low = atoi(argv[2]);
 		high = atoi(argv[3]);
 	}
-	
+		
 	numports = high - low + 1;
 	progress = numports / 100;
 	
@@ -571,11 +570,12 @@ int main (int argc, const char * argv[]) {
 	}
 		
 	printf("RTT %d microseconds\n", global_rtt);
-	printf("Enter Rate Control: [0 for default - 30]: ");
+//	printf("Enter Rate Control: [0 for default - 30]: ");
 	
 	unsigned int packetrate;
-	scanf("%d", &packetrate);
-	if(packetrate == 0) packetrate = DEFAULT_RATE;
+//	scanf("%d", &packetrate);
+//	if(packetrate == 0) 
+	packetrate = DEFAULT_RATE;
 	rateControl = ONE_SECOND/packetrate;
 	
 	threadCount = 5 * 1e6 / global_rtt;
@@ -588,8 +588,7 @@ int main (int argc, const char * argv[]) {
 	setVictim(argv[1]);
 	
 	struct ports* all = NULL;
-	
-	int i;
+
 	for(i=high; i>=low; i--)
 	{
 		struct ports* new_all = malloc(sizeof(struct ports));

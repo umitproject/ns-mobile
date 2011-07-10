@@ -17,6 +17,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity android:name="PortScanner"
+        		android:label="Port Scanner">
+        		</activity>
     </application>
 </manifest>

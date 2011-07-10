@@ -33,7 +33,6 @@ import java.net.UnknownHostException;
 import java.nio.channels.DatagramChannel;
 
 import org.umit.ns.mobile.PortScanner;
-import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -44,7 +43,7 @@ public class ScanUDP extends AsyncTask<String, String, String> {
         String host = params[0];
         String port = params[1];
         
-        publishProgress(host + ":" + port);
+        //publishProgress(host + ":" + port);
         if(portscan(host, port)) {
             return host + ":" + port;
         }
@@ -52,7 +51,7 @@ public class ScanUDP extends AsyncTask<String, String, String> {
     }
     
     protected void onProgressUpdate(String... params) {
-        nsandroid.resultPublish(params[0] + "...");
+        PortScanner.resultPublish(params[0] + "...");
     }
     
     protected void onPostExecute(String hostport) {
@@ -60,6 +59,7 @@ public class ScanUDP extends AsyncTask<String, String, String> {
             String host = hostport.substring(0, hostport.indexOf(':'));
             String port = hostport.substring(hostport.indexOf(':')+1);
             PortScanner.addPort(host, port);
+            PortScanner.addToList(port);
         }
         else 
             PortScanner.updateProgress();
@@ -105,20 +105,20 @@ public class ScanUDP extends AsyncTask<String, String, String> {
             ds.close();
         }
         catch(PortUnreachableException e){
-            publishProgress("port unreachable");
+            //publishProgress("port unreachable");
             return false;
         }
         catch(InterruptedIOException e){
-            publishProgress("Interrupted io");
+            //publishProgress("Interrupted io");
             return false;
         }
         catch(IOException e){
-            publishProgress("IO exception");
+            //publishProgress("IO exception");
             return false;
         }
         catch(Exception e){
-            publishProgress("exception");
-            e.printStackTrace();
+            //publishProgress("exception");
+            //e.printStackTrace();
             return false;
         }
         return true;
