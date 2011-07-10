@@ -36,7 +36,6 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 import org.umit.ns.mobile.PortScanner;
-import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -48,7 +47,7 @@ public class ScanTCP extends AsyncTask<String, String, String> {
         String host = params[0];
         String port = params[1];
         
-        publishProgress(host + ":" + port);
+        //publishProgress(host + ":" + port);
         if(portscan(host, port)) {
             return host + ":" + port;
         }
@@ -56,7 +55,7 @@ public class ScanTCP extends AsyncTask<String, String, String> {
     }
     
     protected void onProgressUpdate(String... params) {
-        nsandroid.resultPublish(params[0] + "...");
+        PortScanner.resultPublish(params[0] + "...");
     }
     
     protected void onPostExecute(String hostport) {
@@ -64,6 +63,7 @@ public class ScanTCP extends AsyncTask<String, String, String> {
             String host = hostport.substring(0, hostport.indexOf(':'));
             String port = hostport.substring(hostport.indexOf(':')+1);
             PortScanner.addPort(host, port);
+            PortScanner.addToList(port);
         }
         else 
             PortScanner.updateProgress();
@@ -76,22 +76,22 @@ public class ScanTCP extends AsyncTask<String, String, String> {
             //s.connect(new InetSocketAddress(host, Integer.parseInt(port)), Constants.timeout);
             s.close();
         } catch (NoRouteToHostException e) {
-            publishProgress("no route to host");
+            //publishProgress("no route to host");
             return false;
         } catch (NumberFormatException e) {
-            publishProgress("number format");
+            //publishProgress("number format");
             return false;
         } catch (SocketTimeoutException e) {
-            publishProgress("socket timeout");
+            //publishProgress("socket timeout");
             return false;
         } catch (ConnectException e) {
-            e.printStackTrace();
-            publishProgress("connect exception");
+            //e.printStackTrace();
+            //publishProgress("connect exception");
             return false;
         }
         catch (IOException e) {
-            e.printStackTrace();
-            publishProgress("ioexception");
+            //e.printStackTrace();
+            //publishProgress("ioexception");
             return false;
         } 
         //  if got this far, its open

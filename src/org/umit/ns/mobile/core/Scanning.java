@@ -37,7 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.core;
 
-import org.umit.ns.mobile.nsandroid;
+import org.umit.ns.mobile.PortScanner;
+import org.umit.ns.mobile.api.scanner.SYNScan;
 import org.umit.ns.mobile.api.scanner.ScanTCP;
 import org.umit.ns.mobile.api.scanner.ScanUDP;
 
@@ -47,48 +48,67 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
 
     AsyncTask<String, String, String> tcp;
     AsyncTask<String, String, String> udp;
+    AsyncTask<String, String, String> syn;
     int method;
     int total;
-    
     
     @Override
     protected Void doInBackground(Object[]... params) {
         
-        Integer[] ports = (Integer[])params[0];
-        method = (Integer)params[1][0];
-        String host = (String)params[1][1];
+        method = (Integer)params[0][0];
+        String host = (String)params[0][1];
+        String from = (String)params[0][2];
+        String to = (String)params[0][3];
 
         switch(method) {
-            case 0: speed(host, ports); break;
-            case 1: insane(host, ports); break;
+            case 0: connectTCPScan(host, from, to); break;
+            case 1: connectUDPScan(host, from, to); break;
+            case 2: synScan(host, from, to); break;
+            case 3: finScan(host, from, to); break;
         }
         
         return null;
     }
 
-    private void insane(String host, Integer[] ports) {
-        //TODO SocketChannel
+    private void synScan(String host, String from, String to) {
+        scanSYN(host, from, to);
     }
     
-    protected void onProgressUpdate(String... params){
-        nsandroid.resultPublish(params[0]);
-    }
-    
-    protected void onPostExecute(Void a) {
-        nsandroid.resultPublish("DONE");
+    private void finScan(String host, String from, String to) {
+        //scanSYN(host, from, to);
+        publishProgress("FIN Scan. Not implemented. Coming soon :)");
     }
 
+    protected void onProgressUpdate(String... params){
+        PortScanner.resultPublish(params[0]);
+    }
     
-    private void speed(String host, Integer[] ports) {
-        for(int i=0; i<ports.length; i++)
+//    protected void onPostExecute(Void a) {
+//        nsandroid.resultPublish("DONE");
+//    }
+    
+    private void connectTCPScan(String host, String from, String to) {
+        int f = Integer.parseInt(from);
+        int t = Integer.parseInt(to);
+        
+        for(int i=f; i<=t; i++)
         {
-            scanTCP(host, Integer.toString(ports[i]));
+            scanTCP(host, Integer.toString(i));
             sleep(50);
             if(isCancelled()) {
-                tcp.cancel(true);
+                udp.cancel(true);
                 return;
             }
-            scanUDP(host, Integer.toString(ports[i]));
+        }
+    }
+    
+    private void connectUDPScan(String host, String from, String to) {
+        int f = Integer.parseInt(from);
+        int t = Integer.parseInt(to);
+        
+        for(int i=f; i<=t; i++)
+        {
+            scanUDP(host, Integer.toString(i));
             sleep(50);
             if(isCancelled()) {
                 udp.cancel(true);
@@ -114,6 +134,11 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
     private void scanUDP(String host, String port) {
         udp = new ScanUDP();
         udp.execute(host, port);
+    }    
+
+    private void scanSYN(String host, String from, String to) {
+        syn = new SYNScan();
+        syn.execute(host, from, to);
     }
 
 }

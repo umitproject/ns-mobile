@@ -3,9 +3,16 @@
     <string name="hello">Hello World, nsandroid!</string>
     <string name="app_name">nsandroid</string>
     <string name="discovery_prompt">Discovery Method</string>
+    <string name="portscan_prompt">Portscan method</string>
     <string-array name="discovery_array">
         <item>Speed</item>
         <item>Normal</item>
         <item>Insane</item>
+    </string-array>
+	<string-array name="portscan_array">
+        <item>TCP Connect() Scan</item>
+        <item>UDP Scan</item>
+        <item>SYN Scan</item>
+        <item>FIN Scan</item>
     </string-array>
 </resources>

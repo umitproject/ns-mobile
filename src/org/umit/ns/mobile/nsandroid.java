@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +37,7 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -113,6 +118,7 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
+        CopyNative("/data/local/synscanner", R.raw.synscanner);
         
         //Attach event handlers
         //modeSelect
@@ -131,7 +137,39 @@ public class nsandroid extends Activity {
         Button info = (Button)findViewById(R.id.info);
         info.setOnClickListener(networkInfo);
     }
-    
+        
+    /**
+     * Copies the native binary from resource to path
+     * 
+     * @param path
+     * path to where the native binary needs to be copied
+     * 
+     * @param resource
+     * integer value of the resource (e.g. R.raw.synscanner)
+     * 
+     */
+    protected void CopyNative(String path, int resource) {
+        InputStream setdbStream = getResources().openRawResource(resource);
+        try {
+            byte[] bytes = new byte[setdbStream.available()];
+            DataInputStream dis = new DataInputStream(setdbStream);
+            dis.readFully(bytes);
+            FileOutputStream setdbOutStream = new FileOutputStream(path);
+            setdbOutStream.write(bytes);
+            setdbOutStream.close();
+
+            //Set executable permissions
+            Process process = Runtime.getRuntime().exec("sh");
+            DataOutputStream os = new DataOutputStream(process.getOutputStream());
+            os.writeBytes("chmod 755 " + path + "\n");
+            os.writeBytes("exit\n");
+            os.flush();
+        } 
+        catch (Exception e) {
+            nsandroid.resultPublish("Unable to Copy native binary");
+          return;
+        }
+      }
     
     /**
      * Resets the application
@@ -142,6 +180,7 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
+        resetProgressBar();
     }
     
     
@@ -208,7 +247,7 @@ public class nsandroid extends Activity {
         }
     };
     
-    
+
     /**
      * Event Listener of listItem click
      * Starts port scan
@@ -218,14 +257,12 @@ public class nsandroid extends Activity {
         public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                 long arg3) {
             String host = ((TextView)arg1).getText().toString();
-            Integer[] ports = {80, 631, 8085, 8080, 26164};
-            ps = new PortScanner(host, ports);
-            makeToast(host);
-            ps.start();
+            Intent ps = new Intent(arg0.getContext(), PortScanner.class);
+            ps.putExtra("host", host);
+            startActivityForResult(ps, 0);
         }
     };
 
-    
     /**
      * Static UI methods
      */

@@ -12,10 +12,10 @@
     </TableLayout>
     <RelativeLayout android:id="@+id/relativeLayout1" android:layout_height="wrap_content" android:layout_width="match_parent">
         <ListView android:id="@+id/listView1" android:layout_height="250dip" android:layout_width="160dip"></ListView>
-        <TextView android:id="@+id/results" android:layout_width="160dip" android:text="logs" android:layout_height="250dip" android:layout_toRightOf="@+id/listView1" android:layout_alignTop="@+id/listView1" android:layout_alignBottom="@+id/listView1"></TextView>
+        <TextView android:id="@+id/results" android:layout_width="160dip" android:text="logs" android:layout_height="200dip" android:layout_toRightOf="@+id/listView1" android:layout_alignTop="@+id/listView1" android:layout_alignBottom="@+id/listView1"></TextView>
         <Button android:text="Stop" android:id="@+id/stop" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@+id/results" android:layout_alignRight="@+id/results"></Button>
         <Button android:layout_width="wrap_content" android:text="Start" android:id="@+id/discover" android:layout_height="wrap_content" android:layout_toLeftOf="@+id/stop" android:layout_alignTop="@+id/stop" android:layout_alignBottom="@+id/stop"></Button>
-        <Button android:text="Mode" android:id="@+id/modeSelect" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@+id/results" android:layout_alignLeft="@+id/results"></Button>
+        <Button android:text="Mode" android:id="@+id/modeSelect" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toLeftOf="@+id/discover" android:layout_alignTop="@+id/discover" android:layout_alignBottom="@+id/discover"></Button>
         <Button android:text="Info" android:id="@+id/info" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toLeftOf="@+id/modeSelect" android:layout_alignTop="@+id/modeSelect" android:layout_alignBottom="@+id/modeSelect"></Button>
     </RelativeLayout>
     <TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_width="match_parent">

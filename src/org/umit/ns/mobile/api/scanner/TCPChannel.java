@@ -32,12 +32,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.umit.ns.mobile.api.scanner;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NoRouteToHostException;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
@@ -45,9 +42,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
-import org.umit.ns.mobile.Constants;
 import org.umit.ns.mobile.PortScanner;
-import org.umit.ns.mobile.nsandroid;
 
 import android.os.AsyncTask;
 
@@ -60,9 +55,7 @@ public class TCPChannel extends AsyncTask<String[], String, Void> {
     public final static int CLOSED = 1;
     public final static int FILTERED = -1;
     public final static int UNREACHABLE = -2;
-    public final static int TIMEOUT = -3;
-
-    
+    public final static int TIMEOUT = -3;    
     
     @Override
     protected Void doInBackground(String[]... params) {
@@ -84,7 +77,7 @@ public class TCPChannel extends AsyncTask<String[], String, Void> {
     }
     
     protected void onProgressUpdate(String... params) {
-        nsandroid.resultPublish(params[0] + "...");
+        PortScanner.resultPublish(params[0] + "...");
     }
     
     protected void onPostExecute(String hostport) {
@@ -159,7 +152,7 @@ public class TCPChannel extends AsyncTask<String[], String, Void> {
                 return;
             }
             closeChannel(key.channel());
-            portdata data = (portdata) key.attachment();
+            //portdata data = (portdata) key.attachment();
             //publishProgress(data.port, state, banner);
             key.attach(null);
             key.cancel();
