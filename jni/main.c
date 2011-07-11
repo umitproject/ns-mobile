@@ -263,6 +263,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	
 	src_port = ntohs(tcph->th_sport);
 	//printf("Port %d TCP %d\n", ntohs(tcph->th_sport), tcph->th_flags);
+	
 	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK)
 	{
 		printf("Port open %d\n", src_port);
@@ -305,7 +306,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	pthread_mutex_unlock(&mutex_probe);
 }
 
-void* scanport(void* port)
+void* synScanPort(void* port)
 {		
 	pthread_mutex_lock(&mutex_probe);
 	
@@ -384,6 +385,86 @@ void* scanport(void* port)
 	pthread_mutex_unlock(&mutex_probe);
 }
 
+void* finScanPort(void* port)
+{		
+	pthread_mutex_lock(&mutex_probe);
+	
+	//Source and Destination addresses
+	int dst_port = (int)port;
+	char* dst_ip = victim;
+	char src_ip[17];
+	snprintf(src_ip,16,"%s", inet_ntoa(ouraddr));  //src ip
+		
+	memset(datagram, 0, 4096); //clearing the buffer
+	int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+	inet_pton(AF_INET, dst_ip, &servaddr.sin_addr);
+
+	int tcpheader_size = sizeof(struct tcpheader);
+	int timeout = 0;
+
+	iph->ip_hl = 5;					//header length 5
+	iph->ip_v = 4;					//version 4
+	iph->ip_tos = 0;				//type of service
+	iph->ip_len = sizeof(struct ip) + sizeof(struct tcpheader);  //no data
+	iph->ip_id = htons(31337);		//id
+	iph->ip_off = 0;				//no fragmentation
+	iph->ip_ttl = 255;				//time to live
+	iph->ip_p = IPPROTO_TCP;		//6
+	iph->ip_sum = 0;				//let kernel fill the checksum
+	inet_pton(AF_INET, src_ip, &(iph->ip_src));	//local device ip
+	iph->ip_dst.s_addr = servaddr.sin_addr.s_addr;	//destination address
+
+	tcph->th_sport = htons(th_sport);	//any port
+	tcph->th_dport = htons(dst_port);	//destination port
+	tcph->th_seq = htonl(31337);		//random
+	tcph->th_ack = htonl(0);			//ACK not needed
+	tcph->th_offx2 = 0x50;	 			//data offset
+	tcph->th_flags = 0x01;				//FIN flag
+	tcph->th_win = htons(65535);		//window size
+	tcph->th_sum = 0;					//later
+	tcph->th_urp = 0;					//no urgent pointer
+
+	struct pseudo_hdr *phdr = (struct pseudo_hdr *) (datagram + sizeof(struct ipheader) + sizeof(struct tcpheader));
+
+	memset(phdr, 0, sizeof(phdr));
+
+	phdr->src = iph->ip_src.s_addr;
+	phdr->dst = iph->ip_dst.s_addr;
+	phdr->mbz = 0;
+	phdr->proto = IPPROTO_TCP;
+	phdr->len = ntohs(0x14); //size of tcp header
+
+	tcph->th_sum = htons(csum((unsigned short *)tcph, sizeof(struct pseudo_hdr)+ sizeof(struct tcpheader)));
+
+	int one = 1;
+	const int *val = &one;
+	if(setsockopt(s, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
+	{
+		printf("Cannot set HDRINCL for dest_port %d socket %d", dst_port, s);
+		pthread_mutex_unlock(&mutex_probe);
+		return;
+	}
+	
+	if (sendto(s, datagram, iph->ip_len, 0, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
+	{
+		printf("Error in sending packet for port %d\n", dst_port);
+		pthread_mutex_unlock(&mutex_probe);
+		return;
+	}
+
+	struct ports* new_probe = malloc(sizeof(struct ports));
+	new_probe->port = dst_port;
+	new_probe->next = probeSent;
+	if(probeSent != NULL)
+		probeSent->prev = new_probe;
+	new_probe->prev = NULL;
+	probeSent = new_probe;
+	num_awaited++;
+	close(s);
+	pthread_mutex_unlock(&mutex_probe);
+}
+
+
 void* sniffPacket(void* a)
 {
 	pcap_loop(handle, -1, got_packet, (u_char *)NULL);
@@ -418,7 +499,7 @@ void syn(struct ports* head, int retry)
 		// }
 		
 //		printf("SCANNING %d\n", current->port);
-		pthread_create(&scanVictim[current->port % threadCount], NULL, scanport, (void *)current->port);
+		pthread_create(&scanVictim[current->port % threadCount], NULL, synScanPort, (void *)current->port);
 		usleep(rateControl);
 		if(current->port % threadCount==0)
 		{
@@ -452,6 +533,56 @@ void syn(struct ports* head, int retry)
 	}
 	syn(probeSent, retry);
 }
+
+void fin(struct ports* head)
+{
+	probeSent = NULL;
+	handle = (pcap_t *)pcapSetup(victim);
+	struct timeval start, end;
+	unsigned long timeTaken = 0;
+
+	pthread_create(&sniffThread, NULL, sniffPacket, NULL);
+
+	int j=0;
+	struct ports* current = head;
+	for(; current!=NULL; current=current->next)
+	{
+		// if(current->port % threadCount == 1)
+		// {
+		// 	gettimeofday(&start, NULL);
+		// }
+	//		printf("SCANNING %d\n", current->port);
+		pthread_create(&scanVictim[current->port % threadCount], NULL, finScanPort, (void *)current->port);
+		usleep(rateControl);
+		if(current->port % threadCount==0)
+		{
+			for(j=0; j<threadCount; j++)
+			{
+				pthread_join(scanVictim[j], NULL);
+			}
+//			usleep(rateControl);
+//			gettimeofday(&end, NULL);
+//			timeTaken = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
+//			printf("timetaken %d\n", timeTaken);
+//			rateControl = timeTaken/threadCount;
+			//- (rateControl * threadCount);
+		}
+	}
+	usleep(ONE_SECOND);
+	pcap_breakloop(handle);
+	
+	printf("%d ports scanned. %d ports confirmed closed\n", numports, numports-num_awaited);
+	if(num_awaited!=0) 
+	{
+		struct ports* o = probeSent;
+		for(;o!=NULL; o=o->next)
+		{
+			printf("%d\topen|filtered\n", o->port);
+		}
+	}
+}
+
+
 
 //A ping function
 //Adapted from nmap isup() function
@@ -532,7 +663,7 @@ int main (int argc, const char * argv[]) {
 
 	if(argc==1 || argc>4)
 	{
-		printf("Usage: syns victim_ip [low port] [high port]\n");
+		printf("Usage: synscanner victim_ip [low port] [high port]\n");
 		exit(1);
 	}
 	
@@ -570,12 +701,13 @@ int main (int argc, const char * argv[]) {
 	}
 		
 	printf("RTT %d microseconds\n", global_rtt);
-//	printf("Enter Rate Control: [0 for default - 30]: ");
+	printf("Enter Rate Control: [0 for default - 30]: ");
 	
 	unsigned int packetrate;
-//	scanf("%d", &packetrate);
-//	if(packetrate == 0) 
-	packetrate = DEFAULT_RATE;
+	scanf("%d", &packetrate);
+	if(packetrate == 0) 
+		packetrate = DEFAULT_RATE;
+
 	rateControl = ONE_SECOND/packetrate;
 	
 	threadCount = 5 * 1e6 / global_rtt;
@@ -600,15 +732,8 @@ int main (int argc, const char * argv[]) {
  		all = new_all;
 	}
 	
-    syn(all, NUM_TRIES);
-	
-	if(num_awaited!=0) printf("Ports timedout: ");
-	struct ports* o = probeSent;
-	for(;o!=NULL; o=o->next)
-	{
-		printf(", %d", o->port);
-	}
-
+//    syn(all, NUM_TRIES);
+	fin(all);
 	gettimeofday(&end, NULL);
 	t = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
 	printf("Total time taken %d microseconds\n", t);
