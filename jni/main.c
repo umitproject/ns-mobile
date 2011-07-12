@@ -18,12 +18,11 @@
 #include <pthread.h>
 
 #define MAX_THREADS 300
-
-//Number of tries for a port if a response is not received within timeout
+#define PING_TIMEOUT 2
 #define NUM_TRIES 1
-
 #define ONE_SECOND 1000000
 #define DEFAULT_RATE 30
+#define SOURCE_PORT 1234
 
 char datagram[4096];
 struct ip *iph = (struct ip *) datagram;
@@ -32,16 +31,15 @@ struct sockaddr_in servaddr;
 
 pcap_t *handle;
 char *victim;
+unsigned short th_sport = SOURCE_PORT;
+int threadCount;
+unsigned long rateControl = 0;
 
 pthread_t scanVictim[MAX_THREADS];
 pthread_t sniffThread;
 pthread_mutex_t mutex_probe;
 
-unsigned short th_sport = 1234;
-
-int threadCount;
-unsigned long rateControl = 0;
-
+//Linked list for storing ports
 struct ports {
 	int port;
 	struct ports* next;
@@ -65,12 +63,13 @@ struct ports* timedout = NULL;
 int numports = 0;
 int progress = 0;
 
+//setter
 void setVictim(char* v) { victim = v; }
 
-#define PING_TIMEOUT 2
 struct in_addr ouraddr = { 0 };
 unsigned long global_rtt = 0;
 
+//Pseudo Header for TCP checksum calculation
 struct pseudo_hdr {
 	u_int32_t src;			//src ip
 	u_int32_t dst;			//dst ip
@@ -103,7 +102,7 @@ struct tcpheader {
 	u_short th_urp;                 /* urgent pointer */
 };
 
-/* IP header */
+// IP header
 struct ipheader {
 	u_char  ip_vhl;                 /* version << 4 | header length >> 2 */
 	u_char  ip_tos;                 /* type of service */
@@ -122,13 +121,12 @@ struct ipheader {
 #define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
 #define IP_V(ip)                (((ip)->ip_vhl) >> 4)
 
-/* Ethernet header */
+// Ethernet header
 struct ethernetheader {
 	u_char  ether_dhost[6];    /* destination host address */
 	u_char  ether_shost[6];    /* source host address */
 	u_short ether_type;                     /* IP? ARP? RARP? etc */
 };
-
 #define SIZE_ETHERNET 14
 
 //Gets the device to sniff packets on
@@ -218,7 +216,8 @@ pcap_t* pcapSetup(char* dst_ip)
 	return handle;
 }
 
-//Packet sniffer and the actual SYN scanner
+
+//Packet sniffer and the actual scanner
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
 	pthread_mutex_lock(&mutex_probe);	
@@ -264,6 +263,8 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	src_port = ntohs(tcph->th_sport);
 	//printf("Port %d TCP %d\n", ntohs(tcph->th_sport), tcph->th_flags);
 	
+	
+	//Looking for open ports (SYN/ACK Packet)
 	if(((tcph->th_flags & 0x02) == TH_SYN) && (tcph->th_flags & 0x10) == TH_ACK)
 	{
 		printf("Port open %d\n", src_port);
@@ -274,6 +275,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 		num_open ++;
 	}
 	
+	//Looking for closed port (RST Packet)
 	else if ((tcph->th_flags & 0x04) == TH_RST)
 	{
 //		printf("Port closed %d\n", src_port);
@@ -284,6 +286,8 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 		num_closed ++;
 	}
 	
+	//Removing the port from probeSent list if a response is received
+	//TODO: Add a check here to confirm its the packet meant for us
 	struct ports *a = probeSent;
 	for(;a!=NULL; a=a->next)
 	{
@@ -306,6 +310,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	pthread_mutex_unlock(&mutex_probe);
 }
 
+//Sending SYN Packets
 void* synScanPort(void* port)
 {		
 	pthread_mutex_lock(&mutex_probe);
@@ -385,6 +390,8 @@ void* synScanPort(void* port)
 	pthread_mutex_unlock(&mutex_probe);
 }
 
+
+//Sending FIN Packets
 void* finScanPort(void* port)
 {		
 	pthread_mutex_lock(&mutex_probe);
@@ -465,11 +472,14 @@ void* finScanPort(void* port)
 }
 
 
+//Initiate pcap_loop
 void* sniffPacket(void* a)
 {
 	pcap_loop(handle, -1, got_packet, (u_char *)NULL);
 }
 
+
+//SYN Scan controller
 void syn(struct ports* head, int retry)
 {
 	if(retry==0)
@@ -493,6 +503,7 @@ void syn(struct ports* head, int retry)
 	struct ports* current = head;
 	for(; current!=NULL; current=current->next)
 	{
+		//TODO: Dynamic rate control
 		// if(current->port % threadCount == 1)
 		// {
 		// 	gettimeofday(&start, NULL);
@@ -527,13 +538,14 @@ void syn(struct ports* head, int retry)
 	
 	if(retry==0)
 	{
-		printf("DONE!");
-		printf("AWAITED %d\n", num_awaited);
+		printf("Done Scanning. ");
+		printf("Number of Ports timedout %d\n", num_awaited);
 		return;
 	}
 	syn(probeSent, retry);
 }
 
+//FIN Scan controller
 void fin(struct ports* head)
 {
 	probeSent = NULL;
@@ -547,6 +559,7 @@ void fin(struct ports* head)
 	struct ports* current = head;
 	for(; current!=NULL; current=current->next)
 	{
+		//TODO: Dynamic rate controller
 		// if(current->port % threadCount == 1)
 		// {
 		// 	gettimeofday(&start, NULL);
@@ -581,8 +594,6 @@ void fin(struct ports* head)
 		}
 	}
 }
-
-
 
 //A ping function
 //Adapted from nmap isup() function
@@ -656,87 +667,124 @@ int isup(struct in_addr target)
 	return 0;
 }
 
+
+
 int main (int argc, const char * argv[]) {
 		
-	int i;	
-	int low, high;
+	int i = 0;
+	int finscan=0, synscan=0, packetRate=30, maxThreads=MAX_THREADS, low=1, high=1024, tries=1, source_port = SOURCE_PORT;
+	char *host = NULL;
+	
+	opterr = 0;
+	int c;
+	while ((c = getopt (argc, argv, "fsr:h:T:t:m:p:")) != -1)
+    {
+		switch(c)
+		{
+			case 'f': finscan = 1; break;
+			case 's': synscan = 1; break;
+			case 'r': packetRate = atoi(optarg); break;
+			case 'h': host = optarg; break;
+			case 'T': tries = atoi(optarg); break;
+			case 'p': source_port = atoi(optarg); break;
+		}
+	}
 
-	if(argc==1 || argc>4)
+	if(optind == argc)
 	{
-		printf("Usage: synscanner victim_ip [low port] [high port]\n");
-		exit(1);
+	 	printf("Port range not specified. Scanning 1-1024\n");
 	}
-	
-	if(argc==2) 
-	{
-		printf("Port range not specified. Scanning 1-1024\n");
-		low = 1;
-		high = 1024;
-	}
-	
-	if(argc==3)
+
+	if((argc-optind) == 1)
 	{
 		printf("High port not specified. Scanning till 65536.\n");
-		low = atoi(argv[2]);
+		low = atoi(argv[optind]);
 		high = 65536;
 	}
 	
-	if(argc == 4)
+	if((argc-optind) == 2)
 	{
-		low = atoi(argv[2]);
-		high = atoi(argv[3]);
+		low = atoi(argv[optind]);
+		high = atoi(argv[optind+1]);
 	}
-		
-	numports = high - low + 1;
-	progress = numports / 100;
 	
-	struct timeval start, end;
-	struct in_addr target;
-	inet_aton(argv[1], &target.s_addr);
-
-	if(isup(target)==0)
+	//Idiot user checks
+	if(finscan == synscan)
 	{
-		printf("Host %s seems to be down. Exiting.\n", argv[1]);
+		printf("You can do only one type of scan at a time.\n");
 		exit(1);
 	}
-		
-	printf("RTT %d microseconds\n", global_rtt);
-	printf("Enter Rate Control: [0 for default - 30]: ");
 	
-	unsigned int packetrate;
-	scanf("%d", &packetrate);
-	if(packetrate == 0) 
-		packetrate = DEFAULT_RATE;
-
-	rateControl = ONE_SECOND/packetrate;
-	
-	threadCount = 5 * 1e6 / global_rtt;
-	if(threadCount > MAX_THREADS)
-		threadCount = MAX_THREADS;
-	printf("Number of threads %d\n", threadCount);
-	
-	unsigned long t;
-	gettimeofday(&start, NULL);
-	setVictim(argv[1]);
-	
-	struct ports* all = NULL;
-
-	for(i=high; i>=low; i--)
+	if(packetRate == 0)
 	{
-		struct ports* new_all = malloc(sizeof(struct ports));
-		new_all->port = i;
-		new_all->next = all;
-		if(probeSent != NULL)
-			all->prev = new_all;
-		new_all->prev = NULL;
- 		all = new_all;
+		printf("Packet Rate cannot be 0. Setting to default 30.");
 	}
 	
-//    syn(all, NUM_TRIES);
-	fin(all);
-	gettimeofday(&end, NULL);
-	t = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
-	printf("Total time taken %d microseconds\n", t);
+	if(low > high)
+	{
+		printf("You forgot your math. Low port cannot be more than High port.");
+		exit(1);
+	}
 	
+	if(host == NULL)
+	{		
+		printf("You did not tell me who to scan >.<");
+		exit(1);
+	}
+	
+	//Starting Engines
+ 	numports = high - low + 1;
+ 	progress = numports / 100;
+ 	
+ 	struct timeval start, end;
+ 	struct in_addr target;
+ 	inet_aton(host, &target.s_addr);
+ 
+ 	if(isup(target)==0)
+ 	{
+ 		printf("Host %s seems to be down. Exiting.\n", host);
+ 		exit(1);
+ 	}
+ 	printf("RTT %d microseconds\n", global_rtt);
+
+ 	rateControl = ONE_SECOND/packetRate;
+ 	
+ 	threadCount = 5 * 1e6 / global_rtt;
+ 	if(threadCount > maxThreads)
+ 		threadCount = maxThreads;
+ 	printf("Number of threads %d\n", threadCount);
+ 	
+ 	unsigned long t;
+ 	gettimeofday(&start, NULL);
+ 	setVictim(host);
+ 	
+ 	struct ports* all = NULL;
+ 
+ 	for(i=high; i>=low; i--)
+ 	{
+ 		struct ports* new_all = malloc(sizeof(struct ports));
+ 		new_all->port = i;
+ 		new_all->next = all;
+ 		if(probeSent != NULL)
+ 			all->prev = new_all;
+ 		new_all->prev = NULL;
+  		all = new_all;
+ 	}
+ 	
+	if(finscan==1)
+	{
+		printf("FIN Scanning %s from %s:%d with %d packets per second\n", host, inet_ntoa(ouraddr), source_port, packetRate);
+	 	fin(all);
+	}
+	if(synscan==1)
+	{
+		printf("SYN Scanning %s from %s:%d with %d packets per second\n", host, inet_ntoa(ouraddr), source_port, packetRate);
+    	syn(all, NUM_TRIES);
+	}
+
+ 	gettimeofday(&end, NULL);
+ 	t = (end.tv_sec - start.tv_sec) * 1e6 + end.tv_usec - start.tv_usec;
+ 	printf("Total time taken %d microseconds\n", t);
+ 	
 	return 0;
 }
