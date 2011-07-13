@@ -73,14 +73,12 @@ public class SYNScan extends AsyncTask<String, String, String>{
         try{
             hostIsUp = Integer.parseInt(st.nextToken());
         } 
-        catch(NumberFormatException e)
-        {
+        catch(NumberFormatException e) {
             //PortScanner.resultPublish("Unable to parse String");
             return;
         }
         
-        if(hostIsUp == 0)
-        {
+        if(hostIsUp == 0) {
             PortScanner.resultPublish("Host is down. Aborting port scan.");
             return;
         }

@@ -1,0 +1,38 @@
+README
+Network Scanner for Android
+[Requires root privileges for some options]
+
+Install the apk using ./adb install ns-mobile.apk
+
+The first activity is the Host Discovery activity.
+Select the mode for host discovery and press start.
+
+The discovered hosts will be shown on the left and
+the logs will be shown on the left.
+Touch a discovered host to go to the Port Scanning 
+activity.
+Select the mode for port scanning, specify the range
+of ports and press start. Open ports will be shown 
+on right and the logs will be shown on the left.
+
+
+Commandline cross-compiled executable -
+[Requires root privileges]
+
+The native binary is copied automatically to  
+/data/local/scanner when the program runs. 
+
+Usage
+
+Basic SYN Scan 
+./scanner -s -h 192.168.2.1
+
+Basic FIN Scan
+./scanner -f -h 192.168.2.1
+
+Additional options
+-v Verbose mode
+-p Set source port
+-T set number of tries for timedout ports
+-r Set packet rate
+-N output for the apk to parse  
