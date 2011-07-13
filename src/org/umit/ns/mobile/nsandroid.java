@@ -118,7 +118,7 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
-        CopyNative("/data/local/synscanner", R.raw.synscanner);
+        CopyNative("/data/local/scanner", R.raw.scanner);
         
         //Attach event handlers
         //modeSelect
@@ -202,7 +202,6 @@ public class nsandroid extends Activity {
             }).create().show();
         }
     };
-        
 
     /**
      * Event Handler for Host Discovery button
@@ -213,7 +212,6 @@ public class nsandroid extends Activity {
             hd.start();
         }
     };
-    
     
     /**
      * Event Handler for Stop Discovery button

@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 /**
  * @author angadsg
- * SYN Scan implementation by executing the scanner binary.
+ * FIN Scan implementation by executing the scanner binary.
  * scanner binary is written in C and cross-compiled for Android
  * Find the source in /jni/main.c
  * 
@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 import android.os.AsyncTask;
 
-public class SYNScan extends AsyncTask<String, String, String>{
+public class FINScan extends AsyncTask<String, String, String>{
 
     String ipAddress;
     String from;
@@ -136,7 +136,7 @@ public class SYNScan extends AsyncTask<String, String, String>{
         
         //-N flag for parsable output
         //-s flag for SYN scan
-        String cmd = "/data/local/scanner -N -s -h " + ip + " " + from + " " + to;  
+        String cmd = "/data/local/scanner -N -f -h " + ip + " " + from + " " + to;  
         publishProgress(cmd);
         Process p;
         

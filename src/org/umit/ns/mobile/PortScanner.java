@@ -21,6 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 package org.umit.ns.mobile;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +52,7 @@ public class PortScanner extends Activity{
 
     public static int open = 0;
     int all = 0;
-    int scannerMode = 0;
+    static int scannerMode = 0;
     int[] portsOpen = null;
     static int portsToScan = 0;
     String host = null;
@@ -74,7 +78,7 @@ public class PortScanner extends Activity{
         setContentView(R.layout.portscanner);
         
         lv = (ListView) findViewById(R.id.listView1);
-        String[] f = new String[] {"host"};
+        String[] f = new String[] {"port"};
         int[] t = new int[] { R.id.host };
         fillMaps = new ArrayList<HashMap<String, String>>();
         sa = new SimpleAdapter(this, fillMaps, R.layout.list_item, f, t);
@@ -109,10 +113,6 @@ public class PortScanner extends Activity{
         //Stop
         Button stop = (Button)findViewById(R.id.stop);
         stop.setOnClickListener(stopScan);
-        
-        //Info
-        //Button info = (Button)findViewById(R.id.info);
-        //info.setOnClickListener(networkInfo);
     }
     
     /**
@@ -169,6 +169,7 @@ public class PortScanner extends Activity{
         started = true;
         portsToScan = getPortsToScan();
         Object[] arg = {(Object)scannerMode, (Object)host, (Object)from.getText().toString(), (Object)to.getText().toString()};
+        
         try {
             scan = new Scanning();
             scan.execute(arg);
@@ -181,6 +182,12 @@ public class PortScanner extends Activity{
     }
     
     public static void stop() {
+        if(scannerMode == 2 || scannerMode == 3) {
+            killProcess("/data/local/scanner");
+            started = false;
+            return;
+        }
+        
         if(started == false) {
             makeToast("Scan not running.");
         }
@@ -194,7 +201,7 @@ public class PortScanner extends Activity{
     public void reset() {
         portsToScan = 0;
         open = 0;
-        
+        started = false;
         resetProgressBar();
         resetList();
     }
@@ -205,12 +212,17 @@ public class PortScanner extends Activity{
         return t-f+1;
     }
     
+    public static void setStarted(boolean s)
+    {
+        started = s;
+    }
+    
     public int getMode() {
         return scannerMode;
     }
     
     public void setMode(int mode) {
-        this.scannerMode = mode;
+        scannerMode = mode;
     }
     
     public int[] getOpenPorts(){
@@ -222,7 +234,7 @@ public class PortScanner extends Activity{
     }
 
     public static void addPort(String host, String port) {
-        PortScanner.resultPublish(port + "found!");
+        PortScanner.resultPublish(port + " found!");
     }
 
     public static void updateProgress() {
@@ -246,7 +258,7 @@ public class PortScanner extends Activity{
     private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        if(line_count == 10 || isFull) {
+        if(line_count == 5 || isFull) {
             String txt = results.getText().toString();
             txt = txt.substring(txt.indexOf('\n') + 1);
             results.setText(txt);
@@ -263,7 +275,7 @@ public class PortScanner extends Activity{
      */
     public static void addToList(String str) {
         HashMap<String, String> map = new HashMap<String, String>();
-        map.put("host", str);
+        map.put("port", str);
         fillMaps.add(map);
         sa.notifyDataSetChanged();
         open++;
@@ -297,6 +309,7 @@ public class PortScanner extends Activity{
     * Resets progress bar
     */
    public static void resetProgressBar() {
+       p=0;
        progress.setProgress(0);
    }
    
@@ -306,5 +319,100 @@ public class PortScanner extends Activity{
    public void fillProgressBar() {
        resetProgressBar();
        updateProgressBar(100);
+   }
+   
+   private static boolean killProcess(String path)
+   {
+       resultPublish("Killing " + path);
+       Process p;
+       StringBuffer output = new StringBuffer();
+       
+       //A very dirty method of killing the process
+       try{
+           p = Runtime.getRuntime().exec("su");
+           
+           DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
+           try {
+               pOut.writeBytes("ps | grep " + path + "\nexit\n");
+               pOut.flush();
+           } 
+           catch (IOException e1) {
+               e1.printStackTrace();
+           }
+           
+           try {
+               p.waitFor();
+           } catch (InterruptedException e1) {
+               e1.printStackTrace();
+           }
+           
+           int read;
+           BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+           char[] buffer = new char[1024];
+           try{
+               while ((read = reader.read(buffer)) > 0) {
+                   output.append(buffer, 0, read);
+                   resultPublish(output.toString());
+                   break;
+               }
+           }
+           catch(IOException e) {
+               e.printStackTrace();
+           }
+       }
+       catch(IOException e) {
+           e.printStackTrace();
+       }
+       
+       String pid = "";
+       for(int i = 0; i<output.length(); i++)
+       {
+           //look for the process id
+           if(output.charAt(i) > 47 && output.charAt(i) < 58)
+           {
+               pid = output.substring(i, i + output.substring(i).indexOf(' '));
+               break;
+           }
+       }
+       
+       try{
+           p = Runtime.getRuntime().exec("su");
+//           p = Runtime.getRuntime().exec("ps | grep " + path);
+
+           DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
+           try {
+               pOut.writeBytes("kill -9 " + pid + "\nexit\n");
+               pOut.flush();
+           } 
+           catch (IOException e1) {
+               e1.printStackTrace();
+           }
+           
+           try {
+               p.waitFor();
+           } catch (InterruptedException e1) {
+               // TODO Auto-generated catch block
+               e1.printStackTrace();
+           }
+           
+           int read;
+           BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+           char[] buffer = new char[1024];
+           try{
+               while ((read = reader.read(buffer)) > 0) {
+                   output.append(buffer, 0, read);
+                   resultPublish(output.toString());
+                   break;
+                   //output = new StringBuffer();
+               }
+           }
+           catch(IOException e) {
+               e.printStackTrace();
+           }
+       }
+       catch(IOException e) {
+           e.printStackTrace();
+       }
+       return false;
    }
 }

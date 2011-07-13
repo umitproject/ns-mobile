@@ -46,7 +46,6 @@ public class PrintingThread extends AsyncTask<BufferedReader, String, String>{
         reader = params[0];
         char[] buffer = new char[1024];
         StringBuffer output = new StringBuffer();
-        publishProgress("TRYING TO READ");  
         try{
             while ((read = reader.read(buffer)) > 0) {
                 output.append(buffer, 0, read);

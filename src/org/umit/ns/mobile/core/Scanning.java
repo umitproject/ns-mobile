@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.umit.ns.mobile.core;
 
 import org.umit.ns.mobile.PortScanner;
+import org.umit.ns.mobile.api.scanner.FINScan;
 import org.umit.ns.mobile.api.scanner.SYNScan;
 import org.umit.ns.mobile.api.scanner.ScanTCP;
 import org.umit.ns.mobile.api.scanner.ScanUDP;
@@ -49,6 +50,7 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
     AsyncTask<String, String, String> tcp;
     AsyncTask<String, String, String> udp;
     AsyncTask<String, String, String> syn;
+    AsyncTask<String, String, String> fin;
     int method;
     int total;
     
@@ -75,8 +77,7 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
     }
     
     private void finScan(String host, String from, String to) {
-        //scanSYN(host, from, to);
-        publishProgress("FIN Scan. Not implemented. Coming soon :)");
+        scanFIN(host, from, to);
     }
 
     protected void onProgressUpdate(String... params){
@@ -138,6 +139,11 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
 
     private void scanSYN(String host, String from, String to) {
         syn = new SYNScan();
+        syn.execute(host, from, to);
+    }
+    
+    private void scanFIN(String host, String from, String to) {
+        syn = new FINScan();
         syn.execute(host, from, to);
     }
 
