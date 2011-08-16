@@ -19,6 +19,13 @@
         </activity>
         <activity android:name="PortScanner"
         		android:label="Port Scanner">
-        		</activity>
+		</activity>
+		<activity android:name="nmap"
+        		android:label="nmap">
+		</activity>
+		<activity android:name="Traceroute"
+        		android:label="Traceroute">
+		</activity>
+		
     </application>
 </manifest>

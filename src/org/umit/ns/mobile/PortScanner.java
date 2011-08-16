@@ -50,15 +50,12 @@ import android.widget.Toast;
 
 public class PortScanner extends Activity{
 
-    public static int open = 0;
-    int all = 0;
+    static int open = 0;
     static int scannerMode = 0;
-    int[] portsOpen = null;
-    static int portsToScan = 0;
-    String host = null;
     static boolean started = false;
     static int p = 0;
     static AsyncTask<Object[], String, Void> scan;
+    static int portsToScan = 0;
     
     static ProgressBar progress;
     static TextView results;
@@ -67,6 +64,10 @@ public class PortScanner extends Activity{
     TextView h;
     ArrayAdapter<CharSequence> adapter;
     Builder select;
+
+    int[] portsOpen = null;
+    String host = null;
+    int all = 0;
     
     ListView lv;
     static SimpleAdapter sa;

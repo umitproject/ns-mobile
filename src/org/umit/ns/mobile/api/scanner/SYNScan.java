@@ -80,6 +80,7 @@ public class SYNScan extends AsyncTask<String, String, String>{
         
         if(hostIsUp == 0) {
             PortScanner.resultPublish("Host is down. Aborting port scan.");
+            PortScanner.setStarted(false);
             return;
         }
         

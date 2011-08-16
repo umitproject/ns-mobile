@@ -24,11 +24,15 @@ package org.umit.ns.mobile;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.umit.ns.mobile.api.networkInfo;
 
@@ -41,6 +45,9 @@ import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -118,13 +125,48 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
+        try {
+            Runtime.getRuntime().exec("su -c 'chmod 777 /data/local'");
+        } catch (IOException e1) {
+            nsandroid.resultPublish(e1.getMessage());
+            e1.printStackTrace();
+        }
+        
+        nsandroid.resultPublish("Copying Busybox to /data/local/...");
+        CopyNative("/data/local/busybox", R.raw.busybox);
+        
+        nsandroid.resultPublish("Copying PortScanner native to /data/local/...");
         CopyNative("/data/local/scanner", R.raw.scanner);
         
-        //Attach event handlers
-        //modeSelect
-        Button mode = (Button)findViewById(R.id.modeSelect);
-        mode.setOnClickListener(modeSelect);
+        nsandroid.resultPublish("Copying nmap to /data/local/...");
+        CopyNative("/data/local/nmap", R.raw.nmap);
         
+        nsandroid.resultPublish("Trying to mount /system/lib/ as read-write partition");
+        try {
+            Runtime.getRuntime().exec("su -c 'mount -o rw,remount -t yaffs2 /dev/block/mtdblock3 | chmod 777 /system/lib/'");
+        } catch (IOException e) {
+            nsandroid.resultPublish(e.getMessage());
+            e.printStackTrace();
+        }
+        
+        nsandroid.resultPublish("Copying libcrypto, libgif, libltdl, libnet, libpcre, libssh, libssl libraries to /system/lib...");
+        CopyNative("/system/lib/libcrypto.so", R.raw.libcrypto);
+        CopyNative("/system/lib/libgif.so", R.raw.libgif);
+        CopyNative("/system/lib/libltdl.so", R.raw.libltdl);
+        CopyNative("/system/lib/libnet.so", R.raw.libnet);
+        CopyNative("/system/lib/libpcre.so", R.raw.libpcre);
+        CopyNative("/system/lib/libssh.so", R.raw.libssh);
+        CopyNative("/system/lib/libssl.so", R.raw.libssl);
+                
+//        CopyNative("/data/local/libcrypto.so", R.raw.libcrypto);
+//        CopyNative("/data/local/libgif.so", R.raw.libgif);
+//        CopyNative("/data/local/libltdl.so", R.raw.libltdl);
+//        CopyNative("/data/local/libnet.so", R.raw.libnet);
+//        CopyNative("/data/local/libpcre.so", R.raw.libpcre);
+//        CopyNative("/data/local/libssh.so", R.raw.libssh);
+//        CopyNative("/data/local/libssl.so", R.raw.libssl);
+        
+        //Attach event handlers
         //Discover
         Button discover = (Button)findViewById(R.id.discover);
         discover.setOnClickListener(discoverHosts);
@@ -132,12 +174,56 @@ public class nsandroid extends Activity {
         //Stop
         Button stop = (Button)findViewById(R.id.stop);
         stop.setOnClickListener(stopDiscovery);
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.layout.appmenu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.info:
+            showInfo();
+            return true;
+        case R.id.mode:
+            showMode();
+            return true;
+        case R.id.nmap:
+            nmapActivity();
+            return true;
+        case R.id.portscan:
+            scanActivity();
+            return true;
+        case R.id.traceroute:
+            tracerouteActivity();
+            return true;
         
-        //Info
-        Button info = (Button)findViewById(R.id.info);
-        info.setOnClickListener(networkInfo);
+        default:
+            return super.onOptionsItemSelected(item);
+        }
     }
         
+    private void tracerouteActivity() {
+        Intent n = new Intent(nsandroid.this, Traceroute.class);
+        startActivityForResult(n, 0);        
+    }
+
+    private void scanActivity() {
+        Intent n = new Intent(nsandroid.this, PortScanner.class);
+        n.putExtra("host", "0.0.0.0");
+        startActivityForResult(n, 0);
+    }
+
+    private void nmapActivity() {
+        Intent n = new Intent(nsandroid.this, nmap.class);
+        startActivityForResult(n, 0);        
+    }
+
     /**
      * Copies the native binary from resource to path
      * 
@@ -153,23 +239,71 @@ public class nsandroid extends Activity {
         try {
             byte[] bytes = new byte[setdbStream.available()];
             DataInputStream dis = new DataInputStream(setdbStream);
-            dis.readFully(bytes);
+            dis.readFully(bytes);   
             FileOutputStream setdbOutStream = new FileOutputStream(path);
             setdbOutStream.write(bytes);
             setdbOutStream.close();
 
             //Set executable permissions
-            Process process = Runtime.getRuntime().exec("sh");
+            Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
             os.writeBytes("chmod 755 " + path + "\n");
             os.writeBytes("exit\n");
             os.flush();
-        } 
+        }
+        
         catch (Exception e) {
-            nsandroid.resultPublish("Unable to Copy native binary");
+            nsandroid.resultPublish("Unable to Copy native binary " + e.getMessage());
           return;
         }
       }
+        
+    /**
+     * Extracts from a zip file. Unused method.
+     * 
+     * @param path
+     * @param resource
+     * 
+     * 
+     */
+    protected void extractFromZip(String path, int resource) {
+        try {
+            byte[] buf = new byte[1024];
+            ZipInputStream zipinputstream = new ZipInputStream(getResources().openRawResource(resource));
+            ZipEntry zipentry;
+
+            zipentry = zipinputstream.getNextEntry();
+            while (zipentry != null) { 
+                String entryName = zipentry.getName();
+                nsandroid.resultPublish("Extracting " + entryName);
+                
+                int n;
+                FileOutputStream fileoutputstream;
+                File newFile = new File(entryName);
+                String directory = newFile.getParent();
+                
+                if(directory == null) {
+                    if(newFile.isDirectory())
+                        break;
+                }
+                
+                fileoutputstream = new FileOutputStream(path + entryName);
+                while ((n = zipinputstream.read(buf, 0, 1024)) > -1)
+                    fileoutputstream.write(buf, 0, n);
+
+                fileoutputstream.close(); 
+                zipinputstream.closeEntry();
+                zipentry = zipinputstream.getNextEntry();
+            }
+            zipinputstream.close();
+        }
+        
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
     
     /**
      * Resets the application
@@ -189,9 +323,9 @@ public class nsandroid extends Activity {
      * Shows a popup for selecting the mode
      * modifies discovery_mode
      */
-    public OnClickListener modeSelect = new OnClickListener() {
-        public void onClick(View v) {
-            select.setTitle(R.string.discovery_prompt)
+
+    public void showMode() {
+        select.setTitle(R.string.discovery_prompt)
             .setAdapter(adapter, new DialogInterface.OnClickListener() {
 
                 @Override
@@ -200,8 +334,7 @@ public class nsandroid extends Activity {
                     dialog.dismiss();
                 }
             }).create().show();
-        }
-    };
+    }
 
     /**
      * Event Handler for Host Discovery button
@@ -223,13 +356,11 @@ public class nsandroid extends Activity {
         }
     };
     
-            
+    
     /**
      * Event handler for Network Info button
      */
-    public OnClickListener networkInfo = new OnClickListener() {
-        public void onClick(View v) {
-
+    public void showInfo() {
             String info;
             if(ni == null) {
                 info = "Cannot get information";
@@ -242,8 +373,7 @@ public class nsandroid extends Activity {
                 info = "Interface: " + networkInterface + "\nIP Address: " + ip + "\nSubnet: " + subnet;    
             }
             makeToast(info);
-        }
-    };
+    }
     
 
     /**
@@ -268,7 +398,7 @@ public class nsandroid extends Activity {
     private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        if(line_count == 10 || isFull) {
+        if(line_count == 5 || isFull) {
             String txt = results.getText().toString();
             txt = txt.substring(txt.indexOf('\n') + 1);
             results.setText(txt);
