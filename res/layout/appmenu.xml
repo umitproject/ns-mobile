@@ -8,6 +8,8 @@
           android:title="Reset" />
     <item android:id="@+id/save"
           android:title="Save" />
+    <item android:id="@+id/load"
+          android:title="Load" />
     <item android:id="@+id/nmap"
           android:title="Nmap" />
     <item android:id="@+id/traceroute"

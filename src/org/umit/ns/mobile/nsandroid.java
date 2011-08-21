@@ -81,6 +81,7 @@ public class nsandroid extends Activity {
     static SimpleAdapter sa;
     static List<HashMap<String, String>> fillMaps;
     TextView list_host;
+    boolean saved;
     
     //API Objects
     networkInfo ni;
@@ -112,8 +113,6 @@ public class nsandroid extends Activity {
         lv.setAdapter(sa);
         lv.setOnItemClickListener(startPortScan);
         
-        //Database
-        
         //setting up mode selection popup
         select = new AlertDialog.Builder(this);
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
@@ -141,6 +140,11 @@ public class nsandroid extends Activity {
         stop.setOnClickListener(stopDiscovery);
     }
     
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        hd.destroy();
+    }
     
     public void setupNative()
     {
@@ -210,6 +214,8 @@ public class nsandroid extends Activity {
             return true;
         case R.id.reset:
             resetApp();
+        case R.id.load:
+            loadScans();
         default:
             return super.onOptionsItemSelected(item);
         }
@@ -230,7 +236,8 @@ public class nsandroid extends Activity {
         public void onClick(DialogInterface dialog, int whichButton) {
           String name = input.getText().toString();
           hd.saveDiscovery(name);
-          }
+          saved = true;
+         }
         });
 
         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -240,6 +247,11 @@ public class nsandroid extends Activity {
         });
 
         alert.show();
+    }
+    
+    private void loadScans() {
+        Intent n = new Intent(nsandroid.this, SavedScans.class);
+        startActivityForResult(n, 0);
     }
     
     private void tracerouteActivity() {

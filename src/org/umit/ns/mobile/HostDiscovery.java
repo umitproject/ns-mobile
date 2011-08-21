@@ -61,8 +61,6 @@ public class HostDiscovery {
      */
     public HostDiscovery(networkInfo ni) {
         this.ni = ni;
-        discoverydb = new DiscoveryDBAdapter(nsandroid.defaultInstance);
-        discoverydb.open();
         init();
     }
     
@@ -73,6 +71,9 @@ public class HostDiscovery {
     public void init()
     {
         reset();
+        discoverydb = new DiscoveryDBAdapter(nsandroid.defaultInstance);
+        discoverydb.open();
+        
         if(ni==null) {
             String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
             nsandroid.resultPublish(result);
@@ -124,6 +125,7 @@ public class HostDiscovery {
      */
     public void start() {
         init();
+        
         if(started == true) {
             String result = "Please wait for the current scan to finish or press stop.";
             nsandroid.makeToast(result);
@@ -161,6 +163,7 @@ public class HostDiscovery {
      * Modifies started, hd
      */
     public void stop() {
+                
         if(started == false) {
             String result = "Discovery not running";
             Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG).show();
@@ -260,7 +263,7 @@ public class HostDiscovery {
             nsandroid.makeToast("Please run a scan first. Nothing to save.");
             return;
         }
-            
+
         if(started == true) {
             nsandroid.makeToast("Scan running. Wait before trying to save or stop the scan and then save.");
             return;
@@ -274,13 +277,19 @@ public class HostDiscovery {
         String hosts = "";
         
         for(int i = 0; i<countDiscoveredhosts; i++) {
-            //hosts.concat(discoveredHosts[i] + "-");
             if(!discoveredHosts.equals("null"))
                 hosts = hosts + discoveredHosts[i] + "-";
         }
         
         discoverydb.save(name, type, target, range, total, args, hosts);
-        nsandroid.resultPublish(hosts);
+//        nsandroid.resultPublish(hosts);
         nsandroid.resultPublish("Saved!");
+    }
+
+    public void destroy() {
+        if(discoverydb !=null)
+        {
+            discoverydb.close();
+        }
     }
 }

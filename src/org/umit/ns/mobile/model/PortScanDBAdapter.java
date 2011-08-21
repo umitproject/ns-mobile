@@ -42,9 +42,9 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
 public class PortScanDBAdapter {
-    
+
     /* Common */
-    public static final String KEY_ROWID = "_id";
+    public static final String KEY_ROWID = "id";
     public static final String KEY_TIME = "time";
     public static final String KEY_PROFILE = "profile";
     public static final String KEY_TYPE = "type";
@@ -92,7 +92,8 @@ public class PortScanDBAdapter {
 
     public long save(String profile, String type, 
             String target, String range, String args, String open, String closed, 
-            String filtered, String protocol, String d_id) {
+            String filtered, String protocol, String d_id) 
+    {
         ContentValues init = createContentValues(now(), profile, type, 
                 target, range, args, open, closed, filtered, protocol, d_id);        
         return database.insert(DATABASE_TABLE, null, init);

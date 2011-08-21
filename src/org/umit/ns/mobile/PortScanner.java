@@ -30,18 +30,24 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.umit.ns.mobile.core.Scanning;
+import org.umit.ns.mobile.model.PortScanDBAdapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
@@ -65,7 +71,7 @@ public class PortScanner extends Activity{
     ArrayAdapter<CharSequence> adapter;
     Builder select;
 
-    int[] portsOpen = null;
+    static String portsOpen = "";
     String host = null;
     int all = 0;
     
@@ -73,6 +79,14 @@ public class PortScanner extends Activity{
     static SimpleAdapter sa;
     static List<HashMap<String, String>> fillMaps;
     TextView list_host;
+    
+    PortScanDBAdapter portscandb;
+    
+    public PortScanner()
+    {
+        portscandb = new PortScanDBAdapter(nsandroid.defaultInstance);
+        portscandb.open();
+    }
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,10 +117,7 @@ public class PortScanner extends Activity{
         to.setText("1024");
         
         portsToScan = 1024;
-        
-        Button mode = (Button)findViewById(R.id.modeSelect);
-        mode.setOnClickListener(modeSelect);
-        
+                
         //Discover
         Button start = (Button)findViewById(R.id.scan);
         start.setOnClickListener(startScan);
@@ -116,25 +127,122 @@ public class PortScanner extends Activity{
         stop.setOnClickListener(stopScan);
     }
     
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (portscandb != null) {
+            portscandb.close();
+        }
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.layout.appmenu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.info:
+            nsandroid.makeToast("Target: " + host);
+            return true;
+        case R.id.mode:
+            showMode();
+            return true;
+        case R.id.nmap:
+            nmapActivity();
+            return true;
+        case R.id.portscan:
+            scanActivity();
+            return true;
+        case R.id.traceroute:
+            tracerouteActivity();
+            return true;
+        case R.id.save:
+            saveScan();
+            return true;
+        case R.id.reset:
+            reset();
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    private void saveScan()
+    {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Save Port Scanning Results");
+        alert.setMessage("Enter name");
+
+        // Set an EditText view to get user input 
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+          String name = input.getText().toString();
+          String type = Integer.toString(scannerMode);
+          String target = host;
+          String range = from + "-" + to;
+          String args = "";
+          
+          String open = portsOpen;
+          
+          String closed = "";
+          String filtered = "";
+          String protocol = "";
+          String d_id = "";
+          
+          portscandb.save(name, type, target, range, args, open, closed, filtered, protocol, d_id);          
+          }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int whichButton) {
+            //  Canceled.
+          }
+        });
+
+        alert.show();
+    }
+    
+    private void tracerouteActivity() {
+        Intent n = new Intent(this, Traceroute.class);
+        startActivityForResult(n, 0);        
+    }
+
+    private void scanActivity() {
+        Intent n = new Intent(this, PortScanner.class);
+        n.putExtra("host", "0.0.0.0");
+        startActivityForResult(n, 0);
+    }
+
+    private void nmapActivity() {
+        Intent n = new Intent(this, nmap.class);
+        startActivityForResult(n, 0);        
+    }
+
     /**
      * Event handler for Mode Select Button
      * Shows a popup for selecting the mode
      * modifies discovery_mode
      */
-    public OnClickListener modeSelect = new OnClickListener() {
-        public void onClick(View v) {
-            select.setTitle(R.string.discovery_prompt)
-            .setAdapter(adapter, new DialogInterface.OnClickListener() {
+    public void showMode() {
+        select.setTitle(R.string.discovery_prompt)
+        .setAdapter(adapter, new DialogInterface.OnClickListener() {
 
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    setMode(which);
-                    h.setText(host + " Current Scan mode: " + getScanMode());                    
-                    dialog.dismiss();
-                }
-            }).create().show();
-        }
-    };
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                setMode(which);
+                h.setText(host + " Current Scan mode: " + getScanMode());                    
+                dialog.dismiss();
+            }
+        }).create().show();
+    }
     
     public OnClickListener stopScan = new OnClickListener() {
         public void onClick(View v) {
@@ -157,7 +265,6 @@ public class PortScanner extends Activity{
         case 2: str = "SYN Scan"; break;
         case 3: str = "FIN Scan"; break;
         }
-        
         return str;
     }
     
@@ -226,10 +333,6 @@ public class PortScanner extends Activity{
         scannerMode = mode;
     }
     
-    public int[] getOpenPorts(){
-        return portsOpen;
-    }
-    
     public int getOpenCount() {
         return open;
     }
@@ -279,6 +382,7 @@ public class PortScanner extends Activity{
         map.put("port", str);
         fillMaps.add(map);
         sa.notifyDataSetChanged();
+        portsOpen = portsOpen + "-" + str;
         open++;
     }
     

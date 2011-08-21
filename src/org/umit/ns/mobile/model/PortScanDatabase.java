@@ -39,7 +39,11 @@ public class PortScanDatabase extends SQLiteOpenHelper {
     
     public static final String DATABASE_NAME = "port_scan";
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_CREATE = "CREATE TABLE portscan (id INTEGER PRIMARY KEY autoincrement, time TEXT, date TEXT, profile TEXT, type TEXT, target TEXT, args TEXT, open TEXT, closed TEXT, range TEXT, filtered TEXT, protocol TEXT, total NUMERIC)";
+    public static final String DATABASE_CREATE = "CREATE TABLE portscan " +
+    		"(id INTEGER PRIMARY KEY autoincrement, time TEXT, " + 
+    		"profile TEXT, type TEXT, target TEXT, " +
+    		"args TEXT, open TEXT, closed TEXT, range TEXT, " +
+    		"filtered TEXT, protocol TEXT, d_id TEXT, total NUMERIC)";
     
 
     public PortScanDatabase(Context context) {

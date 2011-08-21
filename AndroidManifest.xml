@@ -26,6 +26,9 @@
 		<activity android:name="Traceroute"
         		android:label="Traceroute">
 		</activity>
+		<activity android:name="SavedScans"
+        		android:label="Saved Scans">
+		</activity>
 		
     </application>
 </manifest>

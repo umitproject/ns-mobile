@@ -44,7 +44,7 @@ import android.database.sqlite.SQLiteDatabase;
 public class DiscoveryDBAdapter {
     
     /* Common */
-    public static final String KEY_ROWID = "_id";
+    public static final String KEY_ROWID = "id";
     public static final String KEY_TIME = "time";
     public static final String KEY_PROFILE = "profile";
     public static final String KEY_TYPE = "type";
