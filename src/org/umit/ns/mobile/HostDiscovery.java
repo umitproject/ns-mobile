@@ -30,6 +30,7 @@ package org.umit.ns.mobile;
 
 import org.umit.ns.mobile.api.networkInfo;
 import org.umit.ns.mobile.core.Discovery;
+import org.umit.ns.mobile.model.DiscoveryDBAdapter;
 
 import android.os.AsyncTask;
 import android.widget.Toast;
@@ -50,8 +51,9 @@ public class HostDiscovery {
     String high = null;
     AsyncTask<Object[], Integer, Void> hd = null;
     static boolean started = false;
+    static boolean scanned = false;
     networkInfo ni;
-
+    DiscoveryDBAdapter discoverydb;
     
     /**
      * Constructor
@@ -59,9 +61,10 @@ public class HostDiscovery {
      */
     public HostDiscovery(networkInfo ni) {
         this.ni = ni;
+        discoverydb = new DiscoveryDBAdapter(nsandroid.defaultInstance);
+        discoverydb.open();
         init();
     }
-    
     
     /**
      * Initializes host discovery
@@ -148,6 +151,7 @@ public class HostDiscovery {
             nsandroid.makeToast(result);
             return;
         }
+        scanned = true;
 
     }
     
@@ -168,6 +172,7 @@ public class HostDiscovery {
         String result = "Host Discovery interrupted\nDiscovered " + countDiscoveredhosts + " hosts.";
         nsandroid.resultPublish(result);
         nsandroid.makeToast(result);
+        scanned = true;
     }
     
 
@@ -183,6 +188,7 @@ public class HostDiscovery {
         high = null;
         hd = null;
         started = false;
+        scanned = false;
         progress = 0;
         nsandroid.resetList(); 
     }
@@ -247,5 +253,34 @@ public class HostDiscovery {
      */
     public static void publishHost(String ip){
         nsandroid.resultPublish(ip);
+    }
+
+    public void saveDiscovery(String name) {
+        if(scanned == false) {
+            nsandroid.makeToast("Please run a scan first. Nothing to save.");
+            return;
+        }
+            
+        if(started == true) {
+            nsandroid.makeToast("Scan running. Wait before trying to save or stop the scan and then save.");
+            return;
+        }
+ 
+        String target = ni.getIp();
+        String range = ni.getRange()[0] + "-" + ni.getRange()[ni.getRange().length-1];
+        String total = Integer.toString(ni.getNodes());
+        String type = Integer.toString(getMode());
+        String args = "";
+        String hosts = "";
+        
+        for(int i = 0; i<countDiscoveredhosts; i++) {
+            //hosts.concat(discoveredHosts[i] + "-");
+            if(!discoveredHosts.equals("null"))
+                hosts = hosts + discoveredHosts[i] + "-";
+        }
+        
+        discoverydb.save(name, type, target, range, total, args, hosts);
+        nsandroid.resultPublish(hosts);
+        nsandroid.resultPublish("Saved!");
     }
 }

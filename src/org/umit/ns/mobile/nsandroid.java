@@ -54,6 +54,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
@@ -111,6 +112,8 @@ public class nsandroid extends Activity {
         lv.setAdapter(sa);
         lv.setOnItemClickListener(startPortScan);
         
+        //Database
+        
         //setting up mode selection popup
         select = new AlertDialog.Builder(this);
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
@@ -125,6 +128,23 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
+        
+        setupNative();
+        
+        //Attach event handlers
+        //Discover
+        Button discover = (Button)findViewById(R.id.discover);
+        discover.setOnClickListener(discoverHosts);
+        
+        //Stop
+        Button stop = (Button)findViewById(R.id.stop);
+        stop.setOnClickListener(stopDiscovery);
+    }
+    
+    
+    public void setupNative()
+    {
+        //Setting up libraries and native binaries
         try {
             Runtime.getRuntime().exec("su -c 'chmod 777 /data/local'");
         } catch (IOException e1) {
@@ -157,23 +177,6 @@ public class nsandroid extends Activity {
         CopyNative("/system/lib/libpcre.so", R.raw.libpcre);
         CopyNative("/system/lib/libssh.so", R.raw.libssh);
         CopyNative("/system/lib/libssl.so", R.raw.libssl);
-                
-//        CopyNative("/data/local/libcrypto.so", R.raw.libcrypto);
-//        CopyNative("/data/local/libgif.so", R.raw.libgif);
-//        CopyNative("/data/local/libltdl.so", R.raw.libltdl);
-//        CopyNative("/data/local/libnet.so", R.raw.libnet);
-//        CopyNative("/data/local/libpcre.so", R.raw.libpcre);
-//        CopyNative("/data/local/libssh.so", R.raw.libssh);
-//        CopyNative("/data/local/libssl.so", R.raw.libssl);
-        
-        //Attach event handlers
-        //Discover
-        Button discover = (Button)findViewById(R.id.discover);
-        discover.setOnClickListener(discoverHosts);
-        
-        //Stop
-        Button stop = (Button)findViewById(R.id.stop);
-        stop.setOnClickListener(stopDiscovery);
     }
     
     @Override
@@ -202,12 +205,43 @@ public class nsandroid extends Activity {
         case R.id.traceroute:
             tracerouteActivity();
             return true;
-        
+        case R.id.save:
+            saveDiscovery();
+            return true;
+        case R.id.reset:
+            resetApp();
         default:
             return super.onOptionsItemSelected(item);
         }
     }
-        
+
+    private void saveDiscovery()
+    {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Save Host Discovery Results");
+        alert.setMessage("Enter name");
+
+        // Set an EditText view to get user input 
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+          String name = input.getText().toString();
+          hd.saveDiscovery(name);
+          }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int whichButton) {
+            //  Canceled.
+          }
+        });
+
+        alert.show();
+    }
+    
     private void tracerouteActivity() {
         Intent n = new Intent(nsandroid.this, Traceroute.class);
         startActivityForResult(n, 0);        
@@ -302,7 +336,6 @@ public class nsandroid extends Activity {
             e.printStackTrace();
         }
     }
-    
     
     
     /**
