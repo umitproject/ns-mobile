@@ -82,6 +82,8 @@ public class nsandroid extends Activity {
     static List<HashMap<String, String>> fillMaps;
     TextView list_host;
     boolean saved;
+    boolean hasRoot = false;
+    
     
     //API Objects
     networkInfo ni;
@@ -128,6 +130,7 @@ public class nsandroid extends Activity {
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
         
+        checkRoot();
         setupNative();
         
         //Attach event handlers
@@ -146,14 +149,67 @@ public class nsandroid extends Activity {
         hd.destroy();
     }
     
+    public void checkRoot() {
+
+        Process p;   
+        try {   
+           // Preform su to get root privledges  
+           p = Runtime.getRuntime().exec("su");   
+             
+           // Attempt to write a file to a root-only   
+           DataOutputStream os = new DataOutputStream(p.getOutputStream());   
+           os.writeBytes("echo \"Do I have root?\" >/system/sd/temporary.txt\n");  
+             
+           // Close the terminal  
+           os.writeBytes("exit\n");   
+           os.flush();   
+           try {   
+              p.waitFor();   
+                   if (p.exitValue() != 255) {
+                       hasRoot = true;
+                   }   
+                   else {
+                       hasRoot = false;
+                   }   
+           } catch (InterruptedException e) {
+               hasRoot = false;
+           }   
+        } catch (IOException e) {
+            hasRoot = false;
+        }  
+    }
+    
     public void setupNative()
     {
+        if(hasRoot == false) {
+            nsandroid.resultPublish("You dont seem to have root access. Some of the features of the app will be restricted.");
+            return;
+        }
         //Setting up libraries and native binaries
+        nsandroid.resultPublish("Trying to mount /system/lib/ as read-write partition");
         try {
-            Runtime.getRuntime().exec("su -c 'chmod 777 /data/local'");
-        } catch (IOException e1) {
-            nsandroid.resultPublish(e1.getMessage());
-            e1.printStackTrace();
+            Process process = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(process.getOutputStream());
+            os.writeBytes("chmod 777 /data/local" + "\n");
+            os.writeBytes("mount -o rw,remount -t yaffs2 /dev/block/mtdblock3" + "\n");
+            os.writeBytes("chmod 777 /system/lib" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libcrypto.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libgif.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libltdl.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libnet.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libpcre.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libssh.so" + "\n");
+            os.writeBytes("chmod 777 /system/lib/libssl.so" + "\n");
+            os.writeBytes("exit\n");
+            os.flush();
+            process.waitFor();
+
+        } catch (IOException e) {
+            nsandroid.resultPublish(e.getMessage());
+            e.printStackTrace();
+            nsandroid.resultPublish("Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         
         nsandroid.resultPublish("Copying Busybox to /data/local/...");
@@ -164,14 +220,6 @@ public class nsandroid extends Activity {
         
         nsandroid.resultPublish("Copying nmap to /data/local/...");
         CopyNative("/data/local/nmap", R.raw.nmap);
-        
-        nsandroid.resultPublish("Trying to mount /system/lib/ as read-write partition");
-        try {
-            Runtime.getRuntime().exec("su -c 'mount -o rw,remount -t yaffs2 /dev/block/mtdblock3 | chmod 777 /system/lib/'");
-        } catch (IOException e) {
-            nsandroid.resultPublish(e.getMessage());
-            e.printStackTrace();
-        }
         
         nsandroid.resultPublish("Copying libcrypto, libgif, libltdl, libnet, libpcre, libssh, libssl libraries to /system/lib...");
         CopyNative("/system/lib/libcrypto.so", R.raw.libcrypto);

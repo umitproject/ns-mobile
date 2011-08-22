@@ -1,9 +1,5 @@
 package org.umit.ns.mobile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.model.DiscoveryDBAdapter;
 import org.umit.ns.mobile.model.PortScanDBAdapter;
@@ -12,7 +8,6 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
@@ -25,11 +20,13 @@ public class SavedScans extends Activity {
     
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.portscanner);
+        setContentView(R.layout.savedscans);
         
         discoverydb = new DiscoveryDBAdapter(nsandroid.defaultInstance);
         discoverydb.open();
-        //portscandb.open();
+        
+        portscandb = new PortScanDBAdapter(nsandroid.defaultInstance);
+        portscandb.open();
         
         Cursor all = discoverydb.fetchAll();
         startManagingCursor(all);

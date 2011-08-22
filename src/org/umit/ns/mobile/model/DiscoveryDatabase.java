@@ -53,7 +53,7 @@ public class DiscoveryDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         nsandroid.resultPublish("Upgrading databse from version " + oldVersion + " to " + newVersion);
-        db.execSQL("DROP TABLE IF EXISTS portscan");
+        db.execSQL("DROP TABLE IF EXISTS discovery");
         onCreate(db);
     }
 }
