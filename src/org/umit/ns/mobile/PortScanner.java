@@ -67,6 +67,7 @@ public class PortScanner extends Activity{
     static TextView results;
     static TextView from;
     static TextView to;
+    static TextView target;
     TextView h;
     ArrayAdapter<CharSequence> adapter;
     Builder select;
@@ -112,9 +113,10 @@ public class PortScanner extends Activity{
         progress = (ProgressBar)findViewById(R.id.progress);
         from = (TextView)findViewById(R.id.from);
         to = (TextView)findViewById(R.id.to);
-        
+        target = (TextView)findViewById(R.id.target);
         from.setText("1");
         to.setText("1024");
+        target.setText(host);
         
         portsToScan = 1024;
                 
@@ -273,6 +275,8 @@ public class PortScanner extends Activity{
             makeToast("Scan already running. Please wait.");
             return;
         }
+        
+        host = target.getText().toString();
         reset();
         started = true;
         portsToScan = getPortsToScan();

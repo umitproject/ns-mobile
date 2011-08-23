@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.umit.ns.mobile.nsandroid;
 import org.umit.ns.mobile.api.SubnetUtils.SubnetInfo;
 
 import android.net.DhcpInfo;
@@ -64,13 +65,15 @@ public class networkInfo {
     String subnet;
     
     boolean isWifi = false;
+    boolean connected = false;
 
     public networkInfo(WifiManager w) {
         this.w = w;
         if(w.isWifiEnabled()) {
             this.d = w.getDhcpInfo();
             isWifi = true;
-            
+
+            connected = true;
             networkInterface = "eth0";
             ipAddress = intToIp(d.ipAddress);
             serverAddress = intToIp(d.serverAddress);
@@ -91,8 +94,10 @@ public class networkInfo {
                 if(line.substring(9,15).trim().equals("UP"))
                 {
                     networkInterface = line.substring(0,9).trim();
+                    if(networkInterface.contains("lo")) continue;
                     ipAddress = line.substring(15,31).trim();
                     subnet = line.substring(31,47).trim();
+                    connected = true;
                     //nsandroid.resultPublish(networkInterface + " " + ipAddress + " " + subnet);
                 }
                 
@@ -105,6 +110,12 @@ public class networkInfo {
                 nsandroid.resultPublish(output.substring(i, i+57));
                 */
             }
+        }
+        
+        if(connected == false)
+        {
+            nsandroid.resultPublish("You seem not to be connected to any network interface. Please connect and restart the application");
+            return;
         }
         this.su = new SubnetUtils(getIp(), getSubnet());
         this.si = su.getInfo();
@@ -205,4 +216,7 @@ public class networkInfo {
         else return 0;
     }
 
+    public boolean isConnected() {
+        return connected;
+    }
 }

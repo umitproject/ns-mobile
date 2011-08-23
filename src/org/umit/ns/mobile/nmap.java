@@ -56,7 +56,6 @@ public class nmap extends Activity{
 
     public OnClickListener nmapLoad = new OnClickListener() {
         public void onClick(View v) {
-            //NmapLoader.load(cmd.getText().toString());
             AsyncTask<String, String, String> nmap;
             nmap = new cmdLine();
             nmap.execute("/data/local/" + cmd.getText().toString(), "nmap");
@@ -81,6 +80,4 @@ public class nmap extends Activity{
         line_count++;
         results.append("\n" + string);
     }
-    
-    
 }

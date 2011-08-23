@@ -37,4 +37,6 @@ public interface Constants {
     };
     
     public static final int timeout = 1000;
+    public static final int rateControl = 100; //milliseconds (sleep for PortScanning).
+    
 }

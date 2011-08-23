@@ -74,7 +74,7 @@ public class HostDiscovery {
         discoverydb = new DiscoveryDBAdapter(nsandroid.defaultInstance);
         discoverydb.open();
         
-        if(ni==null) {
+        if(ni==null || ni.isConnected() == false) {
             String result = "Error in getting Network Information\n Make sure you are connected to atleast one network interface.";
             nsandroid.resultPublish(result);
             Toast.makeText(nsandroid.defaultInstance, result, Toast.LENGTH_LONG);

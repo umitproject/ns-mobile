@@ -25,6 +25,7 @@ package org.umit.ns.mobile;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -129,10 +130,13 @@ public class nsandroid extends Activity {
         hd = new HostDiscovery(ni);
         from.setText(hd.getLow());
         to.setText(hd.getHigh());
+
         
         checkRoot();
         setupNative();
         
+        extractFromZip("/data/local/", R.raw.nselib);
+                
         //Attach event handlers
         //Discover
         Button discover = (Button)findViewById(R.id.discover);
@@ -163,17 +167,17 @@ public class nsandroid extends Activity {
            // Close the terminal  
            os.writeBytes("exit\n");   
            os.flush();   
-           try {   
+           try {
               p.waitFor();   
                    if (p.exitValue() != 255) {
                        hasRoot = true;
-                   }   
+                   }
                    else {
                        hasRoot = false;
-                   }   
+                   }
            } catch (InterruptedException e) {
                hasRoot = false;
-           }   
+           }
         } catch (IOException e) {
             hasRoot = false;
         }  
@@ -186,20 +190,12 @@ public class nsandroid extends Activity {
             return;
         }
         //Setting up libraries and native binaries
-        nsandroid.resultPublish("Trying to mount /system/lib/ as read-write partition");
+        //nsandroid.resultPublish("Trying to mount /system/lib/ as read-write partition");
         try {
             Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
             os.writeBytes("chmod 777 /data/local" + "\n");
-            os.writeBytes("mount -o rw,remount -t yaffs2 /dev/block/mtdblock3" + "\n");
-            os.writeBytes("chmod 777 /system/lib" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libcrypto.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libgif.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libltdl.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libnet.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libpcre.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libssh.so" + "\n");
-            os.writeBytes("chmod 777 /system/lib/libssl.so" + "\n");
+
             os.writeBytes("exit\n");
             os.flush();
             process.waitFor();
@@ -212,27 +208,23 @@ public class nsandroid extends Activity {
             e.printStackTrace();
         }
         
-        nsandroid.resultPublish("Copying Busybox to /data/local/...");
         CopyNative("/data/local/busybox", R.raw.busybox);
-        
-        nsandroid.resultPublish("Copying PortScanner native to /data/local/...");
         CopyNative("/data/local/scanner", R.raw.scanner);
-        
-        nsandroid.resultPublish("Copying nmap to /data/local/...");
         CopyNative("/data/local/nmap", R.raw.nmap);
-        
-        nsandroid.resultPublish("Copying libcrypto, libgif, libltdl, libnet, libpcre, libssh, libssl libraries to /system/lib...");
-        CopyNative("/system/lib/libcrypto.so", R.raw.libcrypto);
-        CopyNative("/system/lib/libgif.so", R.raw.libgif);
-        CopyNative("/system/lib/libltdl.so", R.raw.libltdl);
-        CopyNative("/system/lib/libnet.so", R.raw.libnet);
-        CopyNative("/system/lib/libpcre.so", R.raw.libpcre);
-        CopyNative("/system/lib/libssh.so", R.raw.libssh);
-        CopyNative("/system/lib/libssl.so", R.raw.libssl);
+        CopyNative("/data/local/nmap-mac-prefixes", R.raw.nmapmacprefixes);   //nmap-mac-prefixes
+        CopyNative("/data/local/nmap-os-db", R.raw.nmaposdatabase);     //nmap-os-database
+        CopyNative("/data/local/nmap-payloads", R.raw.nmappayloads);     //nmap-payloads
+        CopyNative("/data/local/nmap-protocols", R.raw.nmapprotocols);     //nmap-protocols
+        CopyNative("/data/local/nmap-rpc", R.raw.nmaprpc);     //nmap-rpc
+        CopyNative("/data/local/nmap-service-probes", R.raw.nmapserviceprobes);     //nmap-service-probes
+        CopyNative("/data/local/nmap-services", R.raw.nmapservices);     //nmap-services
+        CopyNative("/data/local/nmap.dtd", R.raw.nmapdtd);     //nmap.dtd
+        CopyNative("/data/local/nmap.xsl", R.raw.nmapxsl);     //nmap.xsl
+        CopyNative("/data/local/nse_main.lua", R.raw.nsemainlua);     //nse_main.lua
     }
     
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) { 
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.layout.appmenu, menu);
         return true;
@@ -262,8 +254,10 @@ public class nsandroid extends Activity {
             return true;
         case R.id.reset:
             resetApp();
+            return true;
         case R.id.load:
             loadScans();
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
@@ -357,16 +351,16 @@ public class nsandroid extends Activity {
      * 
      * @param path
      * @param resource
-     * 
-     * 
      */
     protected void extractFromZip(String path, int resource) {
         try {
             byte[] buf = new byte[1024];
-            ZipInputStream zipinputstream = new ZipInputStream(getResources().openRawResource(resource));
+            //ZipInputStream zipinputstream = new ZipInputStream(getResources().openRawResource(resource));
+            ZipInputStream zipinputstream = new ZipInputStream(new FileInputStream("/data/local/nmap"));;
             ZipEntry zipentry;
 
             zipentry = zipinputstream.getNextEntry();
+            
             while (zipentry != null) { 
                 String entryName = zipentry.getName();
                 nsandroid.resultPublish("Extracting " + entryName);
@@ -449,7 +443,6 @@ public class nsandroid extends Activity {
         }
     };
     
-    
     /**
      * Event handler for Network Info button
      */
@@ -467,7 +460,6 @@ public class nsandroid extends Activity {
             }
             makeToast(info);
     }
-    
 
     /**
      * Event Listener of listItem click

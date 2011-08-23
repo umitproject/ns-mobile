@@ -54,26 +54,19 @@ public class cmdLine extends AsyncTask<String, String, String> {
     
     protected void onProgressUpdate(String... params) {
         if(app == "traceroute")
-        {
             Traceroute.resultPublish(params[0]);
-        }
 
         if(app == "nmap")
-        {
             nmap.resultPublish(params[0]);
-        }
     }   
     
     private boolean cmdRun(String cmd) {
         
-        //String cmd = "/data/local/" + c + " -e /data/local/download/error_log.txt";
         publishProgress("Executing " + cmd);
         Process p;
         
         try{
             p = Runtime.getRuntime().exec("su");
-            //p = Runtime.getRuntime().exec(cmd);
-
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
                 pOut.writeBytes(cmd + "\n");
@@ -102,6 +95,5 @@ public class cmdLine extends AsyncTask<String, String, String> {
             e.printStackTrace();
         }
         return false;
-    }
-    
+    }   
 }

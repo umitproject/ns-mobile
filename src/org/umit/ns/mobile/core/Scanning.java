@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.core;
 
+import org.umit.ns.mobile.Constants;
 import org.umit.ns.mobile.PortScanner;
 import org.umit.ns.mobile.api.scanner.FINScan;
 import org.umit.ns.mobile.api.scanner.SYNScan;
@@ -95,7 +96,7 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
         for(int i=f; i<=t; i++)
         {
             scanTCP(host, Integer.toString(i));
-            sleep(50);
+            sleep(Constants.rateControl);
             if(isCancelled()) {
                 udp.cancel(true);
                 return;
@@ -110,7 +111,7 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
         for(int i=f; i<=t; i++)
         {
             scanUDP(host, Integer.toString(i));
-            sleep(50);
+            sleep(Constants.rateControl);
             if(isCancelled()) {
                 udp.cancel(true);
                 return;

@@ -9,8 +9,14 @@
     <TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_width="match_parent">
         <Button android:layout_height="wrap_content" android:text="Start" android:id="@+id/scan" android:layout_width="wrap_content"></Button>
         <Button android:layout_height="wrap_content" android:text="Stop" android:id="@+id/stop" android:layout_width="wrap_content"></Button>
-        <EditText android:id="@+id/from" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="EditText"></EditText>
-        <EditText android:id="@+id/to" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="EditText"></EditText>
+
+    </TableRow>
+    <TableRow android:id="@+id/tableRow2" android:layout_height="wrap_content" android:layout_width="match_parent">
+
+	<EditText android:id="@+id/target" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text=""></EditText>
+        <EditText android:id="@+id/from" android:layout_height="wrap_content" android:layout_width="80dip" android:text=""></EditText>
+        <EditText android:id="@+id/to" android:layout_height="wrap_content" android:layout_width="80dip" android:text=""></EditText>
+
     </TableRow>
     
     <RelativeLayout android:id="@+id/relativeLayout1" android:layout_height="wrap_content" android:layout_width="match_parent">
