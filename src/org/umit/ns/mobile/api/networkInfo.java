@@ -93,8 +93,22 @@ public class networkInfo {
                 String line = output.substring(i, i+57);
                 if(line.substring(9,15).trim().equals("UP"))
                 {
+                    nsandroid.resultPublish("interface: " + line.substring(0,9));
+                    nsandroid.resultPublish("status: " + line.substring(9,15));
+                    nsandroid.resultPublish("ipaddress: " + line.substring(15,31));
+                    nsandroid.resultPublish("subnet: " + line.substring(31,47));
+                    nsandroid.resultPublish("hex: " + line.substring(47,57));
+                    nsandroid.resultPublish(output.substring(i, i+57));
+
                     networkInterface = line.substring(0,9).trim();
+                    
+                    //basic sanity testing
+                    //netcfg shows localhost to be UP
                     if(networkInterface.contains("lo")) continue;
+                    
+                    //netcfg might also show eth0 to be UP with 0.0.0.0 IP and 0.0.0.0 Subnet                    
+                    if(line.substring(15,31).contains("0.0.0.0")) continue;
+                    
                     ipAddress = line.substring(15,31).trim();
                     subnet = line.substring(31,47).trim();
                     connected = true;
