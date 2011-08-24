@@ -460,18 +460,18 @@ public class nsandroid extends Activity {
     /**
      * Static UI methods
      */
-    private static int line_count = 0;
-    private static boolean isFull = false;
+//    private static int line_count = 0;
+//    private static boolean isFull = false;
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
-        if(line_count == 5 || isFull) {
-            String txt = results.getText().toString();
-            txt = txt.substring(txt.indexOf('\n') + 1);
-            results.setText(txt);
-            isFull=true;
-            line_count = 0;
-        }
-        line_count++;
+//        if(line_count == 5 || isFull) {
+//            String txt = results.getText().toString();
+//            txt = txt.substring(txt.indexOf('\n') + 1);
+//            results.setText(txt);
+//            isFull=true;
+//            line_count = 0;
+//        }
+//        line_count++;
         results.append("\n" + string);
     }
     

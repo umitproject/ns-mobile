@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * 
  * 
  */
+
+
 package org.umit.ns.mobile.api.scanner;
 
 import java.io.IOException;
@@ -46,6 +48,7 @@ import org.umit.ns.mobile.PortScanner;
 
 import android.os.AsyncTask;
 
+//This class currently unused
 public class TCPChannel extends AsyncTask<String[], String, Void> {
 
     private Selector selector;

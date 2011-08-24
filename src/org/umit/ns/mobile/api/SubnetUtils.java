@@ -20,6 +20,8 @@ package org.umit.ns.mobile.api;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.umit.ns.mobile.nsandroid;
+
 /**
  * A class that performs some subnet calculations given a network address and a subnet mask.
  * @see "http://www.faqs.org/rfcs/rfc1519.html"
@@ -163,6 +165,7 @@ public class SubnetUtils {
 
         public String[] getAllAddresses() {
             String[] addresses = new String[getAddressCount()];
+            nsandroid.resultPublish("Low: " + Integer.toString(low()) + "High: " + Integer.toString(high()));
             for (int add = low(), j=0; add <= high(); ++add, ++j) {
                 addresses[j] = format(toArray(add));
             }

@@ -186,8 +186,14 @@ public class networkInfo {
     
     public String[] getRange()
     {
-        if(si != null)
+        String a[] = new String[1];
+        if(si != null) {
+            if(getSubnet().equals("255.255.255.255")) {
+                a[0] = getIp();
+                return a;
+            }
             return si.getAllAddresses();
+        }
         else return null;
     }
     
