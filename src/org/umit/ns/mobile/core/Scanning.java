@@ -85,10 +85,6 @@ public class Scanning extends AsyncTask<Object[], String, Void>{
         PortScanner.resultPublish(params[0]);
     }
     
-//    protected void onPostExecute(Void a) {
-//        nsandroid.resultPublish("DONE");
-//    }
-    
     private void connectTCPScan(String host, String from, String to) {
         int f = Integer.parseInt(from);
         int t = Integer.parseInt(to);
