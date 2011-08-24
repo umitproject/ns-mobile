@@ -523,7 +523,7 @@ public class nsandroid extends Activity {
         fillMaps.add(map);
         sa.notifyDataSetChanged();
     }
-    
+
     /**
      * Reset the list
      */

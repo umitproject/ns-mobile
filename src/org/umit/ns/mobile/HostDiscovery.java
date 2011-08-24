@@ -282,7 +282,6 @@ public class HostDiscovery {
         }
         
         discoverydb.save(name, type, target, range, total, args, hosts);
-//        nsandroid.resultPublish(hosts);
         nsandroid.resultPublish("Saved!");
     }
 

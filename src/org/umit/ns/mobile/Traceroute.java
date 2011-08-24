@@ -56,7 +56,6 @@ public class Traceroute extends Activity{
     
     public OnClickListener tracerouteLoad = new OnClickListener() {
         public void onClick(View v) {
-            //NmapLoader.load(cmd.getText().toString());
             AsyncTask<String, String, String> traceroute;
             traceroute = new cmdLine();
             traceroute.execute("/data/local/busybox " + cmd.getText().toString(), "traceroute");

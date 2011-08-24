@@ -6,7 +6,10 @@
     >
     <RelativeLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/relativeLayout1">
         <EditText android:text="nmap" android:id="@+id/nmapcmd" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_toLeftOf="@+id/startNmap" android:layout_alignTop="@+id/startNmap" android:layout_alignBottom="@+id/startNmap"></EditText>
+        
+	      <ScrollView android:id="@+id/scroll" android:layout_below = "@+id/nmapcmd" android:layout_width = "wrap_content" android:layout_height = "wrap_content">	
         <TextView android:id="@+id/nmapOutput" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="output" android:layout_below="@+id/nmapcmd" android:layout_alignLeft="@+id/nmapcmd" android:layout_alignRight="@+id/nmapcmd"></TextView>
-        <Button android:text="Button" android:layout_width="wrap_content" android:id="@+id/startNmap" android:layout_height="wrap_content" android:layout_alignParentRight="true"></Button>
+        </ScrollView>
+        <Button android:text="Start" android:layout_width="wrap_content" android:id="@+id/startNmap" android:layout_height="wrap_content" android:layout_alignParentRight="true"></Button>
     </RelativeLayout>
 </LinearLayout>

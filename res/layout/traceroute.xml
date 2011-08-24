@@ -6,7 +6,9 @@
     >
     <RelativeLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/relativeLayout1">
         <EditText android:text="traceroute" android:id="@+id/traceroutecmd" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_toLeftOf="@+id/startTraceroute" android:layout_alignTop="@+id/startTraceroute" android:layout_alignBottom="@+id/startTraceroute"></EditText>
+        <ScrollView android:id="@+id/scroll" android:layout_below = "@+id/traceroutecmd" android:layout_width = "wrap_content" android:layout_height = "wrap_content">	
         <TextView android:id="@+id/tracerouteOutput" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="output" android:layout_below="@+id/traceroutecmd" android:layout_alignLeft="@+id/traceroutecmd" android:layout_alignRight="@+id/traceroutecmd"></TextView>
+        </ScrollView>
         <Button android:text="Start" android:layout_width="wrap_content" android:id="@+id/startTraceroute" android:layout_height="wrap_content" android:layout_alignParentRight="true"></Button>
     </RelativeLayout>
 </LinearLayout>
