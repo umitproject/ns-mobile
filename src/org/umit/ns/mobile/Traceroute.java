@@ -28,6 +28,7 @@ package org.umit.ns.mobile;
 
 import org.umit.ns.mobile.api.cmdLine;
 import org.umit.ns.mobile.api.shellUtils;
+import org.umit.ns.mobile.model.FileManager;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -103,7 +104,8 @@ public class Traceroute extends Activity{
      * Static UI methods
      */
     public static void resultPublish(String string) {
-        Log.v("nsandroid", string);
+        Log.v("traceroute", string);
+        FileManager.write("traceroute", string);
         results.append("\n" + string);
     }
 }

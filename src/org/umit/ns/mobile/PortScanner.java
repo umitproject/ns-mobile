@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.umit.ns.mobile.core.Scanning;
+import org.umit.ns.mobile.model.FileManager;
 import org.umit.ns.mobile.model.PortScanDBAdapter;
 
 import android.app.Activity;
@@ -362,18 +363,9 @@ public class PortScanner extends Activity{
     /**
      * Static UI methods
      */
-    private static int line_count = 0;
-    private static boolean isFull = false;
     public static void resultPublish(String string) {
-        Log.v("nsandroid", string);
-        if(line_count == 5 || isFull) {
-            String txt = results.getText().toString();
-            txt = txt.substring(txt.indexOf('\n') + 1);
-            results.setText(txt);
-            isFull=true;
-            line_count = 0;
-        }
-        line_count++;
+        Log.v("Scanner", string);
+        FileManager.write("scanner", string);
         results.append("\n" + string);
     }
     

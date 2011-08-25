@@ -29,6 +29,7 @@ package org.umit.ns.mobile;
 import org.umit.ns.mobile.api.XmlParser;
 import org.umit.ns.mobile.api.cmdLine;
 import org.umit.ns.mobile.api.shellUtils;
+import org.umit.ns.mobile.model.FileManager;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -106,7 +107,8 @@ public class nmap extends Activity{
      * Static UI methods
      */
     public static void resultPublish(String string) {
-            Log.v("nsandroid", string);
+        Log.v("nmap", string);
+        FileManager.write("nmap", string);
         results.append("\n" + string);
     }
 }

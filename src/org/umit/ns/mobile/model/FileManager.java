@@ -31,6 +31,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile.model;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class FileManager {
 
+    static String fileName = "/data/local/nsandroid-logs.txt";
+    public static void write(String tag, String str)
+    {
+        FileWriter fstream;
+        try {
+            fstream = new FileWriter(fileName);
+            BufferedWriter out = new BufferedWriter(fstream);
+            out.append(tag + ": " + str);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
 }
