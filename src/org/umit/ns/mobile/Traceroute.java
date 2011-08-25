@@ -32,6 +32,9 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -62,22 +65,33 @@ public class Traceroute extends Activity{
         }
     };
     
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) { 
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.layout.cmdmenu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.clear:
+            clearLogs();
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void clearLogs() {
+        results.setText("");
+    }
+    
     /**
      * Static UI methods
      */
-    private static int line_count = 0;
-    private static boolean isFull = false;
     public static void resultPublish(String string) {
-        if(string == null) return;
         Log.v("nsandroid", string);
-        if(line_count == 5 || isFull) {
-            String txt = results.getText().toString();
-            txt = txt.substring(txt.indexOf('\n') + 1);
-            results.setText(txt);
-            isFull=true;
-            line_count = 0;
-        }
-        line_count++;
         results.append("\n" + string);
     }
 }

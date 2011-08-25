@@ -40,16 +40,33 @@ import android.os.AsyncTask;
 public class cmdLine extends AsyncTask<String, String, String> {
 
     String app;
+    Process p;
+    boolean running = false;
     
     @Override
     protected String doInBackground(String... params) {
         String cmd = params[0];
         app = params[1];
+        running = true;
+        
         cmdRun(cmd);
         return " ";
     }
     
+    @Override
+    protected void onCancelled()
+    {
+        if(running == false)
+            return;
+        running = false;
+        p.destroy();
+    }
+    
     protected void onPostExecute(String param) {
+        if(app == "nmap")
+        {
+            nmap.onDone();
+        }
     }
     
     protected void onProgressUpdate(String... params) {
@@ -63,19 +80,20 @@ public class cmdLine extends AsyncTask<String, String, String> {
     private boolean cmdRun(String cmd) {
         
         publishProgress("Executing " + cmd);
-        Process p;
         
         try{
             p = Runtime.getRuntime().exec("su");
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
+                pOut.writeBytes("cd /data/local\n");
                 pOut.writeBytes(cmd + "\n");
+                pOut.writeBytes("exit\n");
                 pOut.flush();
             } 
             catch (IOException e1) {
                 e1.printStackTrace();
             }
-
+            
             int read;
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
             char[] buffer = new char[1024];
@@ -94,6 +112,8 @@ public class cmdLine extends AsyncTask<String, String, String> {
         catch(IOException e) {
             e.printStackTrace();
         }
+        
+
         return false;
     }   
 }
