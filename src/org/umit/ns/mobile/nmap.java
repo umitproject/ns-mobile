@@ -28,6 +28,7 @@ package org.umit.ns.mobile;
 
 import org.umit.ns.mobile.api.XmlParser;
 import org.umit.ns.mobile.api.cmdLine;
+import org.umit.ns.mobile.api.shellUtils;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -89,14 +90,13 @@ public class nmap extends Activity{
             nmap = new cmdLine();
             nmap.execute("./" + cmd.getText().toString() + " -oX nmap.xml", "nmap");
             started = true;
-            start.setText("Stop");
         }
     };
     
     public static void onDone()
     {
-        start.setText("Start");
         started = false;
+        shellUtils.killProcess("./nmap");
         XmlParser xp = new XmlParser();
         String output = xp.parseXML("/data/local/nmap.xml");
         resultPublish(output);
@@ -105,19 +105,8 @@ public class nmap extends Activity{
     /**
      * Static UI methods
      */
-//    private static int line_count = 0;
-//    private static boolean isFull = false;
     public static void resultPublish(String string) {
-//        if(string == null) return;
             Log.v("nsandroid", string);
-//        if(line_count == 5 || isFull) {
-//            String txt = results.getText().toString();
-//            txt = txt.substring(txt.indexOf('\n') + 1);
-//            results.setText(txt);
-//            isFull=true;
-//            line_count = 0;
-//        }
-//        line_count++;
         results.append("\n" + string);
     }
 }

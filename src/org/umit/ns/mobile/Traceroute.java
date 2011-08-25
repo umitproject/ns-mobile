@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.umit.ns.mobile;
 
 import org.umit.ns.mobile.api.cmdLine;
+import org.umit.ns.mobile.api.shellUtils;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -44,12 +45,15 @@ public class Traceroute extends Activity{
     
     TextView cmd;
     static TextView results;
+    static boolean started = false;
+    static Button start;
+    
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.traceroute);
         
-        Button start = (Button)findViewById(R.id.startTraceroute);
+        start = (Button)findViewById(R.id.startTraceroute);
         start.setOnClickListener(tracerouteLoad);
 
         cmd = (TextView)findViewById(R.id.traceroutecmd);
@@ -62,6 +66,7 @@ public class Traceroute extends Activity{
             AsyncTask<String, String, String> traceroute;
             traceroute = new cmdLine();
             traceroute.execute("/data/local/busybox " + cmd.getText().toString(), "traceroute");
+            started = true;
         }
     };
     
@@ -71,6 +76,13 @@ public class Traceroute extends Activity{
         inflater.inflate(R.layout.cmdmenu, menu);
         return true;
     }
+    
+    public static void onDone()
+    {
+        started = false;
+        shellUtils.killProcess("/data/local/busybox");
+    }
+
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

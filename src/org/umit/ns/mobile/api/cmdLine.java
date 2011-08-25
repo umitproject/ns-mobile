@@ -67,6 +67,11 @@ public class cmdLine extends AsyncTask<String, String, String> {
         {
             nmap.onDone();
         }
+        
+        if(app == "traceroute")
+        {
+            Traceroute.onDone();
+        }
     }
     
     protected void onProgressUpdate(String... params) {
