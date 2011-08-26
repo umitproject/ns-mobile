@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/info"
           android:title="Info" />
+    <item android:id="@+id/logs"
+          android:title="Logs" />
     <item android:id="@+id/mode"
           android:title="Mode" />
-    <item android:id="@+id/reset"
-          android:title="Reset" />
     <item android:id="@+id/save"
           android:title="Save" />
     <item android:id="@+id/load"
@@ -16,4 +16,7 @@
           android:title="Traceroute" />
 	<item android:id="@+id/portscan"
           android:title="Port Scan" />
+	<item android:id="@+id/reset"
+          android:title="Reset" />
+    
 </menu>

@@ -29,6 +29,9 @@
 		<activity android:name="SavedScans"
         		android:label="Saved Scans">
 		</activity>
+		<activity android:name="LogsViewer"
+        		android:label="Logs">
+		</activity>
 		
     </application>
 </manifest>

@@ -63,7 +63,7 @@ public class PortScanner extends Activity{
     static int p = 0;
     static AsyncTask<Object[], String, Void> scan;
     static int portsToScan = 0;
-    
+
     static ProgressBar progress;
     static TextView results;
     static TextView from;
@@ -169,9 +169,17 @@ public class PortScanner extends Activity{
             return true;
         case R.id.reset:
             reset();
+        case R.id.logs:
+            loadLogs();
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void loadLogs() {        
+        Intent n = new Intent(PortScanner.this, LogsViewer.class);
+        startActivityForResult(n, 0);
     }
     
     private void saveScan()

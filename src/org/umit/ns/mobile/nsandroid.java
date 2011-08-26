@@ -285,9 +285,17 @@ public class nsandroid extends Activity {
         case R.id.load:
             loadScans();
             return true;
+        case R.id.logs:
+            loadLogs();
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void loadLogs() {        
+        Intent n = new Intent(nsandroid.this, LogsViewer.class);
+        startActivityForResult(n, 0);
     }
 
     private void saveDiscovery()

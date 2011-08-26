@@ -22,30 +22,83 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 /**
  * @author angadsg
- * 
- * Exports Database to XML file (similar to nmaps' implementation)
- * 
- * Loads data from XML file.
+ * File based logs
  * 
  */
 
 package org.umit.ns.mobile.model;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import org.umit.ns.mobile.nsandroid;
+
+import android.util.Log;
 
 public class FileManager {
 
-    static String fileName = "/data/local/nsandroid-logs.txt";
+    static String fileName = "nsandroid-logs.txt";
     public static void write(String tag, String str)
     {
-        FileWriter fstream;
+        FileOutputStream fos;
         try {
-            fstream = new FileWriter(fileName);
-            BufferedWriter out = new BufferedWriter(fstream);
-            out.append(tag + ": " + str);
-            out.flush();
+            fos = nsandroid.defaultInstance.openFileOutput(fileName, nsandroid.defaultInstance.MODE_APPEND);
+            fos.write(("[" + tag + "] " + now() + ": " + str + "\n").getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static String read()
+    {
+        String all = " ";
+        FileInputStream fis;
+        
+        try {
+            fis = nsandroid.defaultInstance.openFileInput(fileName);
+            DataInputStream in = new DataInputStream(fis);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String str;
+            while((str = br.readLine()) != null) {
+                all = all + str + "\n";
+            }
+            in.close();
+            fis.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        return all;
+    }
+    
+    public static final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
+
+    public static String now() {
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+        return sdf.format(cal.getTime());
+    }
+
+    public static void clear() {
+        FileOutputStream fos;
+        try {
+            fos = nsandroid.defaultInstance.openFileOutput(fileName, nsandroid.defaultInstance.MODE_PRIVATE);
+            fos.write(" ".getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

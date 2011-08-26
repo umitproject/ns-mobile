@@ -31,6 +31,7 @@ import org.umit.ns.mobile.api.shellUtils;
 import org.umit.ns.mobile.model.FileManager;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -91,9 +92,17 @@ public class Traceroute extends Activity{
         switch (item.getItemId()) {
         case R.id.clear:
             clearLogs();
+            return true;
+        case R.id.logs:
+            loadLogs();
         default:
             return super.onOptionsItemSelected(item);
         }
+    }
+    
+    private void loadLogs() {        
+        Intent n = new Intent(Traceroute.this, LogsViewer.class);
+        startActivityForResult(n, 0);
     }
 
     public void clearLogs() {

@@ -59,8 +59,7 @@ public class XmlParser {
                 Element e = (Element)list.item(i);
                 nmap.resultPublish(e.getNodeName() + ": " + e.getNodeValue());
                 NamedNodeMap nnm = e.getAttributes();
-                for(int j=0; j<nnm.getLength(); j++)
-                {
+                for(int j=0; j<nnm.getLength(); j++) {
                     Node n = nnm.item(j);
                         nmap.resultPublish(n.getNodeName() +": " + n.getNodeValue());
                 }
