@@ -26,6 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.umit.ns.mobile.api.cmdLine;
 import org.umit.ns.mobile.api.shellUtils;
 import org.umit.ns.mobile.model.FileManager;
@@ -41,15 +45,23 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 public class Traceroute extends Activity{
     
     TextView cmd;
-    static TextView results;
     static boolean started = false;
     static Button start;
+    static ListView lv;
+    static SimpleAdapter sa;
+    static List<HashMap<String, String>> fillMaps;
+    TextView list_host;
+
     
+    AsyncTask<String, String, String> traceroute;
+
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,13 +71,18 @@ public class Traceroute extends Activity{
         start.setOnClickListener(tracerouteLoad);
 
         cmd = (TextView)findViewById(R.id.traceroutecmd);
-        
-        results = (TextView)findViewById(R.id.tracerouteOutput);
+        lv = (ListView)findViewById(R.id.listView);
+        String[] f = new String[] {"host"};
+        int[] t = new int[] { R.id.host };
+        fillMaps = new ArrayList<HashMap<String, String>>();
+        sa = new SimpleAdapter(this, fillMaps, R.layout.list_item, f, t);
+        lv.setAdapter(sa);
+        //lv.setOnItemClickListener();
+
     }
     
     public OnClickListener tracerouteLoad = new OnClickListener() {
         public void onClick(View v) {
-            AsyncTask<String, String, String> traceroute;
             traceroute = new cmdLine();
             traceroute.execute("/data/local/busybox " + cmd.getText().toString(), "traceroute");
             started = true;
@@ -82,7 +99,7 @@ public class Traceroute extends Activity{
     public static void onDone()
     {
         started = false;
-        shellUtils.killProcess("/data/local/busybox");
+        //shellUtils.killProcess("/data/local/busybox");
     }
 
     
@@ -91,7 +108,7 @@ public class Traceroute extends Activity{
         // Handle item selection
         switch (item.getItemId()) {
         case R.id.clear:
-            clearLogs();
+            clearList();
             return true;
         case R.id.logs:
             loadLogs();
@@ -105,8 +122,16 @@ public class Traceroute extends Activity{
         startActivityForResult(n, 0);
     }
 
-    public void clearLogs() {
-        results.setText("");
+    public static void addToList(String str) {
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("host", str);
+        fillMaps.add(map);
+        sa.notifyDataSetChanged();
+    }
+    
+    public static void clearList() {
+        fillMaps.clear();
+        sa.notifyDataSetChanged();
     }
     
     /**
@@ -115,6 +140,7 @@ public class Traceroute extends Activity{
     public static void resultPublish(String string) {
         Log.v("traceroute", string);
         FileManager.write("traceroute", string);
-        results.append("\n" + string);
+        //addToList(string.substring(string.indexOf(' '), string.indexOf('(')));
+        addToList(string);
     }
 }

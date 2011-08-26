@@ -100,7 +100,7 @@ public class cmdLine extends AsyncTask<String, String, String> {
             }
             
             int read;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             char[] buffer = new char[1024];
             StringBuffer output = new StringBuffer();
             try{
