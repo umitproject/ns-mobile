@@ -40,8 +40,6 @@ import java.util.Calendar;
 
 import org.umit.ns.mobile.nsandroid;
 
-import android.util.Log;
-
 public class FileManager {
 
     static String fileName = "nsandroid-logs.txt";

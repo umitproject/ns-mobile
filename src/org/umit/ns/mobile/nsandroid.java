@@ -73,7 +73,6 @@ public class nsandroid extends Activity {
     
     //UI
     static ProgressBar progress;
-    static TextView results;
     static TextView from;
     static TextView to;
     ArrayAdapter<CharSequence> adapter;
@@ -124,7 +123,6 @@ public class nsandroid extends Activity {
         select = new AlertDialog.Builder(this);
         adapter = ArrayAdapter.createFromResource(this, R.array.discovery_array, android.R.layout.simple_spinner_dropdown_item);
         
-        results = (TextView)findViewById(R.id.results);
         progress = (ProgressBar)findViewById(R.id.progress);
         from = (TextView)findViewById(R.id.from);
         to = (TextView)findViewById(R.id.to);
@@ -472,7 +470,6 @@ public class nsandroid extends Activity {
     public static void resultPublish(String string) {
         Log.v("nsandroid", string);
         FileManager.write("nsandroid", string);
-        results.append("\n" + string);
     }
     
     /**
