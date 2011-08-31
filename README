@@ -1,26 +1,23 @@
-README
-Network Scanner for Android
-[Requires root privileges for some options]
+Compiling and Installation
+The binaries for the native applications are included. You can also compile them from the source using the instructions from the resources given in the resource section.
 
-Install the apk using ./adb install ns-mobile.apk
+Compiling instructions for the native applications will be added here soon.
 
-The first activity is the Host Discovery activity.
-Select the mode for host discovery and press start.
+To get the application running on your android phone -
 
-The discovered hosts will be shown on the left and
-the logs will be shown on the left.
-Touch a discovered host to go to the Port Scanning 
-activity.
-Select the mode for port scanning, specify the range
-of ports and press start. Open ports will be shown 
-on right and the logs will be shown on the left.
+Get the source
+git clone http://git.umitproject.org/ns-mobile.git
 
+From the android-sdk tools folder run -
+android update project --name ns-mobile --target 8 --path /path/to/source
 
-Commandline cross-compiled executable -
+And then from the project folder run 'ant release'.
+The APK file will be generated in the bin folder. Install it on your device using adb install /path/to/apk
+
+Port Scanner executable
 [Requires root privileges]
 
-The native binary is copied automatically to  
-/data/local/scanner when the program runs. 
+The native binary is copied automatically to /data/local/scanner when the program runs. 
 
 Usage
 
@@ -36,3 +33,15 @@ Additional options
 -T set number of tries for timedout ports
 -r Set packet rate
 -N output for the apk to parse  
+
+
+Resources
+Busybox compiling instructions - 
+http://wiki.androidx86.org/index.php?title=Installing_BusyBox
+
+Nmap Cross Compile - 
+http://rmccurdy.com/stuff/G1/BINS/NMAP/NMAP%20FOR%20ANDROID%20CROSS%20COMPILE%20ARM.html
+
+Nmap for Android binaries - 
+http://ftp.linux.hr/android/nmap/
+
