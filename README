@@ -9,7 +9,7 @@ Get the source
 git clone http://git.umitproject.org/ns-mobile.git
 
 From the android-sdk tools folder run -
-android update project --name ns-mobile --target 8 --path /path/to/source
+android update project --name ns-mobile --target android-8 --path /path/to/source
 
 And then from the project folder run 'ant release'.
 The APK file will be generated in the bin folder. Install it on your device using adb install /path/to/apk
