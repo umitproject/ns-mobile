@@ -14,6 +14,14 @@ android update project --name ns-mobile --target android-8 --path /path/to/sourc
 And then from the project folder run 'ant release'.
 The APK file will be generated in the bin folder. Install it on your device using adb install /path/to/apk
 
+Note: you need zipalign on the PATH. Also you should configure the keystore in ant.properties.
+Example @ UNIX
+$ cd ~/.android
+$ keytool -genkey -v -keystore my-release-key.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000
+create an ant.properties in root project with:
+key.store=/Users/.username/my-release-key.keystore
+key.alias=alias_name
+
 Port Scanner executable
 [Requires root privileges]
 
@@ -44,4 +52,6 @@ http://rmccurdy.com/stuff/G1/BINS/NMAP/NMAP%20FOR%20ANDROID%20CROSS%20COMPILE%20
 
 Nmap for Android binaries - 
 http://ftp.linux.hr/android/nmap/
+
+
 
