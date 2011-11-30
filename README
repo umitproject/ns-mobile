@@ -2,7 +2,7 @@ Compiling and Installation
 The binaries for the native applications are included. You can also compile them from the source using the instructions from the resources given in the resource section.
 
 Compiling instructions for the native applications will be added here soon.
-	
+
 To get the application running on your android phone -
 
 Get the source
@@ -23,14 +23,13 @@ key.store=/Users/.username/my-release-key.keystore
 key.alias=alias_name
 
 Port Scanner executable
+[Requires root privileges]
 Build instructions : 
 ~/android-ndk-r6/ndk-build -C /path/to/project
 
 The binary is generated at libs/armeabi/scanner
 Copy the scanner to /data folder by using dab push libs/armeabi/scanner /data/scanner
 
-[Requires root privileges]
-
 The native binary is copied automatically to /data/local/scanner when the program runs. 
 
 Usage
@@ -58,63 +57,3 @@ http://rmccurdy.com/stuff/G1/BINS/NMAP/NMAP%20FOR%20ANDROID%20CROSS%20COMPILE%20
 
 Nmap for Android binaries - 
 http://ftp.linux.hr/android/nmap/
-
-
-
-Compiling and Installation
-The binaries for the native applications are included. You can also compile them from the source using the instructions from the resources given in the resource section.
-
-Compiling instructions for the native applications will be added here soon.
-
-To get the application running on your android phone -
-
-Get the source
-git clone http://git.umitproject.org/ns-mobile.git
-
-From the android-sdk tools folder run -
-android update project --name ns-mobile --target android-8 --path /path/to/source
-
-And then from the project folder run 'ant release'.
-The APK file will be generated in the bin folder. Install it on your device using adb install /path/to/apk
-
-Note: you need zipalign on the PATH. Also you should configure the keystore in ant.properties.
-Example @ UNIX
-$ cd ~/.android
-$ keytool -genkey -v -keystore my-release-key.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000
-create an ant.properties in root project with:
-key.store=/Users/.username/my-release-key.keystore
-key.alias=alias_name
-
-Port Scanner executable
-[Requires root privileges]
-
-The native binary is copied automatically to /data/local/scanner when the program runs. 
-
-Usage
-
-Basic SYN Scan 
-./scanner -s -h 192.168.2.1
-
-Basic FIN Scan
-./scanner -f -h 192.168.2.1
-
-Additional options
--v Verbose mode
--p Set source port
--T set number of tries for timedout ports
--r Set packet rate
--N output for the apk to parse  
-
-
-Resources
-Busybox compiling instructions - 
-http://wiki.androidx86.org/index.php?title=Installing_BusyBox
-
-Nmap Cross Compile - 
-http://rmccurdy.com/stuff/G1/BINS/NMAP/NMAP%20FOR%20ANDROID%20CROSS%20COMPILE%20ARM.html
-
-Nmap for Android binaries - 
-http://ftp.linux.hr/android/nmap/
-
-
-
