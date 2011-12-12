@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.umit.ns.mobile.api.cmdLine;
-import org.umit.ns.mobile.api.shellUtils;
 import org.umit.ns.mobile.model.FileManager;
 
 import android.app.Activity;

@@ -216,8 +216,7 @@ public class nsandroid extends Activity {
         ZipUtils zu = new ZipUtils();
         boolean success = zu.unzipArchive(new File("/data/local/archive"), new File("/data/local/"));
 
-        if(success == false)
-        {
+        if(success == false) {
             nsandroid.resultPublish("Some issue with extracting the zipfile. Contact the developer");
         }
         else {
@@ -225,7 +224,6 @@ public class nsandroid extends Activity {
             SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean("nativeInstalled", nativeInstalled);
-            
             editor.commit();
         }
         
@@ -237,7 +235,6 @@ public class nsandroid extends Activity {
             os.writeBytes("exit\n");
             os.flush();
             process.waitFor();
-
         } catch (IOException e) {
             nsandroid.resultPublish(e.getMessage());
             e.printStackTrace();
@@ -245,7 +242,6 @@ public class nsandroid extends Activity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
     }
     
     @Override
