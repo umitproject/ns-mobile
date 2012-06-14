@@ -2,12 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.umit.ns.mobile"
       android:versionCode="1"
-      android:versionName="1.0">
+      android:versionName="1.1"
+      android:process="org.umit.ns.mobile.Scanner">
     <uses-sdk android:minSdkVersion="8" />
 
-<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET" />
 
     <application android:debuggable="true" android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name="nsandroid"
@@ -32,6 +33,26 @@
 		<activity android:name="LogsViewer"
         		android:label="Logs">
 		</activity>
-		
+        <activity android:name=".service.TestService"
+                android:label="TestService">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service android:name="org.umit.ns.mobile.service.ScanService"
+                 android:exported="true"
+                 android:process="org.umit.ns.mobile.service.ScanServiceProcess"
+                 android:label="@string/service_scan_name"
+                 android:icon="@drawable/icon_service">
+            <intent-filter>
+                <action android:name="org.umit.ns.mobile.service.ScanService"/>
+                <action android:name="org.umit.ns.mobile.SCAN"/>
+                <action android:name="android.intent.action.NETWORK_SCAN"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
+
     </application>
 </manifest>
