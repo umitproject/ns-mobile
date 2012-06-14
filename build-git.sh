@@ -9,5 +9,5 @@ cp ./libs/armeabi/scanner ./res/raw/archived/scanner
 zip -r ./res/raw/archive ./res/raw/archived/*
 mv ./res/raw/archive.zip ./res/raw/archive
 
-echo "Building Android Project"
-ant debug
+#echo "Building Android Project"
+#ant debug
