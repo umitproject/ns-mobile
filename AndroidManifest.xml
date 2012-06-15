@@ -33,8 +33,9 @@
 		<activity android:name="LogsViewer"
         		android:label="Logs">
 		</activity>
-        <activity android:name=".service.TestService"
-                android:label="TestService">
+
+        <activity android:name=".service.ScanningActivity"
+                android:label="ScanningActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
