@@ -53,7 +53,7 @@ Busybox compiling instructions -
 http://wiki.androidx86.org/index.php?title=Installing_BusyBox
 
 Nmap Cross Compile - 
-http://rmccurdy.com/stuff/G1/BINS/NMAP/NMAP%20FOR%20ANDROID%20CROSS%20COMPILE%20ARM.html
+http://blog.umitproject.org/2012/05/cross-compilation-of-static-nmap-with.html
 
 Nmap for Android binaries - 
 http://ftp.linux.hr/android/nmap/
