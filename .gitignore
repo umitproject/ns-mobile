@@ -17,3 +17,6 @@ local.properties
 *.jar
 .classpath
 obj/**
+*.iml
+.idea
+.idea/*

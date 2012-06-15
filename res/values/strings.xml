@@ -4,6 +4,7 @@
     <string name="app_name">nsandroid</string>
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
+    <string name="service_scan_name">Umit Network Scanner Service</string>
     <string-array name="discovery_array">
         <item>Speed</item>
         <item>Normal</item>

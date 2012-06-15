@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:orientation="horizontal"
+                  android:gravity="center_horizontal"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent">
+
+        <Button android:id="@+id/start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start">
+
+        </Button>
+
+        <Button android:id="@+id/bind"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bind">
+        </Button>
+
+        <Button android:id="@+id/sendmessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Msg">
+        </Button>
+
+        <Button android:id="@+id/unbind"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Unbind">
+        </Button>
+
+        <Button android:id="@+id/stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stop">
+        </Button>
+
+    </LinearLayout>
+</LinearLayout>
+
