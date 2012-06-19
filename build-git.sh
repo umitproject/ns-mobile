@@ -6,8 +6,10 @@ ndk-build
 
 echo "Arranging binaries"
 cp ./libs/armeabi/scanner ./res/raw/archived/scanner
-zip -r ./res/raw/archive ./res/raw/archived/*
-mv ./res/raw/archive.zip ./res/raw/archive
+cd ./res/raw/archived
+zip -r archive *
+mv archive.zip ../archive
+cd ../../../
 
 #echo "Building Android Project"
 #ant debug

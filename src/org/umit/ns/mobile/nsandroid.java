@@ -232,6 +232,7 @@ public class nsandroid extends Activity {
             Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
             os.writeBytes("chmod 755 /data/local/*" + "\n");
+            os.writeBytes("chmod 755 /data/local/nmap/bin/nmap" + "\n");
             os.writeBytes("exit\n");
             os.flush();
             process.waitFor();

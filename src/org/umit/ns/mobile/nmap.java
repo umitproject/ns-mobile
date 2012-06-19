@@ -109,7 +109,7 @@ public class nmap extends Activity{
         started = false;
         shellUtils.killProcess("./nmap");
         XmlParser xp = new XmlParser();
-        String output = xp.parseXML("/data/local/nmap.xml");
+        String output = xp.parseXML("/data/local/nmap/share/nmap.xml");
         resultPublish(output);
     }
     

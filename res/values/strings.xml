@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, nsandroid!</string>
-    <string name="app_name">nsandroid</string>
+    <string name="app_name">Umit Scanner</string>
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
     <string name="service_scan_name">Umit Network Scanner Service</string>

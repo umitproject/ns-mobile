@@ -12,16 +12,11 @@ public class NmapScanTask implements Runnable {
     private final boolean hasRoot;
     private final StringBuffer scanResults;
     private final String scanArguments;
+
     private volatile boolean cancelled;
+    private volatile boolean done;
+
     private Process p;
-
-    public synchronized void cancel() {
-        cancelled=true;
-    }
-
-    public synchronized boolean isCancelled(){
-        return cancelled;
-    }
 
     public NmapScanTask(final String scanArguments,
                         final StringBuffer scanResults,
@@ -31,11 +26,21 @@ public class NmapScanTask implements Runnable {
         this.scanResults=scanResults;
         this.scanArguments=scanArguments;
         this.hasRoot=hasRoot;
-        cancelled=false;
+        cancelled = false;
+        done = false;
     }
 
     public void run() {
         Log.d("UmitScanner","NmapScanTask:run()");
+
+        if(scanArguments==null) {
+            Log.e("UmitScanner", "NmapScanTask:run() scanArguments is null");
+            return;
+        }
+        if(scanResults==null) {
+            Log.e("UmitScanner", "NmapScanTask:run() scanResults is null");
+            return;
+        }
 
         try{
             //TODO Necessary to request root/check for it in Activity
@@ -43,7 +48,7 @@ public class NmapScanTask implements Runnable {
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
                 //TODO make it work with the correct location
-                pOut.writeBytes("cd /data/local\n");
+                pOut.writeBytes("cd /data/local/nmap/bin \n");
                 pOut.writeBytes(scanArguments + "\n");
                 pOut.writeBytes("exit\n");
                 pOut.flush();
@@ -68,7 +73,12 @@ public class NmapScanTask implements Runnable {
                     //TODO I'll probably use a ContentProvider in the future
                     scanResults.append(buffer, 0, read);
                 }
+                //scan finished
                 p.destroy();
+                synchronized (this) {
+                    done=true;
+                }
+                //TODO notify Service
             }
             catch(IOException e) {
                 if(Thread.currentThread().isInterrupted()) {
@@ -93,5 +103,17 @@ public class NmapScanTask implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public synchronized void cancel() {
+        cancelled=true;
+    }
+
+    public synchronized boolean isCancelled(){
+        return cancelled;
+    }
+
+    public synchronized boolean isDone(){
+        return done;
     }
 }

@@ -90,7 +90,7 @@ public class cmdLine extends AsyncTask<String, String, String> {
             p = Runtime.getRuntime().exec("su");
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
-                pOut.writeBytes("cd /data/local\n");
+                pOut.writeBytes("cd /data/local/nmap/bin\n");
                 pOut.writeBytes(cmd + "\n");
                 pOut.writeBytes("exit\n");
                 pOut.flush();

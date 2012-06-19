@@ -11,6 +11,7 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 
     <application android:debuggable="true" android:icon="@drawable/icon" android:label="@string/app_name">
+
         <activity android:name="nsandroid"
                   android:label="@string/app_name">
             <intent-filter>
@@ -18,29 +19,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name="PortScanner"
         		android:label="Port Scanner">
 		</activity>
+
 		<activity android:name="nmap"
         		android:label="nmap">
 		</activity>
+
 		<activity android:name="Traceroute"
         		android:label="Traceroute">
 		</activity>
+
 		<activity android:name="SavedScans"
         		android:label="Saved Scans">
 		</activity>
+
 		<activity android:name="LogsViewer"
         		android:label="Logs">
 		</activity>
-
-        <activity android:name=".service.ScanningActivity"
-                android:label="ScanningActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
 
         <service android:name="org.umit.ns.mobile.service.ScanService"
                  android:exported="true"
