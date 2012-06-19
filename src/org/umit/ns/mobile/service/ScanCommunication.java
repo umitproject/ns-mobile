@@ -5,7 +5,7 @@ public interface ScanCommunication {
     static final int RQST_SCAN_ID = 1;
     static final int RESP_SCAN_ID = 2;
 
-    static final int RQST_START_SCAN = 3; //expecting obj with a bundle with "ScanArguments", as well as replyTo
+    static final int RQST_START_SCAN = 3; //obj=Bundle: {boolean HasRoot, string ScanArguments}
     static final int RESP_START_SCAN_OK = 4;
     static final int RESP_START_SCAN_ERR = 5;
 

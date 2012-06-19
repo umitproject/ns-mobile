@@ -1,5 +1,9 @@
 package org.umit.ns.mobile.service;
 
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import org.umit.ns.mobile.R;
 
@@ -8,37 +12,35 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class NmapScanTask implements Runnable {
+public class NmapScanTask implements Runnable, ScanCommunication {
     private final boolean hasRoot;
     private final StringBuffer scanResults;
     private final String scanArguments;
-
-    private volatile boolean cancelled;
-    private volatile boolean done;
+    private final Messenger mService;
 
     private Process p;
 
-    public NmapScanTask(final String scanArguments,
+    public NmapScanTask(final IBinder service,
+                        final String scanArguments,
                         final StringBuffer scanResults,
                         final boolean hasRoot) {
 
-        Log.d("UmitScanner","NmapScanTask:NmapScanTask()");
+        Log.d("UmitScanner","NmapScanTask.NmapScanTask()");
         this.scanResults=scanResults;
         this.scanArguments=scanArguments;
         this.hasRoot=hasRoot;
-        cancelled = false;
-        done = false;
+        this.mService=new Messenger(service);
     }
 
     public void run() {
-        Log.d("UmitScanner","NmapScanTask:run()");
+        Log.d("UmitScanner","NmapScanTask.run()");
 
         if(scanArguments==null) {
-            Log.e("UmitScanner", "NmapScanTask:run() scanArguments is null");
+            Log.e("UmitScanner", "NmapScanTask.run() scanArguments is null");
             return;
         }
         if(scanResults==null) {
-            Log.e("UmitScanner", "NmapScanTask:run() scanResults is null");
+            Log.e("UmitScanner", "NmapScanTask.run() scanResults is null");
             return;
         }
 
@@ -69,15 +71,20 @@ public class NmapScanTask implements Runnable {
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             char[] buffer = new char[1024];
             try{
-                while ( ((read = reader.read(buffer)) > 0) & ! isCancelled()) {
+                while ( ((read = reader.read(buffer)) > 0)) {
                     //TODO I'll probably use a ContentProvider in the future
                     scanResults.append(buffer, 0, read);
                 }
                 //scan finished
                 p.destroy();
-                synchronized (this) {
-                    done=true;
+                Message msg = Message.obtain(null,NOTIFY_SCAN_FINISHED);
+                try {
+                    mService.send(msg);
+                } catch (RemoteException e) {
+                    Log.d("UmitScanner",
+                            "Caught Remote Exception while sending from ScanTask to ScanService:"+e.toString());
                 }
+
                 //TODO notify Service
             }
             catch(IOException e) {
@@ -103,17 +110,5 @@ public class NmapScanTask implements Runnable {
                 e.printStackTrace();
             }
         }
-    }
-
-    public synchronized void cancel() {
-        cancelled=true;
-    }
-
-    public synchronized boolean isCancelled(){
-        return cancelled;
-    }
-
-    public synchronized boolean isDone(){
-        return done;
     }
 }
