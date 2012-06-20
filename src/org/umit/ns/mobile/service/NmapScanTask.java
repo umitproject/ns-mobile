@@ -52,7 +52,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
             p = Runtime.getRuntime().exec("su");
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
-                //TODO make it work with the correct location
+                //TODO make it work with the correct location from string resource
                 pOut.writeBytes("cd /data/local/nmap/bin \n");
                 pOut.writeBytes(scanArguments + "\n");
                 pOut.writeBytes("exit\n");

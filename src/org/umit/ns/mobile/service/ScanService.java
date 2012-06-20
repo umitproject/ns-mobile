@@ -8,14 +8,14 @@ import android.widget.Toast;
 import org.umit.ns.mobile.R;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 //TODO Handle Runtime Changes (may kill the thread)
-//TODO Implement managing of Calling Activity, matching Scan Thread
-//TODO Implement ScanObject
 //TODO Handle Redelivered Intent
 //TODO Notification for Service or Notification for each scan, but first design GUI with Ad and check with Adriano
 
@@ -132,7 +132,14 @@ public class ScanService extends Service implements ScanCommunication {
     @Override
     public void onDestroy() {
         Log.d("UmitScanner","ScanService.onDestroy()");
-        //TODO thread.stop();
+        //Stop all scans, remove all Scan objects
+        Iterator it = scans.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            Scan scan = (Scan)pairs.getValue();
+            scan.stop();
+            it.remove(); // avoids a ConcurrentModificationException
+        }
     }
 
     //----BINDING-----
@@ -200,7 +207,6 @@ public class ScanService extends Service implements ScanCommunication {
 
                 case RQST_PROGRESS:{
                     Log.d("UmitScanner","ScanService:RQST_PROGRESS");
-                    //TODO implement progress
                     if(false) {
                         Scan scan = scans.get(msg.arg1);
                         if(scan==null) {
