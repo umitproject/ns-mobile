@@ -4,7 +4,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.*;
 import android.util.Log;
+import android.widget.Toast;
+import org.umit.ns.mobile.R;
 
+import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -18,14 +22,97 @@ import java.util.concurrent.Future;
 public class ScanService extends Service implements ScanCommunication {
 
     private static ExecutorService executorService = Executors.newCachedThreadPool();
+    private Random random=new Random();
+
+    private HashMap<Integer,Scan> scans = new HashMap<Integer, Scan>();
 
     //---Thread-specific vars (one for each scanning thread/request activity)
-    private StringBuffer scanResults;
-    private Messenger messengerActivity;
-    private Future<?> futureScan;
-    private String scanArguments;
-    private boolean hasRoot;
-    private boolean scanFinished;
+    private class Scan {
+        protected int id;
+        protected boolean hasRoot;
+
+        protected Messenger messengerActivity;
+        public StringBuffer results;
+        public Future<?> future;
+        public String arguments;
+
+        public boolean started;
+        public boolean finished;
+
+        Scan(Messenger messengerActivity, boolean hasRoot) {
+            id = random.nextInt();
+            results = new StringBuffer();
+            this.messengerActivity=messengerActivity;
+            this.hasRoot=hasRoot;
+            started = false;
+            finished = false;
+        }
+
+        public boolean tellActivity(int RESP_CODE){
+            try{
+                messengerActivity.send(Message.obtain(null,RESP_CODE,id,0));
+            } catch(RemoteException e) {
+                Log.d("UmitScanner", "ScanService could not send Message to Activity");
+                return false;
+            }
+            return true;
+        }
+
+        public boolean tellActivity(int RESP_CODE, String Info){
+            Bundle bundle = new Bundle();
+            bundle.putString("Info",Info);
+            Log.d("UmitScanner",Info);
+            try{
+                messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
+            } catch(RemoteException e) {
+                Log.d("UmitScanner", "ScanService could not send Message to Activity");
+                return false;
+            }
+            return true;
+        }
+
+        public boolean tellActivity(int RESP_CODE, Bundle bundle){
+            try{
+                messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
+            } catch(RemoteException e) {
+                Log.d("UmitScanner", "ScanService could not send Message to Activity");
+                return false;
+            }
+            return true;
+        }
+
+        public boolean tellActivity(int RESP_CODE, int msg_arg2){
+            try{
+                messengerActivity.send(Message.obtain(null, RESP_CODE, id, msg_arg2));
+            } catch(RemoteException e) {
+                Log.d("UmitScanner", "ScanService could not send Message to Activity");
+                return false;
+            }
+            return true;
+        }
+
+        public void start(String scanArguments) {
+            this.arguments = scanArguments;
+
+            //Start scan with submit so we can call futureScan.cancel() if we want to stop it
+            future = executorService.submit(
+                    new NmapScanTask(id, mMessenger.getBinder(),arguments,results,hasRoot));
+
+            started=true;
+            finished=false;
+        }
+
+        public boolean stop() {
+            started = false;
+            finished = false;
+            return future.cancel(true);
+        }
+
+        public int progress() {
+            //TODO implement progress
+            return 1;
+        }
+    }
     //--\Thread-specific vars
 
     @Override
@@ -45,7 +132,7 @@ public class ScanService extends Service implements ScanCommunication {
     @Override
     public void onDestroy() {
         Log.d("UmitScanner","ScanService.onDestroy()");
-//        thread.stop();
+        //TODO thread.stop();
     }
 
     //----BINDING-----
@@ -53,68 +140,119 @@ public class ScanService extends Service implements ScanCommunication {
         @Override
         public void handleMessage(Message msg) {
             switch(msg.what) {
-                case RQST_START_SCAN:
+                case RQST_SCAN_ID:{
+                    //Check if Activity has sent a messenger in replyTo
+                    if(msg.replyTo==null){
+                        Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.replyTo present");
+                        break;
+                    }
+                    if(msg.obj==null || !((Bundle)msg.obj).containsKey("HasRoot")){
+                        Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.obj:HasRoot boolean present");
+                        break;
+                    }
+
+                    boolean hasRoot = ((Bundle)msg.obj).getBoolean("HasRoot");
+                    Scan scan = new Scan(msg.replyTo,hasRoot);
+                    scans.put(scan.id, scan);
+                    //Scan ID Response
+                    scan.tellActivity(RESP_SCAN_ID);
+                    break;
+                }
+
+                case RQST_START_SCAN: {
                     Log.d("UmitScanner","ScanService:RQST_START_SCAN");
 
-                    scanFinished=false;
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan == null){
+                        scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no scan with specified id present");
+                        break;
+                    }
+                    if(scan.started) {
+                        scan.tellActivity(RESP_START_SCAN_ERR,"ScanService:RQST_START_SCAN Scan already started");
+                        break;
+                    }
+                    if(msg.obj==null || !((Bundle)msg.obj).containsKey("ScanArguments")) {
+                        scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no msg.obj:ScanArguments string present");
+                        break;
+                    }
 
-                    //Extract info from msg
-                    messengerActivity = msg.replyTo;
                     String scanArguments = ((Bundle)msg.obj).getString("ScanArguments");
-                    boolean hasRoot = ((Bundle)msg.obj).getBoolean("HasRoot");
-                    scanResults = new StringBuffer();
-                    Log.d("UmitScanner","FLAG1");
-
-                    //Start scan with submit so we can call futureScan.cancel() if we want to stop it
-                    futureScan = executorService.submit(
-                            new NmapScanTask(mMessenger.getBinder(),scanArguments,scanResults,hasRoot));
-                    Log.d("UmitScanner","FLAG2");
+                    scan.start(scanArguments);
+                    scan.tellActivity(RESP_START_SCAN_OK);
                     break;
+                }
 
-                case RQST_STOP_SCAN:
+                case RQST_STOP_SCAN:{
                     Log.d("UmitScanner","ScanService:RQST_STOP_SCAN");
-                    // :)
-                    futureScan.cancel(true);
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan==null) {
+                        scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN no scan with specified id present");
+                        break;
+                    }
+                    if(!(scan.started)) {
+                        scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN scan is not started");
+                        break;
+                    }
+                    scan.stop();
+                    scan.tellActivity(RESP_STOP_SCAN_OK);
                     break;
+                }
 
-                case RQST_PROGRESS:
+                case RQST_PROGRESS:{
                     Log.d("UmitScanner","ScanService:RQST_PROGRESS");
                     //TODO implement progress
-                    break;
+                    if(false) {
+                        Scan scan = scans.get(msg.arg1);
+                        if(scan==null) {
+                            scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR no scan with specified id present");
+                            break;
+                        }
+                        if(!(scan.started)) {
+                            scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR scan is not started");
+                            break;
+                        }
+                        scan.tellActivity(RESP_PROGRESS_OK,scan.progress());
+                    }
 
-                case RQST_RESULTS:
+                    break;
+                }
+
+                case RQST_RESULTS:{
                     Log.d("UmitScanner","ScanService:RQST_RESULTS");
-                    //Build Message
-                    Message messageActivity;
-                    if(scanFinished){
-                        messageActivity=Message.obtain(null, RESP_RESULTS_OK);
-                        Bundle bundle = new Bundle();
-                        bundle.putString("ScanResults",scanResults.toString());
-                        messageActivity.obj=bundle;
-                    } else {
-                        messageActivity=Message.obtain(null, RESP_RESULTS_ERR);
-                    }
-                    //Send Message
-                    try {
-                        messengerActivity.send(messageActivity);
-                    } catch (RemoteException e) {
-                        Log.d("UmitScanner",
-                                "Caught Remote Exception while sending RESP_RESULTS from ScanService to ScanActivity:"+e.toString());
-                    }
-                    break;
+                    //TODO test realtime results
 
-                case NOTIFY_SCAN_FINISHED:
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan==null) {
+                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR no scan with specified id present");
+                        break;
+                    }
+                    if(!(scan.started)) {
+                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
+                        break;
+                    }
+                    if(!(scan.finished)) {
+                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan has not finished");
+                        break;
+                    }
+
+                    scan.tellActivity(RESP_RESULTS_OK,scan.results.toString());
+                    break;
+                }
+
+                case NOTIFY_SCAN_FINISHED:{
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
-
-                    scanFinished=true;
-                    Message messageActivity2 = Message.obtain(null,NOTIFY_SCAN_FINISHED);
-                    try {
-                        messengerActivity.send(messageActivity2);
-                    } catch (RemoteException e) {
-                        Log.d("UmitScanner",
-                                "Caught Remote Exception while sending NOTIFY_SCAN_FINISHED from ScanService to ScanActivity:"+e.toString());
-                    }
+                    Scan scan = scans.get(msg.arg1);
+                    scan.finished=true;
+                    scan.tellActivity(NOTIFY_SCAN_FINISHED);
                     break;
+                }
+
+                case NOTIFY_SCAN_PROBLEM:{
+                    Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
+                    Scan scan = scans.get(msg.arg1);
+                    scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj));
+                    break;
+                }
 
                 default:
                     super.handleMessage(msg);

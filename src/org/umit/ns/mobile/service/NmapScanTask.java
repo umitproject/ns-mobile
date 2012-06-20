@@ -17,15 +17,18 @@ public class NmapScanTask implements Runnable, ScanCommunication {
     private final StringBuffer scanResults;
     private final String scanArguments;
     private final Messenger mService;
+    private final int id;
 
     private Process p;
 
-    public NmapScanTask(final IBinder service,
+    public NmapScanTask(final int id,
+                        final IBinder service,
                         final String scanArguments,
                         final StringBuffer scanResults,
                         final boolean hasRoot) {
 
-        Log.d("UmitScanner","NmapScanTask.NmapScanTask()");
+        Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
+        this.id = id;
         this.scanResults=scanResults;
         this.scanArguments=scanArguments;
         this.hasRoot=hasRoot;
@@ -77,7 +80,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
                 }
                 //scan finished
                 p.destroy();
-                Message msg = Message.obtain(null,NOTIFY_SCAN_FINISHED);
+                Message msg = Message.obtain(null,NOTIFY_SCAN_FINISHED,id,0);
                 try {
                     mService.send(msg);
                 } catch (RemoteException e) {
