@@ -26,17 +26,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.umit.ns.mobile;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.os.*;
-import android.widget.Toast;
+import org.umit.ns.mobile.api.ScanCommunication;
 import org.umit.ns.mobile.api.XmlParser;
-import org.umit.ns.mobile.api.cmdLine;
 import org.umit.ns.mobile.api.shellUtils;
 import org.umit.ns.mobile.model.FileManager;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
 import android.view.Menu;
@@ -46,14 +45,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import org.umit.ns.mobile.service.ScanCommunication;
 
-public class nmap extends Activity implements ScanCommunication{
+public class nmap extends Activity implements ScanCommunication {
     
     TextView cmd;
     static TextView results;
     static boolean started = false;
-    static AsyncTask<String, String, String> nmap;
     static Button start;
 
     //---Binding---
@@ -71,7 +68,7 @@ public class nmap extends Activity implements ScanCommunication{
         }
     };
 
-    class IncomingHandler extends Handler {
+    private class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -105,7 +102,7 @@ public class nmap extends Activity implements ScanCommunication{
     final Messenger mMessenger = new Messenger(new IncomingHandler());
     //--\Binding---
 
-
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nmap);
@@ -189,7 +186,6 @@ public class nmap extends Activity implements ScanCommunication{
         Intent n = new Intent(nmap.this, LogsViewer.class);
         startActivityForResult(n, 0);
     }
-
 
     public void clearLogs() {
         results.setText("");

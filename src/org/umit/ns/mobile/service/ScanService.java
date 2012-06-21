@@ -4,8 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.*;
 import android.util.Log;
-import android.widget.Toast;
-import org.umit.ns.mobile.R;
+import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -58,10 +57,10 @@ public class ScanService extends Service implements ScanCommunication {
             return true;
         }
 
-        public boolean tellActivity(int RESP_CODE, String Info){
+        public boolean tellActivity(int RESP_CODE, String info){
             Bundle bundle = new Bundle();
-            bundle.putString("Info",Info);
-            Log.d("UmitScanner",Info);
+            bundle.putString("Info", info);
+            Log.d("UmitScanner", "tellActivity():"+info);
             try{
                 messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
             } catch(RemoteException e) {
@@ -72,6 +71,7 @@ public class ScanService extends Service implements ScanCommunication {
         }
 
         public boolean tellActivity(int RESP_CODE, Bundle bundle){
+            Log.d("UmitScanner","tellActivity():Bundle");
             try{
                 messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
             } catch(RemoteException e) {
@@ -82,6 +82,7 @@ public class ScanService extends Service implements ScanCommunication {
         }
 
         public boolean tellActivity(int RESP_CODE, int msg_arg2){
+            Log.d("UmitScanner","tellActivity():msg.arg2="+msg_arg2);
             try{
                 messengerActivity.send(Message.obtain(null, RESP_CODE, id, msg_arg2));
             } catch(RemoteException e) {
@@ -96,7 +97,7 @@ public class ScanService extends Service implements ScanCommunication {
 
             //Start scan with submit so we can call futureScan.cancel() if we want to stop it
             future = executorService.submit(
-                    new NmapScanTask(id, mMessenger.getBinder(),arguments,results,hasRoot));
+                    new NmapScanServiceRunnable(id, mMessenger.getBinder(),arguments,results,hasRoot));
 
             started=true;
             finished=false;
@@ -236,16 +237,19 @@ public class ScanService extends Service implements ScanCommunication {
                         scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
                         break;
                     }
-                    if(!(scan.finished)) {
-                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan has not finished");
-                        break;
-                    }
+//                    if(!(scan.finished)) {
+//                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan has not finished");
+//                        break;
+//                    }
 
                     scan.tellActivity(RESP_RESULTS_OK,scan.results.toString());
+                    //Once we've sent the results, we can dispense with them.
+                    scans.remove(msg.arg1);
                     break;
                 }
 
                 case NOTIFY_SCAN_FINISHED:{
+                    //Service receives it from ScanThread
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
                     Scan scan = scans.get(msg.arg1);
                     scan.finished=true;
@@ -254,9 +258,10 @@ public class ScanService extends Service implements ScanCommunication {
                 }
 
                 case NOTIFY_SCAN_PROBLEM:{
+                    //Service receives it from ScanThread
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
                     Scan scan = scans.get(msg.arg1);
-                    scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj));
+                    scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj).getString("Info"));
                     break;
                 }
 

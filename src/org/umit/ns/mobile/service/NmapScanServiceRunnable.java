@@ -1,31 +1,28 @@
 package org.umit.ns.mobile.service;
 
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
+import android.os.*;
 import android.util.Log;
-import org.umit.ns.mobile.R;
+import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class NmapScanTask implements Runnable, ScanCommunication {
+public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
     private final boolean hasRoot;
     private final StringBuffer scanResults;
     private final String scanArguments;
     private final Messenger mService;
     private final int id;
 
-    private Process p;
+    private java.lang.Process p;
 
-    public NmapScanTask(final int id,
-                        final IBinder service,
-                        final String scanArguments,
-                        final StringBuffer scanResults,
-                        final boolean hasRoot) {
+    public NmapScanServiceRunnable(final int id,
+                                   final IBinder service,
+                                   final String scanArguments,
+                                   final StringBuffer scanResults,
+                                   final boolean hasRoot) {
 
         Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
         this.id = id;
@@ -33,6 +30,31 @@ public class NmapScanTask implements Runnable, ScanCommunication {
         this.scanArguments=scanArguments;
         this.hasRoot=hasRoot;
         this.mService=new Messenger(service);
+    }
+
+    private void tellService(int RESP_CODE){
+        Log.d("UmitScanner","tellService():RESP_CODE="+RESP_CODE);
+        Message msg = Message.obtain(null,RESP_CODE,id,0);
+        try {
+            mService.send(msg);
+        } catch (RemoteException e) {
+            Log.d("UmitScanner",
+                    "Caught Remote Exception while sending from ScanTask to ScanService:"+e.toString());
+        }
+    }
+
+    private void tellService(int RESP_CODE, String info) {
+        Log.d("UmitScanner","tellService():RESP_CODE="+RESP_CODE+"; info="+info);
+        Message msg = Message.obtain(null,RESP_CODE,id,0);
+        Bundle bundle = new Bundle();
+        bundle.putString("Info", info);
+        msg.obj=bundle;
+        try {
+            mService.send(msg);
+        } catch (RemoteException e) {
+            Log.d("UmitScanner",
+                    "Caught Remote Exception while sending from ScanTask to ScanService:"+e.toString());
+        }
     }
 
     public void run() {
@@ -49,10 +71,11 @@ public class NmapScanTask implements Runnable, ScanCommunication {
 
         try{
             //TODO Necessary to request root/check for it in Activity
+            //TODO insert root logic here
             p = Runtime.getRuntime().exec("su");
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
-                //TODO make it work with the correct location from string resource
+                //TODO externalize location to string resource
                 pOut.writeBytes("cd /data/local/nmap/bin \n");
                 pOut.writeBytes(scanArguments + "\n");
                 pOut.writeBytes("exit\n");
@@ -64,8 +87,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
                     Log.d("UmitScanner","Interrupted from blocked I/O");
                     p.destroy();
                 } else {
-                    //TODO manage exception
-                    //throw new RuntimeException(e);
+                    tellService(NOTIFY_SCAN_PROBLEM,e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -80,15 +102,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
                 }
                 //scan finished
                 p.destroy();
-                Message msg = Message.obtain(null,NOTIFY_SCAN_FINISHED,id,0);
-                try {
-                    mService.send(msg);
-                } catch (RemoteException e) {
-                    Log.d("UmitScanner",
-                            "Caught Remote Exception while sending from ScanTask to ScanService:"+e.toString());
-                }
-
-                //TODO notify Service
+                tellService(NOTIFY_SCAN_FINISHED);
             }
             catch(IOException e) {
                 if(Thread.currentThread().isInterrupted()) {
@@ -96,8 +110,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
                     Log.d("UmitScanner","Interrupted from blocked I/O");
                     p.destroy();
                 } else {
-                    //TODO manage exception
-                    //throw new RuntimeException(e);
+                    tellService(NOTIFY_SCAN_PROBLEM,e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -108,8 +121,7 @@ public class NmapScanTask implements Runnable, ScanCommunication {
                 Log.d("UmitScanner","Interrupted from blocked I/O");
                 p.destroy();
             } else {
-                //TODO manage exception
-                //throw new RuntimeException(e);
+                tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
                 e.printStackTrace();
             }
         }
