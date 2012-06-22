@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
-    private final boolean hasRoot;
+    private final boolean rootAccess;
     private final StringBuffer scanResults;
     private final String scanArguments;
     private final Messenger mService;
@@ -28,7 +28,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         this.id = id;
         this.scanResults=scanResults;
         this.scanArguments=scanArguments;
-        this.hasRoot=hasRoot;
+        this.rootAccess=hasRoot;
         this.mService=new Messenger(service);
     }
 
@@ -70,9 +70,12 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         }
 
         try{
-            //TODO Necessary to request root/check for it in Activity
             //TODO insert root logic here
-            p = Runtime.getRuntime().exec("su");
+            if(rootAccess)
+                p = Runtime.getRuntime().exec("su");
+            else
+                p = Runtime.getRuntime().exec("ls");
+
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
                 //TODO externalize location to string resource

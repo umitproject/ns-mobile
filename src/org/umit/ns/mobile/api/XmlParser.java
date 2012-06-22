@@ -57,11 +57,11 @@ public class XmlParser {
             NodeList list = doc.getElementsByTagName("*");
             for(int i = 0; i<list.getLength(); i++) {
                 Element e = (Element)list.item(i);
-                nmap.resultPublish(e.getNodeName() + ": " + e.getNodeValue());
+              //  nmap.resultPublish(e.getNodeName() + ": " + e.getNodeValue());
                 NamedNodeMap nnm = e.getAttributes();
                 for(int j=0; j<nnm.getLength(); j++) {
                     Node n = nnm.item(j);
-                        nmap.resultPublish(n.getNodeName() +": " + n.getNodeValue());
+                        //nmap.resultPublish(n.getNodeName() +": " + n.getNodeValue());
                 }
             }
         } catch (ParserConfigurationException e) {

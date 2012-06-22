@@ -65,7 +65,7 @@ public class cmdLine extends AsyncTask<String, String, String> {
     protected void onPostExecute(String param) {
         if(app == "nmap")
         {
-            nmap.onDone();
+            //nmap.onDone();
         }
         
         if(app == "traceroute")
@@ -77,9 +77,10 @@ public class cmdLine extends AsyncTask<String, String, String> {
     protected void onProgressUpdate(String... params) {
         if(app == "traceroute")
             Traceroute.resultPublish(params[0]);
-
+        int x;
         if(app == "nmap")
-            nmap.resultPublish(params[0]);
+            x=5;
+            //nmap.resultPublish(params[0]);
     }   
     
     private boolean cmdRun(String cmd) {

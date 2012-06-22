@@ -40,7 +40,7 @@
         		android:label="Logs">
 		</activity>
 
-        <service android:name="org.umit.ns.mobile.service.ScanService"
+        <service android:name=".service.ScanService"
                  android:exported="true"
                  android:process="org.umit.ns.mobile.service.ScanServiceProcess"
                  android:label="@string/service_scan_name"

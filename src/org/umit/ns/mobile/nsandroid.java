@@ -165,7 +165,7 @@ public class nsandroid extends Activity {
              
            // Attempt to write a file to a root-only   
            DataOutputStream os = new DataOutputStream(p.getOutputStream());   
-           os.writeBytes("echo \"Do I have root?\" >/system/sd/temporary.txt\n");  
+           os.writeBytes("echo \"Do I have root?\" >/system/sd/UmitUniqueRootCheck.txt\n");
              
            // Close the terminal  
            os.writeBytes("exit\n");   

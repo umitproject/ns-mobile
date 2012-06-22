@@ -22,13 +22,14 @@ public class ScanService extends Service implements ScanCommunication {
 
     private static ExecutorService executorService = Executors.newCachedThreadPool();
     private Random random=new Random();
-
+    private boolean rootAccess=false;
+    private boolean checkedRoot=false;
+    private boolean pending_RQST_SCAN_ID = false;
     private HashMap<Integer,Scan> scans = new HashMap<Integer, Scan>();
 
     //---Thread-specific vars (one for each scanning thread/request activity)
     private class Scan {
         protected int id;
-        protected boolean hasRoot;
 
         protected Messenger messengerActivity;
         public StringBuffer results;
@@ -38,11 +39,10 @@ public class ScanService extends Service implements ScanCommunication {
         public boolean started;
         public boolean finished;
 
-        Scan(Messenger messengerActivity, boolean hasRoot) {
+        Scan(Messenger messengerActivity) {
             id = random.nextInt();
             results = new StringBuffer();
             this.messengerActivity=messengerActivity;
-            this.hasRoot=hasRoot;
             started = false;
             finished = false;
         }
@@ -70,17 +70,6 @@ public class ScanService extends Service implements ScanCommunication {
             return true;
         }
 
-        public boolean tellActivity(int RESP_CODE, Bundle bundle){
-            Log.d("UmitScanner","tellActivity():Bundle");
-            try{
-                messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
-            } catch(RemoteException e) {
-                Log.d("UmitScanner", "ScanService could not send Message to Activity");
-                return false;
-            }
-            return true;
-        }
-
         public boolean tellActivity(int RESP_CODE, int msg_arg2){
             Log.d("UmitScanner","tellActivity():msg.arg2="+msg_arg2);
             try{
@@ -97,7 +86,7 @@ public class ScanService extends Service implements ScanCommunication {
 
             //Start scan with submit so we can call futureScan.cancel() if we want to stop it
             future = executorService.submit(
-                    new NmapScanServiceRunnable(id, mMessenger.getBinder(),arguments,results,hasRoot));
+                    new NmapScanServiceRunnable(id, mMessenger.getBinder(),arguments,results,rootAccess));
 
             started=true;
             finished=false;
@@ -119,6 +108,8 @@ public class ScanService extends Service implements ScanCommunication {
     @Override
     public void onCreate() {
         Log.d("UmitScanner","ScanService.onCreate()");
+        Runnable rootRunnable =new RootAcquisitionRunnable(mMessenger.getBinder());
+        executorService.execute(rootRunnable);
         //this.startForeground();
     }
 
@@ -154,16 +145,34 @@ public class ScanService extends Service implements ScanCommunication {
                         Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.replyTo present");
                         break;
                     }
-                    if(msg.obj==null || !((Bundle)msg.obj).containsKey("HasRoot")){
-                        Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.obj:HasRoot boolean present");
-                        break;
-                    }
 
-                    boolean hasRoot = ((Bundle)msg.obj).getBoolean("HasRoot");
-                    Scan scan = new Scan(msg.replyTo,hasRoot);
+                    Scan scan = new Scan(msg.replyTo);
                     scans.put(scan.id, scan);
                     //Scan ID Response
-                    scan.tellActivity(RESP_SCAN_ID);
+
+                    //If the NOTIFY_ROOT_ACCESS came before the RQST_SCAN_ID
+                    if(checkedRoot)
+                        scan.tellActivity(RESP_SCAN_ID,(int)(rootAccess?1:0));
+                    else
+                        pending_RQST_SCAN_ID = true;
+
+                    break;
+                }
+
+                case NOTIFY_ROOT_ACCESS: {
+                    Log.d("UmitScanner","ScanService:NOTIFY_ROOT_ACCESS");
+                    rootAccess = (msg.arg1 == 1);
+                    checkedRoot=true;
+                    //If the RQST_SCAN_ID came before the NOTIFY_ROOT_ACCESS
+                    if(pending_RQST_SCAN_ID){
+                        Scan scan;
+                        Iterator it = scans.entrySet().iterator();
+                        while(it.hasNext()) {
+                            Map.Entry pairs = (Map.Entry)it.next();
+                            scan = (Scan)pairs.getValue();
+                            scan.tellActivity(RESP_SCAN_ID,(int)(rootAccess?1:0));
+                        }
+                    }
                     break;
                 }
 
@@ -171,10 +180,9 @@ public class ScanService extends Service implements ScanCommunication {
                     Log.d("UmitScanner","ScanService:RQST_START_SCAN");
 
                     Scan scan = scans.get(msg.arg1);
-                    if(scan == null){
-                        scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no scan with specified id present");
+                    if(scan == null)
                         break;
-                    }
+                        //scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no scan with specified id present");
                     if(scan.started) {
                         scan.tellActivity(RESP_START_SCAN_ERR,"ScanService:RQST_START_SCAN Scan already started");
                         break;
@@ -193,10 +201,9 @@ public class ScanService extends Service implements ScanCommunication {
                 case RQST_STOP_SCAN:{
                     Log.d("UmitScanner","ScanService:RQST_STOP_SCAN");
                     Scan scan = scans.get(msg.arg1);
-                    if(scan==null) {
-                        scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN no scan with specified id present");
+                    if(scan==null)
                         break;
-                    }
+                        //scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN no scan with specified id present");
                     if(!(scan.started)) {
                         scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN scan is not started");
                         break;
@@ -210,10 +217,9 @@ public class ScanService extends Service implements ScanCommunication {
                     Log.d("UmitScanner","ScanService:RQST_PROGRESS");
                     if(false) {
                         Scan scan = scans.get(msg.arg1);
-                        if(scan==null) {
-                            scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR no scan with specified id present");
+                        if(scan==null)
                             break;
-                        }
+                            //scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR no scan with specified id present");
                         if(!(scan.started)) {
                             scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR scan is not started");
                             break;
@@ -229,10 +235,9 @@ public class ScanService extends Service implements ScanCommunication {
                     //TODO test realtime results
 
                     Scan scan = scans.get(msg.arg1);
-                    if(scan==null) {
-                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR no scan with specified id present");
+                    if(scan==null)
                         break;
-                    }
+//                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR no scan with specified id present");
                     if(!(scan.started)) {
                         scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
                         break;
@@ -243,8 +248,9 @@ public class ScanService extends Service implements ScanCommunication {
 //                    }
 
                     scan.tellActivity(RESP_RESULTS_OK,scan.results.toString());
-                    //Once we've sent the results, we can dispense with them.
-                    scans.remove(msg.arg1);
+                    //Once we've sent the final results, we can dispense with them.
+                    if(scan.finished)
+                        scans.remove(msg.arg1);
                     break;
                 }
 
@@ -253,7 +259,7 @@ public class ScanService extends Service implements ScanCommunication {
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
                     Scan scan = scans.get(msg.arg1);
                     scan.finished=true;
-                    scan.tellActivity(NOTIFY_SCAN_FINISHED);
+                    scan.tellActivity(NOTIFY_SCAN_FINISHED,scan.results.toString());
                     break;
                 }
 
