@@ -47,8 +47,7 @@
                  android:icon="@drawable/icon_service">
             <intent-filter>
                 <action android:name="org.umit.ns.mobile.service.ScanService"/>
-                <action android:name="org.umit.ns.mobile.SCAN"/>
-                <action android:name="android.intent.action.NETWORK_SCAN"/>
+                <action android:name="org.umit.ns.mobile.ScanService"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </service>
