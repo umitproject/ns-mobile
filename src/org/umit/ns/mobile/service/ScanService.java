@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.*;
@@ -44,10 +45,10 @@ public class ScanService extends Service implements ScanCommunication{
     public IBinder onBind(Intent intent) {
         Log.d("UmitScanner","ScanService.onBind()");
         startService(new Intent(this, ScanService.class));
-        //TODO startForeground();
         return msgrLocal.getBinder();
     }
 
+    @Override
     public boolean onUnbind(Intent intent) {
 
         if(scans.size()==0)
@@ -69,16 +70,20 @@ public class ScanService extends Service implements ScanCommunication{
 
     @Override
     public void onCreate() {
+        super.onCreate();
         Log.d("UmitScanner","ScanService.onCreate()");
 
         serviceNotificationID=random.nextInt();
-        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        mNM=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        startForeground(serviceNotificationID,getNotification(R.string.service_ready));
 
-        showNotification(R.string.service_ready);
+        Log.d("UmitScanner","Notification shown");
 
         //TODO this.startForeground
         executorService.execute(new RootAcquisitionRunnable(msgrLocal.getBinder()));
-        showNotification(R.string.service_acquire_root);
+        mNM.notify(serviceNotificationID, getNotification(R.string.service_acquire_root));
+
+        Log.d("UmitScanner","RootAcquisition fired");
 
         SharedPreferences settings = getSharedPreferences("native", 0);
         nativeInstalled = settings.getBoolean("nativeInstalled", false);
@@ -92,6 +97,7 @@ public class ScanService extends Service implements ScanCommunication{
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         Log.d("UmitScanner","ScanService.onDestroy()");
         //Stop all scans, remove all Scan objects
         for(Scan scan:scans.values())
@@ -150,7 +156,8 @@ public class ScanService extends Service implements ScanCommunication{
                     scan.start(scanArguments);
                     scan.tellActivity(RESP_START_SCAN_OK);
 
-                    showNotification(R.string.service_scan_running); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                    //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                    mNM.notify(serviceNotificationID, getNotification(R.string.service_scan_running));
                     break;
                 }
                 case RQST_STOP_SCAN:{
@@ -183,8 +190,8 @@ public class ScanService extends Service implements ScanCommunication{
                     if(scans.size()==0)
                         stopSelf();
 
-                    showNotification(R.string.service_ready); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
-
+                    //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                    mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
                     break;
                 }
                 case RQST_PROGRESS:{
@@ -233,7 +240,8 @@ public class ScanService extends Service implements ScanCommunication{
                     if(scan.finished){
                         scan = null;
                         scans.remove(msg.arg1);
-                        showNotification(R.string.service_ready); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                        //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                        mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
                     }
 
                     if(scans.size()==0)
@@ -268,10 +276,10 @@ public class ScanService extends Service implements ScanCommunication{
                             pending_RQST_SCAN_ID=false;
                         }
                         serviceReady=true;
-                        showNotification(R.string.service_ready);
+                        mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
                     }
                     else {
-                        showNotification(R.string.service_setup_native);
+                        mNM.notify(serviceNotificationID, getNotification(R.string.service_setup_native));
                         executorService.execute(new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder()));
                     }
 
@@ -306,13 +314,14 @@ public class ScanService extends Service implements ScanCommunication{
                     }
 
                     serviceReady=true;
-                    showNotification(R.string.service_ready);
+                    mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
 
                     break;
                 }
                 case NOTIFY_SCAN_FINISHED:{
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
 
+                    mNM.notify(serviceNotificationID,getNotification(R.string.service_scan_finished));
                     Scan scan = scans.get(msg.arg1);
                     scan.finished=true;
                     scan.tellActivity(NOTIFY_SCAN_FINISHED);
@@ -320,7 +329,7 @@ public class ScanService extends Service implements ScanCommunication{
                 }
                 case NOTIFY_SCAN_PROBLEM:{
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
-
+                    mNM.notify(serviceNotificationID,getNotification(R.string.service_scan_problem));
                     Scan scan = scans.get(msg.arg1);
                     scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj).getString("Info"));
                     break;
@@ -411,24 +420,14 @@ public class ScanService extends Service implements ScanCommunication{
     }
     //--\Thread-specific vars
 
-    private void showNotification(int resStringID) {
-        // In this sample, we'll use the same text for the ticker and the expanded notification
+    private Notification getNotification(int resStringID) {
         CharSequence text = getText(resStringID);
-
-        // Set the icon, scrolling text and timestamp
-        Notification notification = new Notification(R.drawable.icon_service, text,
+        Notification notification = new Notification(R.drawable.ic_stat_icon, text,
                 System.currentTimeMillis());
-
-        // The PendingIntent to launch our activity if the user selects this notification
-//        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-//                new Intent(this, Controller.class), 0);
-
-        // Set the info for the views that show in the notification panel.
+        PendingIntent contentIntent = PendingIntent.getActivity(this,0,
+                new Intent(this,org.umit.ns.mobile.nmap.class),0);
         notification.setLatestEventInfo(this, getText(R.string.service_scan_name),
-                text, null);
-
-        // Send the notification.
-        // We use a string id because it is a unique number.  We use it later to cancel.
-        mNM.notify(serviceNotificationID, notification);
+                text, contentIntent);
+        return notification;
     }
 }

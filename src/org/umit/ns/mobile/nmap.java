@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import org.umit.ns.mobile.api.ScanClientActivity;
 import org.umit.ns.mobile.api.XmlParser;
 import org.umit.ns.mobile.api.shellUtils;
@@ -34,6 +35,11 @@ public class nmap extends ScanClientActivity {
         results = (TextView)findViewById(R.id.nmapOutput);
     }
 
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+    }
+
     public View.OnClickListener nmapLoad = new View.OnClickListener() {
         public void onClick(View v) {
             startScan("./"+cmd.getText().toString()+" -oX nmap.xml");
@@ -56,9 +62,8 @@ public class nmap extends ScanClientActivity {
     public void onScanProgressReceive(int progress){}
     public void onScanCrash(int RESP_CODE,String info){
         Log.e("UmitScanner","Scan has crashed. Info: "+info);
+        Toast.makeText(getApplicationContext(),"Scanning problem: "+info,Toast.LENGTH_LONG).show();
     }
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

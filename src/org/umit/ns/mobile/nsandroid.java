@@ -95,6 +95,17 @@ public class nsandroid extends Activity {
     boolean nativeInstalled;
     private boolean mBound;
     private Messenger msgrService;
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            msgrService = new Messenger(service);
+            mBound = true;
+        }
+        public void onServiceDisconnected(ComponentName className) {
+            msgrService = null;
+            mBound = false;
+        }
+    };
+
     
     public static final String PREFS_NAME = "native";
 
@@ -150,23 +161,15 @@ public class nsandroid extends Activity {
         Button stop = (Button)findViewById(R.id.stop);
         stop.setOnClickListener(stopDiscovery);
 
-        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),
-                new ServiceConnection() {
-                    public void onServiceConnected(ComponentName className, IBinder service) {
-                        msgrService = new Messenger(service);
-                        mBound = true;
-                    }
-                    public void onServiceDisconnected(ComponentName className) {
-                        msgrService = null;
-                        mBound = false;
-                    }
-                }, Context.BIND_AUTO_CREATE);
+        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),mServiceConnection, Context.BIND_AUTO_CREATE);
+
     }
     
     @Override
     protected void onDestroy() {
         super.onDestroy();
         hd.destroy();
+        unbindService(mServiceConnection);
     }
 
 

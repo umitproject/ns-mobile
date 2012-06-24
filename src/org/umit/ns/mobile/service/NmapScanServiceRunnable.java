@@ -73,8 +73,12 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
             //TODO insert root logic here
             if(rootAccess)
                 p = Runtime.getRuntime().exec("su");
-            else
+            else {
                 p = Runtime.getRuntime().exec("ls");
+                tellService(NOTIFY_SCAN_PROBLEM,"No root access");
+                p.destroy();
+                return;
+            }
 
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {

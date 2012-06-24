@@ -7,6 +7,8 @@
 
     <string name="service_ready">Scanner Service ready</string>
     <string name="service_scan_running">Scanning in progress</string>
+    <string name="service_scan_finished">Scanning finished</string>
+    <string name="service_scan_problem">Problem with scan</string>
 
     <string name="service_acquire_root">Trying to acquire root</string>
     <string name="service_acquire_root_ok">Successfully acquired root access</string>

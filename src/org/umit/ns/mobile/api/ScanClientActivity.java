@@ -19,6 +19,11 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
                 serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unbindService(serviceConnection);
+    }
     //---Binding---
     private Messenger msgrService;
     private boolean mBound;
