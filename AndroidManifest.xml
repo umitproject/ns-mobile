@@ -46,8 +46,7 @@
                  android:exported="true"
                  android:process="org.umit.ns.mobile.service.ScanServiceProcess"
                  android:label="@string/service_scan_name"
-                 android:icon="@drawable/icon_service"
-                 android:debuggable="true">
+                 android:icon="@drawable/icon_service">
             <intent-filter>
                 <action android:name="org.umit.ns.mobile.service.ScanService"/>
                 <action android:name="org.umit.ns.mobile.ScanService"/>
