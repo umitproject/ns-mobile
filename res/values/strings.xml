@@ -4,6 +4,19 @@
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
     <string name="service_scan_name">Umit Network Scanner Service</string>
+
+    <string name="service_ready">Scanner Service ready</string>
+    <string name="service_scan_running">Scanning in progress</string>
+
+    <string name="service_acquire_root">Trying to acquire root</string>
+    <string name="service_acquire_root_ok">Successfully acquired root access</string>
+    <string name="service_acquire_root_err">No root access, limited functionality</string>
+
+    <string name="service_setup_native">Setting up native binaries</string>
+    <string name="service_setup_native_ok">Successfully set up native binaries</string>
+    <string name="service_setup_native_err">Failed to set up native binaries</string>
+
+
     <string-array name="discovery_array">
         <item>Speed</item>
         <item>Normal</item>

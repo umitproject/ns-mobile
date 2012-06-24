@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.*;
 import android.util.Log;
+import android.widget.Toast;
+import org.umit.ns.mobile.R;
 
 public abstract class ScanClientActivity extends Activity implements ScanCommunication {
     @Override
@@ -50,16 +52,22 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         public boolean finished;
     }
 
-    private Scan scan;
+    protected Scan scan;
 
     private class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case RESP_SCAN_ID:
+                case RESP_SCAN_ID_OK:
                     //Handle locally
                     scan.id = msg.arg1;
-                    scan.rootAccess = ( msg.arg2==1 ? true : false );
+                    scan.rootAccess = (msg.arg2==1);
+                    if(scan.rootAccess)
+                        Toast.makeText(getApplicationContext(), R.string.service_acquire_root_ok,Toast.LENGTH_SHORT).show();
+                    else {
+                        Toast.makeText(getApplicationContext(), R.string.service_acquire_root_err,Toast.LENGTH_SHORT).show();
+                    }
+
                     if(!mBound){
                         return;
                     }
@@ -93,6 +101,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
                     onScanFinish();
                     break;
 
+                case RESP_SCAN_ID_ERR:
                 case RESP_START_SCAN_ERR:
                 case RESP_STOP_SCAN_ERR:
                 case RESP_PROGRESS_ERR:

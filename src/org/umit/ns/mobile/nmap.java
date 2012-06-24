@@ -2,6 +2,7 @@ package org.umit.ns.mobile;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -53,7 +54,9 @@ public class nmap extends ScanClientActivity {
         results.append("\n" + scanResults);
     }
     public void onScanProgressReceive(int progress){}
-    public void onScanCrash(int RESP_CODE,String info){}
+    public void onScanCrash(int RESP_CODE,String info){
+        Log.e("UmitScanner","Scan has crashed. Info: "+info);
+    }
 
 
 

@@ -1,9 +1,14 @@
 package org.umit.ns.mobile.service;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.*;
 import android.util.Log;
+import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.util.HashMap;
@@ -18,16 +23,316 @@ import java.util.concurrent.Future;
 //TODO Handle Redelivered Intent
 //TODO Notification for Service or Notification for each scan, but first design GUI with Ad and check with Adriano
 
-public class ScanService extends Service implements ScanCommunication {
+public class ScanService extends Service implements ScanCommunication{
 
+    private NotificationManager mNM;
+    private final Messenger msgrLocal = new Messenger(new ScanServiceHandler());
     private static ExecutorService executorService = Executors.newCachedThreadPool();
-    private Random random=new Random();
-    private boolean rootAccess=false;
-    private boolean checkedRoot=false;
-    private boolean pending_RQST_SCAN_ID = false;
-    private HashMap<Integer,Scan> scans = new HashMap<Integer, Scan>();
 
-    //---Thread-specific vars (one for each scanning thread/request activity)
+    private HashMap<Integer,Scan> scans = new HashMap<Integer, Scan>();
+    private Random random=new Random();
+
+    private boolean rootAccess=false;
+    private boolean nativeInstalled=false;
+
+    private boolean pending_RQST_SCAN_ID=false;
+
+    private boolean serviceReady=false;
+
+    private int serviceNotificationID;
+
+    public IBinder onBind(Intent intent) {
+        Log.d("UmitScanner","ScanService.onBind()");
+        startService(new Intent(this, ScanService.class));
+        //TODO startForeground();
+        return msgrLocal.getBinder();
+    }
+
+    public boolean onUnbind(Intent intent) {
+
+        if(scans.size()==0)
+            stopSelf();
+
+        //Just in case some scans have Scan objects but aren't started. Ex. pending_RQST_SCAN_ID=true :)
+        boolean stop = true;
+        for(Scan scan : scans.values())
+            if(scan.started){
+                stop=false;
+                break;
+            }
+
+        if(stop)
+            stopSelf();
+
+        return false; //TODO onRebind implement!
+    }
+
+    @Override
+    public void onCreate() {
+        Log.d("UmitScanner","ScanService.onCreate()");
+
+        serviceNotificationID=random.nextInt();
+        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+        showNotification(R.string.service_ready);
+
+        //TODO this.startForeground
+        executorService.execute(new RootAcquisitionRunnable(msgrLocal.getBinder()));
+        showNotification(R.string.service_acquire_root);
+
+        SharedPreferences settings = getSharedPreferences("native", 0);
+        nativeInstalled = settings.getBoolean("nativeInstalled", false);
+    }
+
+//    @Override
+//    public int onStartCommand(Intent intent, int flags, int startId) {
+//        Log.d("UmitScanner","ScanService.onStartCommand()");
+//        return START_REDELIVER_INTENT;
+//    }
+
+    @Override
+    public void onDestroy() {
+        Log.d("UmitScanner","ScanService.onDestroy()");
+        //Stop all scans, remove all Scan objects
+        for(Scan scan:scans.values())
+            scan.stop();
+        scans.clear();
+        mNM.cancel(serviceNotificationID);
+
+    }
+
+    //TODO if the activity dies, there should be no scan? (the tellActivity will return false)
+    //TODO take account of bound activities?
+    private final class ScanServiceHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch(msg.what) {
+                case RQST_SCAN_ID:{
+                    Log.d("UmitScanner","ScanService:RQST_SCAN_ID");
+                    if(msg.replyTo==null){
+                        Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.replyTo present");
+                        break;
+                    }
+
+                    Scan scan = new Scan(msg.replyTo);
+                    scans.put(scan.id, scan);
+
+                    if(serviceReady)
+                        scan.tellActivity(RESP_SCAN_ID_OK,(int)(rootAccess?1:0));
+                    else
+                        pending_RQST_SCAN_ID = true;
+
+                    break;
+                }
+                case RQST_START_SCAN:{
+                    Log.d("UmitScanner","ScanService:RQST_START_SCAN");
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan == null){
+                        if(msg.replyTo!=null){
+                            scan = new Scan(msg.replyTo);
+                            scan.id=msg.arg1;
+                            scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no scan with specified id present");
+                        }
+                        break;
+                    }
+                    if(msg.replyTo!=null)
+                        scan.messengerActivity=msg.replyTo;
+                    if(scan.started) {
+                        scan.tellActivity(RESP_START_SCAN_ERR,"ScanService:RQST_START_SCAN Scan already started");
+                        break;
+                    }
+                    if(msg.obj==null || !((Bundle)msg.obj).containsKey("ScanArguments")) {
+                        scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no msg.obj:ScanArguments string present");
+                        break;
+                    }
+
+                    String scanArguments = ((Bundle)msg.obj).getString("ScanArguments");
+                    scan.start(scanArguments);
+                    scan.tellActivity(RESP_START_SCAN_OK);
+
+                    showNotification(R.string.service_scan_running); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                    break;
+                }
+                case RQST_STOP_SCAN:{
+                    Log.d("UmitScanner","ScanService:RQST_STOP_SCAN");
+
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan == null){
+                        if(msg.replyTo!=null){
+                            scan = new Scan(msg.replyTo);
+                            scan.id=msg.arg1;
+                            scan.tellActivity(RESP_STOP_SCAN_ERR, "ScanService:RQST_STOP_SCAN no scan with specified id present");
+                        }
+                        break;
+                    }
+                    if(msg.replyTo!=null)
+                        scan.messengerActivity=msg.replyTo;
+                    if(!scan.started) {
+                        scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN scan is not started");
+                        break;
+                    }
+
+                    scan.stop();
+                    scan.tellActivity(RESP_STOP_SCAN_OK);
+
+                    //delete the scan
+                    int scanID = scan.id;
+                    scan = null;
+                    scans.remove(scanID);
+
+                    if(scans.size()==0)
+                        stopSelf();
+
+                    showNotification(R.string.service_ready); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+
+                    break;
+                }
+                case RQST_PROGRESS:{
+                    Log.d("UmitScanner","ScanService:RQST_PROGRESS");
+
+                    if(false) {
+                        Scan scan =scans.get(msg.arg1);
+                        if(scan == null){
+                            if(msg.replyTo!=null){
+                                scan = new Scan(msg.replyTo);
+                                scan.id=msg.arg1;
+                                scan.tellActivity(RESP_PROGRESS_ERR, "ScanService:RQST_PROGRESS no scan with specified id present");
+                            }
+                            break;
+                        }
+                        if(!(scan.started)){
+                            scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR scan is not started");
+                            break;
+                        }
+                        scan.tellActivity(RESP_PROGRESS_OK,scan.progress());
+                    }
+                    break;
+                }
+                case RQST_RESULTS:{
+                    Log.d("UmitScanner","ScanService:RQST_RESULTS");
+
+                    //TODO test realtime results
+                    Scan scan = scans.get(msg.arg1);
+                    if(scan == null){
+                        if(msg.replyTo!=null){
+                            scan = new Scan(msg.replyTo);
+                            scan.id=msg.arg1;
+                            scan.tellActivity(RESP_RESULTS_ERR, "ScanService:RESP_RESULTS_ERR no scan with specified id present");
+                        }
+                        break;
+                    }
+
+                    if(!(scan.started)) {
+                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
+                        break;
+                    }
+
+                    scan.tellActivity(RESP_RESULTS_OK,scan.results.toString());
+
+                    //If the scan is finished, no reason keeping the results in the backyard
+                    if(scan.finished){
+                        scan = null;
+                        scans.remove(msg.arg1);
+                        showNotification(R.string.service_ready); //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
+                    }
+
+                    if(scans.size()==0)
+                        stopSelf();
+
+                    break;
+                }
+
+                case NOTIFY_ROOT_ACCESS:{
+                    Log.d("UmitScanner","ScanService:NOTIFY_ROOT_ACCESS");
+
+                    rootAccess = (msg.arg1==1);
+                    if(!rootAccess){
+                        //TODO NOTIFICATION ROOT FAIL
+                        if(!nativeInstalled){ //TODO Cannot setup native without root access
+                            if(pending_RQST_SCAN_ID){
+                                for(Scan scan:scans.values())
+                                    scan.tellActivity(RESP_SCAN_ID_ERR, "No root access");
+                                pending_RQST_SCAN_ID=false;
+                            }
+                            stopSelf();
+                        }
+                    }
+
+                    //TODO NOTIFICATION ROOT OK
+                    //If we get here we have root :)
+
+                    if(nativeInstalled) {
+                        if(pending_RQST_SCAN_ID){
+                            for(Scan scan:scans.values())
+                                scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
+                            pending_RQST_SCAN_ID=false;
+                        }
+                        serviceReady=true;
+                        showNotification(R.string.service_ready);
+                    }
+                    else {
+                        showNotification(R.string.service_setup_native);
+                        executorService.execute(new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder()));
+                    }
+
+                    break;
+                }
+                case NOTIFY_NATIVE_SETUP:{
+                    Log.d("UmitScanner","ScanService:NOTIFY_NATIVE_SETUP");
+
+                    //Will not go in here unless root acquired and native is not set up
+                    if(msg.arg2!=NATIVE_SETUP_SUCCESS){
+                        //NATIVE FAIL
+                        if(pending_RQST_SCAN_ID){
+                            for(Scan scan:scans.values())
+                                scan.tellActivity(RESP_SCAN_ID_ERR, "Native binaries setup has failed:" + ((Bundle)msg.obj).getString("Info"));
+                            pending_RQST_SCAN_ID=false;
+                        }
+                        stopSelf();
+                    }
+
+                    //NATIVE OK
+
+                    nativeInstalled = true;
+                    SharedPreferences settings = getSharedPreferences("native", 0);
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putBoolean("nativeInstalled", nativeInstalled);
+                    editor.commit();
+
+                    if(pending_RQST_SCAN_ID) {
+                        for(Scan scan:scans.values())
+                            scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
+                        pending_RQST_SCAN_ID=false;
+                    }
+
+                    serviceReady=true;
+                    showNotification(R.string.service_ready);
+
+                    break;
+                }
+                case NOTIFY_SCAN_FINISHED:{
+                    Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
+
+                    Scan scan = scans.get(msg.arg1);
+                    scan.finished=true;
+                    scan.tellActivity(NOTIFY_SCAN_FINISHED);
+                    break;
+                }
+                case NOTIFY_SCAN_PROBLEM:{
+                    Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
+
+                    Scan scan = scans.get(msg.arg1);
+                    scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj).getString("Info"));
+                    break;
+                }
+
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
+    //---Thread-specific vars
     private class Scan {
         protected int id;
 
@@ -48,8 +353,9 @@ public class ScanService extends Service implements ScanCommunication {
         }
 
         public boolean tellActivity(int RESP_CODE){
+            Log.d("UmitScanner", "tellActivity():RESP_CODE=" + RESP_CODE + " ID=" + id);
             try{
-                messengerActivity.send(Message.obtain(null,RESP_CODE,id,0));
+                messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0));
             } catch(RemoteException e) {
                 Log.d("UmitScanner", "ScanService could not send Message to Activity");
                 return false;
@@ -60,7 +366,8 @@ public class ScanService extends Service implements ScanCommunication {
         public boolean tellActivity(int RESP_CODE, String info){
             Bundle bundle = new Bundle();
             bundle.putString("Info", info);
-            Log.d("UmitScanner", "tellActivity():"+info);
+            Log.d("UmitScanner","tellActivity():RESP_CODE="+RESP_CODE+ " ID="+id+" info="+info);
+
             try{
                 messengerActivity.send(Message.obtain(null, RESP_CODE, id, 0, bundle));
             } catch(RemoteException e) {
@@ -71,7 +378,7 @@ public class ScanService extends Service implements ScanCommunication {
         }
 
         public boolean tellActivity(int RESP_CODE, int msg_arg2){
-            Log.d("UmitScanner","tellActivity():msg.arg2="+msg_arg2);
+            Log.d("UmitScanner","tellActivity():RESP_CODE="+RESP_CODE+ " ID="+id+" msg.arg2="+msg_arg2);
             try{
                 messengerActivity.send(Message.obtain(null, RESP_CODE, id, msg_arg2));
             } catch(RemoteException e) {
@@ -86,8 +393,7 @@ public class ScanService extends Service implements ScanCommunication {
 
             //Start scan with submit so we can call futureScan.cancel() if we want to stop it
             future = executorService.submit(
-                    new NmapScanServiceRunnable(id, mMessenger.getBinder(),arguments,results,rootAccess));
-
+                    new NmapScanServiceRunnable(id, msgrLocal.getBinder(),arguments,results,rootAccess));
             started=true;
             finished=false;
         }
@@ -105,184 +411,24 @@ public class ScanService extends Service implements ScanCommunication {
     }
     //--\Thread-specific vars
 
-    @Override
-    public void onCreate() {
-        Log.d("UmitScanner","ScanService.onCreate()");
-        Runnable rootRunnable =new RootAcquisitionRunnable(mMessenger.getBinder());
-        executorService.execute(rootRunnable);
-        //this.startForeground();
+    private void showNotification(int resStringID) {
+        // In this sample, we'll use the same text for the ticker and the expanded notification
+        CharSequence text = getText(resStringID);
+
+        // Set the icon, scrolling text and timestamp
+        Notification notification = new Notification(R.drawable.icon_service, text,
+                System.currentTimeMillis());
+
+        // The PendingIntent to launch our activity if the user selects this notification
+//        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+//                new Intent(this, Controller.class), 0);
+
+        // Set the info for the views that show in the notification panel.
+        notification.setLatestEventInfo(this, getText(R.string.service_scan_name),
+                text, null);
+
+        // Send the notification.
+        // We use a string id because it is a unique number.  We use it later to cancel.
+        mNM.notify(serviceNotificationID, notification);
     }
-
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("UmitScanner","ScanService.onStartCommand()");
-        return START_REDELIVER_INTENT;
-    }
-
-
-    @Override
-    public void onDestroy() {
-        Log.d("UmitScanner","ScanService.onDestroy()");
-        //Stop all scans, remove all Scan objects
-        Iterator it = scans.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pairs = (Map.Entry)it.next();
-            Scan scan = (Scan)pairs.getValue();
-            scan.stop();
-            it.remove(); // avoids a ConcurrentModificationException
-        }
-    }
-
-    //----BINDING-----
-    private final class ScanServiceHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch(msg.what) {
-                case RQST_SCAN_ID:{
-                    //Check if Activity has sent a messenger in replyTo
-                    if(msg.replyTo==null){
-                        Log.d("UmitScanner","ScanService:RQST_SCAN_ID no msg.replyTo present");
-                        break;
-                    }
-
-                    Scan scan = new Scan(msg.replyTo);
-                    scans.put(scan.id, scan);
-                    //Scan ID Response
-
-                    //If the NOTIFY_ROOT_ACCESS came before the RQST_SCAN_ID
-                    if(checkedRoot)
-                        scan.tellActivity(RESP_SCAN_ID,(int)(rootAccess?1:0));
-                    else
-                        pending_RQST_SCAN_ID = true;
-
-                    break;
-                }
-
-                case NOTIFY_ROOT_ACCESS: {
-                    Log.d("UmitScanner","ScanService:NOTIFY_ROOT_ACCESS");
-                    rootAccess = (msg.arg1 == 1);
-                    checkedRoot=true;
-                    //If the RQST_SCAN_ID came before the NOTIFY_ROOT_ACCESS
-                    if(pending_RQST_SCAN_ID){
-                        Scan scan;
-                        Iterator it = scans.entrySet().iterator();
-                        while(it.hasNext()) {
-                            Map.Entry pairs = (Map.Entry)it.next();
-                            scan = (Scan)pairs.getValue();
-                            scan.tellActivity(RESP_SCAN_ID,(int)(rootAccess?1:0));
-                        }
-                    }
-                    break;
-                }
-
-                case RQST_START_SCAN: {
-                    Log.d("UmitScanner","ScanService:RQST_START_SCAN");
-
-                    Scan scan = scans.get(msg.arg1);
-                    if(scan == null)
-                        break;
-                        //scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no scan with specified id present");
-                    if(scan.started) {
-                        scan.tellActivity(RESP_START_SCAN_ERR,"ScanService:RQST_START_SCAN Scan already started");
-                        break;
-                    }
-                    if(msg.obj==null || !((Bundle)msg.obj).containsKey("ScanArguments")) {
-                        scan.tellActivity(RESP_START_SCAN_ERR, "ScanService:RQST_START_SCAN no msg.obj:ScanArguments string present");
-                        break;
-                    }
-
-                    String scanArguments = ((Bundle)msg.obj).getString("ScanArguments");
-                    scan.start(scanArguments);
-                    scan.tellActivity(RESP_START_SCAN_OK);
-                    break;
-                }
-
-                case RQST_STOP_SCAN:{
-                    Log.d("UmitScanner","ScanService:RQST_STOP_SCAN");
-                    Scan scan = scans.get(msg.arg1);
-                    if(scan==null)
-                        break;
-                        //scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN no scan with specified id present");
-                    if(!(scan.started)) {
-                        scan.tellActivity(RESP_STOP_SCAN_ERR,"ScanService:RQST_STOP_SCAN scan is not started");
-                        break;
-                    }
-                    scan.stop();
-                    scan.tellActivity(RESP_STOP_SCAN_OK);
-                    break;
-                }
-
-                case RQST_PROGRESS:{
-                    Log.d("UmitScanner","ScanService:RQST_PROGRESS");
-                    if(false) {
-                        Scan scan = scans.get(msg.arg1);
-                        if(scan==null)
-                            break;
-                            //scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR no scan with specified id present");
-                        if(!(scan.started)) {
-                            scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR scan is not started");
-                            break;
-                        }
-                        scan.tellActivity(RESP_PROGRESS_OK,scan.progress());
-                    }
-
-                    break;
-                }
-
-                case RQST_RESULTS:{
-                    Log.d("UmitScanner","ScanService:RQST_RESULTS");
-                    //TODO test realtime results
-
-                    Scan scan = scans.get(msg.arg1);
-                    if(scan==null)
-                        break;
-//                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR no scan with specified id present");
-                    if(!(scan.started)) {
-                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
-                        break;
-                    }
-//                    if(!(scan.finished)) {
-//                        scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan has not finished");
-//                        break;
-//                    }
-
-                    scan.tellActivity(RESP_RESULTS_OK,scan.results.toString());
-                    //Once we've sent the final results, we can dispense with them.
-                    if(scan.finished)
-                        scans.remove(msg.arg1);
-                    break;
-                }
-
-                case NOTIFY_SCAN_FINISHED:{
-                    //Service receives it from ScanThread
-                    Log.d("UmitScanner","ScanService:NOTIFY_SCAN_FINISHED");
-                    Scan scan = scans.get(msg.arg1);
-                    scan.finished=true;
-                    scan.tellActivity(NOTIFY_SCAN_FINISHED,scan.results.toString());
-                    break;
-                }
-
-                case NOTIFY_SCAN_PROBLEM:{
-                    //Service receives it from ScanThread
-                    Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
-                    Scan scan = scans.get(msg.arg1);
-                    scan.tellActivity(NOTIFY_SCAN_PROBLEM,((Bundle)msg.obj).getString("Info"));
-                    break;
-                }
-
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
-
-    final Messenger mMessenger = new Messenger(new ScanServiceHandler());
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.d("UmitScanner","ScanService.onBind()");
-        return mMessenger.getBinder();
-    }
-    //---\BINDING-----
 }

@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import android.content.*;
+import android.os.IBinder;
+import android.os.Messenger;
 import org.umit.ns.mobile.api.ZipUtils;
 import org.umit.ns.mobile.api.networkInfo;
 import org.umit.ns.mobile.model.FileManager;
@@ -39,10 +42,6 @@ import org.umit.ns.mobile.model.FileManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -94,6 +93,8 @@ public class nsandroid extends Activity {
     public static nsandroid defaultInstance = null;
     
     boolean nativeInstalled;
+    private boolean mBound;
+    private Messenger msgrService;
     
     public static final String PREFS_NAME = "native";
 
@@ -136,9 +137,9 @@ public class nsandroid extends Activity {
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         nativeInstalled = settings.getBoolean("nativeInstalled", false);
         
-        checkRoot();
-        if(nativeInstalled == false)
-            setupNative();
+//        checkRoot();
+//        if(nativeInstalled == false)
+//            setupNative();
         
         //Attach event handlers
         //Discover
@@ -148,6 +149,18 @@ public class nsandroid extends Activity {
         //Stop
         Button stop = (Button)findViewById(R.id.stop);
         stop.setOnClickListener(stopDiscovery);
+
+        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),
+                new ServiceConnection() {
+                    public void onServiceConnected(ComponentName className, IBinder service) {
+                        msgrService = new Messenger(service);
+                        mBound = true;
+                    }
+                    public void onServiceDisconnected(ComponentName className) {
+                        msgrService = null;
+                        mBound = false;
+                    }
+                }, Context.BIND_AUTO_CREATE);
     }
     
     @Override
@@ -155,37 +168,8 @@ public class nsandroid extends Activity {
         super.onDestroy();
         hd.destroy();
     }
-    
-    public void checkRoot() {
 
-        Process p;   
-        try {   
-           // Preform su to get root privledges  
-           p = Runtime.getRuntime().exec("su");   
-             
-           // Attempt to write a file to a root-only   
-           DataOutputStream os = new DataOutputStream(p.getOutputStream());   
-           os.writeBytes("echo \"Do I have root?\" >/system/sd/UmitUniqueRootCheck.txt\n");
-             
-           // Close the terminal  
-           os.writeBytes("exit\n");   
-           os.flush();   
-           try {
-              p.waitFor();   
-                   if (p.exitValue() != 255) {
-                       hasRoot = true;
-                   }
-                   else {
-                       hasRoot = false;
-                   }
-           } catch (InterruptedException e) {
-               hasRoot = false;
-           }
-        } catch (IOException e) {
-            hasRoot = false;
-        }  
-    }
-    
+
     public void setupNative()
     {
         if(hasRoot == false) {
@@ -208,7 +192,7 @@ public class nsandroid extends Activity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
+
         //Copy the compressed file over
         CopyNative("/data/local/archive", R.raw.archive);
 
@@ -226,7 +210,7 @@ public class nsandroid extends Activity {
             editor.putBoolean("nativeInstalled", nativeInstalled);
             editor.commit();
         }
-        
+
         //Set to Executable permission
         try {
             Process process = Runtime.getRuntime().exec("su");
@@ -244,7 +228,7 @@ public class nsandroid extends Activity {
             e.printStackTrace();
         }
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) { 
         MenuInflater inflater = getMenuInflater();

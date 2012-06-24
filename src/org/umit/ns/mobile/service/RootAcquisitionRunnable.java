@@ -11,11 +11,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class RootAcquisitionRunnable implements Runnable,ScanCommunication {
+
     private Messenger mService;
+
     RootAcquisitionRunnable (IBinder service) {
         this.mService = new Messenger(service);
     }
+
     public void run() {
+        Log.d("UmitScanner", "RootAcquisitionRunnable:run()");
         java.lang.Process p;
         boolean root;
 
