@@ -10,15 +10,17 @@ import org.umit.ns.mobile.api.ZipUtils;
 
 import java.io.*;
 
-//Will not execute unless root acquired
+//SetupNative doesn't require root access
 public class SetupNativeRunnable implements Runnable,ScanCommunication {
 
-    private Messenger service;
-    private Context context;
+    private final Messenger service;
+    private final Context context;
+    private final String nativeInstallDir;
 
-    SetupNativeRunnable(Context context, IBinder service) {
+    SetupNativeRunnable(Context context, IBinder service, String nativeInstallDir) {
         this.service = new Messenger(service);
         this.context = context;
+        this.nativeInstallDir =nativeInstallDir;
     }
 
     private void tellService(int status, String info) {
@@ -33,69 +35,57 @@ public class SetupNativeRunnable implements Runnable,ScanCommunication {
         try {
             service.send(msg);
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e("UmitScanner",e.toString());
         }
     }
 
     public void run() {
         Log.d("UmitScanner","SetupNativeRunnable:run()");
 
-        try {
-            java.lang.Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("chmod 777 /data/local" + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            process.waitFor();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            tellService(PERMISSIONS_PROBLEM,"Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
-            return;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            tellService(UNZIPPING_FAILED,null);
+        if (! CopyResourceToPath(context, nativeInstallDir+"/archive", R.raw.archive)) {
+            //notification to the service is handled internally to CopyNative
             return;
         }
 
-        //Copy the compressed file over
-        if (! CopyNative(context, "/data/local/archive", R.raw.archive))
-            return;
-
-        //Extract the compressed file
         ZipUtils zu = new ZipUtils();
-        boolean success = zu.unzipArchive(new File("/data/local/archive"), new File("/data/local/"));
+        boolean success = zu.unzipArchive(new File(nativeInstallDir +"/archive"), new File(nativeInstallDir +"/"));
 
         if(!success) {
-            tellService(UNZIPPING_FAILED, "Some issue with extracting the zipfile. Contact the developer");
+            tellService(NATIVE_SETUP_FAIL,"Failed unzipping archive with binary executables");
             return;
         }
 
-        //Set to Executable permission
         try {
-            java.lang.Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("chmod 755 /data/local/*" + "\n");
-            os.writeBytes("chmod 755 /data/local/nmap/bin/nmap" + "\n");
+            java.lang.Process p = Runtime.getRuntime().exec("sh");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+            os.writeBytes("cd "+ nativeInstallDir + "\n");
+
+            os.writeBytes("chmod 755 " + nativeInstallDir + "/*" + "\n");
+            os.writeBytes("chmod 755 " + nativeInstallDir + "/nmap/bin/*" +"\n");
+
             os.writeBytes("exit\n");
             os.flush();
-            process.waitFor();
+            p.waitFor();
+            os.close();
+            p.destroy();
+
         } catch (IOException e) {
-            tellService(PERMISSIONS_PROBLEM,"Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
+            tellService(NATIVE_SETUP_FAIL,"Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
             e.printStackTrace();
             return;
         } catch (InterruptedException e) {
             e.printStackTrace();
-            tellService(UNZIPPING_FAILED,null);
+            tellService(NATIVE_SETUP_FAIL,"Interrupted process for setting permissions");
             return;
         }
 
-        tellService(NATIVE_SETUP_SUCCESS,null);
+        tellService(NATIVE_SETUP_SUCCESS,"Succeeded setting up native executables");
     }
 
-    protected boolean CopyNative(Context context, String path, int resource) {
+    protected boolean CopyResourceToPath(Context context, String path, int resource) {
 
         InputStream setdbStream = context.getResources().openRawResource(resource);
+
         try {
             byte[] bytes = new byte[setdbStream.available()];
             DataInputStream dis = new DataInputStream(setdbStream);
@@ -103,15 +93,8 @@ public class SetupNativeRunnable implements Runnable,ScanCommunication {
             FileOutputStream setdbOutStream = new FileOutputStream(path);
             setdbOutStream.write(bytes);
             setdbOutStream.close();
-
-            //Set executable permissions
-            java.lang.Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("chmod 755 " + path + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
         } catch (Exception e) {
-            tellService(UNZIPPING_FAILED, "Unable to Copy native binary " + e.getMessage());
+            tellService(NATIVE_SETUP_FAIL, "Unable to Copy native binary. Reason: " + e.getMessage());
             return false;
         }
         return true;
