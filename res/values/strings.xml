@@ -18,6 +18,7 @@
     <string name="service_setup_native_ok">Successfully set up native binaries</string>
     <string name="service_setup_native_err">Failed to set up native binaries</string>
 
+    <string name="native_install_dir">/data/data/org.umit.ns.mobile/files</string>
 
     <string-array name="discovery_array">
         <item>Speed</item>
