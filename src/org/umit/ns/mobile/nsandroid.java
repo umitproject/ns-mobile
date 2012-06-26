@@ -24,9 +24,7 @@ package org.umit.ns.mobile;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +33,6 @@ import java.util.List;
 import android.content.*;
 import android.os.IBinder;
 import android.os.Messenger;
-import org.umit.ns.mobile.api.ZipUtils;
 import org.umit.ns.mobile.api.networkInfo;
 import org.umit.ns.mobile.model.FileManager;
 
@@ -170,66 +167,6 @@ public class nsandroid extends Activity {
         super.onDestroy();
         hd.destroy();
         unbindService(mServiceConnection);
-    }
-
-
-    public void setupNative()
-    {
-        if(hasRoot == false) {
-            nsandroid.resultPublish("You dont seem to have root access. Some of the features of the app will be restricted.");
-            return;
-        }
-        //Setting up libraries and native binaries
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("chmod 777 /data/local" + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            process.waitFor();
-
-        } catch (IOException e) {
-            nsandroid.resultPublish(e.getMessage());
-            e.printStackTrace();
-            nsandroid.resultPublish("Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        //Copy the compressed file over
-        CopyNative("/data/local/archive", R.raw.archive);
-
-        //Extract the compressed file
-        ZipUtils zu = new ZipUtils();
-        boolean success = zu.unzipArchive(new File("/data/local/archive"), new File("/data/local/"));
-
-        if(success == false) {
-            nsandroid.resultPublish("Some issue with extracting the zipfile. Contact the developer");
-        }
-        else {
-            nativeInstalled = true;
-            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putBoolean("nativeInstalled", nativeInstalled);
-            editor.commit();
-        }
-
-        //Set to Executable permission
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("chmod 755 /data/local/*" + "\n");
-            os.writeBytes("chmod 755 /data/local/nmap/bin/nmap" + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            process.waitFor();
-        } catch (IOException e) {
-            nsandroid.resultPublish(e.getMessage());
-            e.printStackTrace();
-            nsandroid.resultPublish("Unable to set some of the permissions. Please verify if you have root. Some of the features of the app will be disabled.");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
