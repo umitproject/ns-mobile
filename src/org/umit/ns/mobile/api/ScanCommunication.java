@@ -28,8 +28,7 @@ public interface ScanCommunication {
     static final int NOTIFY_ROOT_ACCESS=17;
     static final int NOTIFY_NATIVE_SETUP =18;
     //---response codes NOTIFY_NATIVE_SETUP
-    static final int NATIVE_SETUP_SUCCESS=0;
-    static final int PERMISSIONS_PROBLEM=1;
-    static final int UNZIPPING_FAILED=2; //Info= reason;
+    static final int NATIVE_SETUP_SUCCESS=1;
+    static final int NATIVE_SETUP_FAIL=0;
     //--\response codes
 }
