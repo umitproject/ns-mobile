@@ -13,14 +13,12 @@ import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-//TODO Handle Runtime Changes (may kill the thread)
+//TODO Handle Runtime Changes (may kill the thread) temporarily portrait mode
 //TODO Handle Redelivered Intent
 //TODO Notification for Service or Notification for each scan, but first design GUI with Ad and check with Adriano
 
@@ -41,6 +39,8 @@ public class ScanService extends Service implements ScanCommunication{
     private boolean serviceReady=false;
 
     private int serviceNotificationID;
+
+    private String nativeInstallDir;
 
     public IBinder onBind(Intent intent) {
         Log.d("UmitScanner","ScanService.onBind()");
@@ -87,6 +87,14 @@ public class ScanService extends Service implements ScanCommunication{
 
         SharedPreferences settings = getSharedPreferences("native", 0);
         nativeInstalled = settings.getBoolean("nativeInstalled", false);
+
+        nativeInstallDir = getString(R.string.native_install_dir);
+
+        //Only useful to the programmers so nothing we can do about it runtime
+
+        if(0 != nativeInstallDir.compareTo(getFilesDir().toString()))
+            Log.e("UmitScanner", "Critical fault! nmap_install_dir string resource not matching package:" +
+                    getFilesDir().toString()+":"+nativeInstallDir);
     }
 
 //    @Override
@@ -124,7 +132,7 @@ public class ScanService extends Service implements ScanCommunication{
                     scans.put(scan.id, scan);
 
                     if(serviceReady)
-                        scan.tellActivity(RESP_SCAN_ID_OK,(int)(rootAccess?1:0));
+                        scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
                     else
                         pending_RQST_SCAN_ID = true;
 
@@ -184,7 +192,6 @@ public class ScanService extends Service implements ScanCommunication{
 
                     //delete the scan
                     int scanID = scan.id;
-                    scan = null;
                     scans.remove(scanID);
 
                     if(scans.size()==0)
@@ -238,7 +245,6 @@ public class ScanService extends Service implements ScanCommunication{
 
                     //If the scan is finished, no reason keeping the results in the backyard
                     if(scan.finished){
-                        scan = null;
                         scans.remove(msg.arg1);
                         //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
                         mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
@@ -280,13 +286,15 @@ public class ScanService extends Service implements ScanCommunication{
                     }
                     else {
                         mNM.notify(serviceNotificationID, getNotification(R.string.service_setup_native));
-                        executorService.execute(new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder()));
+                        executorService.execute(
+                                new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder(), nativeInstallDir) );
                     }
 
                     break;
                 }
                 case NOTIFY_NATIVE_SETUP:{
-                    Log.d("UmitScanner","ScanService:NOTIFY_NATIVE_SETUP");
+                    String info = ( ((Bundle)msg.obj).containsKey("Info") ? ((Bundle)msg.obj).getString("Info") : "" );
+                    Log.d("UmitScanner","ScanService:NOTIFY_NATIVE_SETUP:RESP="+msg.arg1+";Info="+info);
 
                     //Will not go in here unless root acquired and native is not set up
                     if(msg.arg2!=NATIVE_SETUP_SUCCESS){
