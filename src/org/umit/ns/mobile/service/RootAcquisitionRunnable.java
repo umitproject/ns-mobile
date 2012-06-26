@@ -7,6 +7,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import org.umit.ns.mobile.api.ScanCommunication;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -21,7 +22,7 @@ public class RootAcquisitionRunnable implements Runnable,ScanCommunication {
     public void run() {
         Log.d("UmitScanner", "RootAcquisitionRunnable:run()");
         java.lang.Process p;
-        boolean root;
+        boolean root=false;
 
         try {
             // Preform su to get root privileges
@@ -29,24 +30,47 @@ public class RootAcquisitionRunnable implements Runnable,ScanCommunication {
 
             // Attempt to write a file to a root-only
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
-            os.writeBytes("echo \"Do I have root?\" >/system/sd/UmitSuCheck.txt\n");
+            DataInputStream is = new DataInputStream(p.getInputStream());
 
-            // Close the terminal
-            os.writeBytes("exit\n");
-            os.flush();
-            try {
-                p.waitFor();
-                if (p.exitValue() != 255) {
-                    root=true;
+            if(null != os && null !=is) {
+                os.writeBytes("id\n");
+                os.flush();
+
+                String currUid = is.readLine();
+                boolean exitSu = false;
+                if (null == currUid) {
+                    root = false;
+                    exitSu = false;
+                    Log.d("UmitScanner", "Can't get root access or denied by user");
                 }
-                else {
-                    root= false;
+                else if (true == currUid.contains("uid=0"))
+                {
+                    root = true;
+                    exitSu = true;
+                    Log.d("UmitScanner", "Root access granted");
                 }
-            } catch (InterruptedException e) {
-                root= false;
+                else
+                {
+                    root = false;
+                    exitSu = true;
+                    Log.d("UmitScanner", "Root access rejected: " + currUid);
+                }
+
+                if (exitSu)
+                {
+                    os.writeBytes("exit\n");
+                    os.flush();
+                }
             }
-        } catch (IOException e) {
-            root =false;
+        }
+        catch (Exception e)
+        {
+            // Can't get root !
+            // Probably broken pipe exception on trying to write to output
+            // stream after su failed, meaning that the device is not rooted
+
+            root = false;
+            Log.d("UmitScanner", "Root access rejected:" + e.getMessage());
         }
 
         int rootAccess = (root?1:0);

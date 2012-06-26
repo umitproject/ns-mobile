@@ -81,6 +81,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
+                Log.d("UmitScanner","Executing $ "+"cd " + nativeInstallDir + "/nmap/bin \n");
                 pOut.writeBytes("cd " + nativeInstallDir + "/nmap/bin \n");
                 pOut.writeBytes(scanArguments + "\n");
                 pOut.writeBytes("exit\n");
