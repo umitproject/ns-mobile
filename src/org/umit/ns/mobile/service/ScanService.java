@@ -32,15 +32,14 @@ public class ScanService extends Service implements ScanCommunication{
     private Random random=new Random();
 
     private boolean rootAccess=false;
+    private boolean rootAcqisitionFinished = false;
     private boolean nativeInstalled=false;
+    private String nativeInstallDir;
 
     private boolean pending_RQST_SCAN_ID=false;
 
-    private boolean serviceReady=false;
-
     private int serviceNotificationID;
 
-    private String nativeInstallDir;
 
     public IBinder onBind(Intent intent) {
         Log.d("UmitScanner","ScanService.onBind()");
@@ -72,23 +71,22 @@ public class ScanService extends Service implements ScanCommunication{
     public void onCreate() {
         super.onCreate();
         Log.d("UmitScanner","ScanService.onCreate()");
+        //Check if the native binaries are already extracted
+        SharedPreferences settings = getSharedPreferences("native", 0);
+        nativeInstalled = settings.getBoolean("nativeInstalled", false);
+        nativeInstallDir = getString(R.string.native_install_dir);
 
+        //Setup notifications and foreground
         serviceNotificationID=random.nextInt();
         mNM=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         startForeground(serviceNotificationID,getNotification(R.string.service_ready));
 
-        Log.d("UmitScanner","Notification shown");
-
-        //TODO this.startForeground
         executorService.execute(new RootAcquisitionRunnable(msgrLocal.getBinder()));
-        mNM.notify(serviceNotificationID, getNotification(R.string.service_acquire_root));
-
-        Log.d("UmitScanner","RootAcquisition fired");
-
-        SharedPreferences settings = getSharedPreferences("native", 0);
-        nativeInstalled = settings.getBoolean("nativeInstalled", false);
-
-        nativeInstallDir = getString(R.string.native_install_dir);
+        if(!nativeInstalled) {
+            executorService.execute(
+                    new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder(), nativeInstallDir) );
+            mNM.notify(serviceNotificationID,getNotification(R.string.service_setup_native));
+        }
 
         //Only useful to the programmers so nothing we can do about it runtime
 
@@ -116,7 +114,7 @@ public class ScanService extends Service implements ScanCommunication{
     }
 
     //TODO if the activity dies, there should be no scan? (the tellActivity will return false)
-    //TODO take account of bound activities?
+    //TODO take account of bound activities? (for notification PendingIntent!!!)
     private final class ScanServiceHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -131,7 +129,7 @@ public class ScanService extends Service implements ScanCommunication{
                     Scan scan = new Scan(msg.replyTo);
                     scans.put(scan.id, scan);
 
-                    if(serviceReady)
+                    if(nativeInstalled && rootAcqisitionFinished)
                         scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
                     else
                         pending_RQST_SCAN_ID = true;
@@ -257,23 +255,9 @@ public class ScanService extends Service implements ScanCommunication{
                 }
 
                 case NOTIFY_ROOT_ACCESS:{
-                    Log.d("UmitScanner","ScanService:NOTIFY_ROOT_ACCESS");
-
                     rootAccess = (msg.arg1==1);
-                    if(!rootAccess){
-                        //TODO NOTIFICATION ROOT FAIL
-                        if(!nativeInstalled){ //TODO Cannot setup native without root access
-                            if(pending_RQST_SCAN_ID){
-                                for(Scan scan:scans.values())
-                                    scan.tellActivity(RESP_SCAN_ID_ERR, "No root access");
-                                pending_RQST_SCAN_ID=false;
-                            }
-                            stopSelf();
-                        }
-                    }
-
-                    //TODO NOTIFICATION ROOT OK
-                    //If we get here we have root :)
+                    rootAcqisitionFinished=true;
+                    Log.d("UmitScanner","ScanService:NOTIFY_ROOT_ACCESS="+(rootAccess?"Yes":"No"));
 
                     if(nativeInstalled) {
                         if(pending_RQST_SCAN_ID){
@@ -281,49 +265,40 @@ public class ScanService extends Service implements ScanCommunication{
                                 scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
                             pending_RQST_SCAN_ID=false;
                         }
-                        serviceReady=true;
-                        mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
                     }
-                    else {
-                        mNM.notify(serviceNotificationID, getNotification(R.string.service_setup_native));
-                        executorService.execute(
-                                new SetupNativeRunnable(getApplicationContext(),msgrLocal.getBinder(), nativeInstallDir) );
-                    }
-
                     break;
                 }
                 case NOTIFY_NATIVE_SETUP:{
                     String info = ( ((Bundle)msg.obj).containsKey("Info") ? ((Bundle)msg.obj).getString("Info") : "" );
                     Log.d("UmitScanner","ScanService:NOTIFY_NATIVE_SETUP:RESP="+msg.arg1+";Info="+info);
 
-                    //Will not go in here unless root acquired and native is not set up
-                    if(msg.arg2!=NATIVE_SETUP_SUCCESS){
-                        //NATIVE FAIL
+                    //If unsuccessful native_setup
+                    if(msg.arg1==NATIVE_SETUP_FAIL){
                         if(pending_RQST_SCAN_ID){
                             for(Scan scan:scans.values())
                                 scan.tellActivity(RESP_SCAN_ID_ERR, "Native binaries setup has failed:" + ((Bundle)msg.obj).getString("Info"));
                             pending_RQST_SCAN_ID=false;
                         }
+                        //No native, no scanning service
                         stopSelf();
                     }
 
                     //NATIVE OK
-
                     nativeInstalled = true;
                     SharedPreferences settings = getSharedPreferences("native", 0);
                     SharedPreferences.Editor editor = settings.edit();
                     editor.putBoolean("nativeInstalled", nativeInstalled);
                     editor.commit();
 
-                    if(pending_RQST_SCAN_ID) {
-                        for(Scan scan:scans.values())
-                            scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
-                        pending_RQST_SCAN_ID=false;
-                    }
-
-                    serviceReady=true;
                     mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
 
+                    if(rootAcqisitionFinished) {
+                        if(pending_RQST_SCAN_ID) {
+                            for(Scan scan:scans.values())
+                                scan.tellActivity(RESP_SCAN_ID_OK,(rootAccess?1:0));
+                            pending_RQST_SCAN_ID=false;
+                        }
+                    }
                     break;
                 }
                 case NOTIFY_SCAN_FINISHED:{
@@ -410,7 +385,7 @@ public class ScanService extends Service implements ScanCommunication{
 
             //Start scan with submit so we can call futureScan.cancel() if we want to stop it
             future = executorService.submit(
-                    new NmapScanServiceRunnable(id, msgrLocal.getBinder(),arguments,results,rootAccess));
+                    new NmapScanServiceRunnable(id, msgrLocal.getBinder(),arguments,results,rootAccess,nativeInstallDir));
             started=true;
             finished=false;
         }
