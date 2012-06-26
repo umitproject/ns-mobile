@@ -99,7 +99,7 @@ public class ZipUtils {
     
     private void createDir(File dir) {
         try {
-            Process process = Runtime.getRuntime().exec("su");
+            Process process = Runtime.getRuntime().exec("sh");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
             os.writeBytes("mkdir " + dir + "\n");
             os.writeBytes("exit\n");
