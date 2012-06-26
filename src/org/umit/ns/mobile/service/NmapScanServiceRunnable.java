@@ -15,6 +15,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
     private final String scanArguments;
     private final Messenger mService;
     private final int id;
+    private final String nativeInstallDir;
 
     private java.lang.Process p;
 
@@ -22,7 +23,8 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
                                    final IBinder service,
                                    final String scanArguments,
                                    final StringBuffer scanResults,
-                                   final boolean hasRoot) {
+                                   final boolean hasRoot,
+                                   final String nativeInstallDir) {
 
         Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
         this.id = id;
@@ -30,6 +32,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         this.scanArguments=scanArguments;
         this.rootAccess=hasRoot;
         this.mService=new Messenger(service);
+        this.nativeInstallDir = nativeInstallDir;
     }
 
     private void tellService(int RESP_CODE){
@@ -70,20 +73,15 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         }
 
         try{
-            //TODO insert root logic here
             if(rootAccess)
                 p = Runtime.getRuntime().exec("su");
             else {
-                p = Runtime.getRuntime().exec("ls");
-                tellService(NOTIFY_SCAN_PROBLEM,"No root access");
-                p.destroy();
-                return;
+                p = Runtime.getRuntime().exec("sh");
             }
 
             DataOutputStream pOut = new DataOutputStream(p.getOutputStream());
             try {
-                //TODO externalize location to string resource
-                pOut.writeBytes("cd /data/local/nmap/bin \n");
+                pOut.writeBytes("cd " + nativeInstallDir + "/nmap/bin \n");
                 pOut.writeBytes(scanArguments + "\n");
                 pOut.writeBytes("exit\n");
                 pOut.flush();
