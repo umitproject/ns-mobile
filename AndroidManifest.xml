@@ -50,6 +50,7 @@
             <intent-filter>
                 <action android:name="org.umit.ns.mobile.service.ScanService"/>
                 <action android:name="org.umit.ns.mobile.ScanService"/>
+                <action android:name="android.intent.action.NETWORK_SCAN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </service>
