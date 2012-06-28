@@ -405,7 +405,7 @@ public class ScanService extends Service implements ScanCommunication{
 
     private Notification getNotification(int resStringID) {
         CharSequence text = getText(resStringID);
-        Notification notification = new Notification(R.drawable.ic_stat_icon, text,
+        Notification notification = new Notification(R.drawable.icon_service, text,
                 System.currentTimeMillis());
         PendingIntent contentIntent = PendingIntent.getActivity(this,0,
                 new Intent(this,org.umit.ns.mobile.nmap.class),0);
