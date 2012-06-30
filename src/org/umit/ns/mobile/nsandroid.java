@@ -324,7 +324,6 @@ public class nsandroid extends Activity {
         select.setTitle(R.string.discovery_prompt)
             .setAdapter(adapter, new DialogInterface.OnClickListener() {
 
-                @Override
                 public void onClick(DialogInterface dialog, int which) {
                     hd.setMode(which);
                     dialog.dismiss();
@@ -375,7 +374,7 @@ public class nsandroid extends Activity {
      * Starts port scan
      */
     public OnItemClickListener startPortScan = new OnItemClickListener() {
-        @Override
+
         public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
                 long arg3) {
             String host = ((TextView)arg1).getText().toString();

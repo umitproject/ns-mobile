@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.umit.ns.mobile.Traceroute;
-import org.umit.ns.mobile.nmap;
-
 import android.os.AsyncTask;
 
 public class cmdLine extends AsyncTask<String, String, String> {

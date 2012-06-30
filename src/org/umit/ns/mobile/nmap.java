@@ -11,9 +11,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.umit.ns.mobile.api.ScanClientActivity;
-import org.umit.ns.mobile.api.XmlParser;
 import org.umit.ns.mobile.api.shellUtils;
-import org.umit.ns.mobile.model.FileManager;
 
 public class nmap extends ScanClientActivity {
     TextView cmd;

@@ -9,7 +9,6 @@ import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 
 public class RootAcquisitionRunnable implements Runnable,ScanCommunication {
 

@@ -244,7 +244,6 @@ public class PortScanner extends Activity{
         select.setTitle(R.string.discovery_prompt)
         .setAdapter(adapter, new DialogInterface.OnClickListener() {
 
-            @Override
             public void onClick(DialogInterface dialog, int which) {
                 setMode(which);
                 h.setText(host + " Current Scan mode: " + getScanMode());                    
