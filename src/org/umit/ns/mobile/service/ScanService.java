@@ -77,7 +77,7 @@ public class ScanService extends Service implements ScanCommunication{
         nativeInstallDir = getString(R.string.native_install_dir);
 
         //Setup notifications and foreground
-        serviceNotificationID=random.nextInt();
+        serviceNotificationID=Math.abs(random.nextInt()); //Always positive, need it for file creation
         mNM=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         startForeground(serviceNotificationID,getNotification(R.string.service_ready));
 

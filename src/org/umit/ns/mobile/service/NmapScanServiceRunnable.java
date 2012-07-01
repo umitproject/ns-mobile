@@ -29,10 +29,13 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
         this.id = id;
         this.scanResults=scanResults;
-        this.scanArguments=scanArguments + " -oX " + id + ".xml";
         this.rootAccess=hasRoot;
         this.mService=new Messenger(service);
         this.nativeInstallDir = nativeInstallDir;
+        //TODO export scanresults dir to Resources
+        //TODO expose time refresh to activity default is 500ms
+        //output to /dev/null so we don't fill "ze buffer" up
+        this.scanArguments=scanArguments + " -vv --stats-every 500ms -oX " + nativeInstallDir + "/scanresults/" + id + ".xml > /dev/null";
     }
 
     private void tellService(int RESP_CODE){
@@ -106,6 +109,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
                     //TODO I'll probably use a ContentProvider in the future
                     scanResults.append(buffer, 0, read);
                 }
+
                 //scan finished
                 p.destroy();
                 tellService(NOTIFY_SCAN_FINISHED);

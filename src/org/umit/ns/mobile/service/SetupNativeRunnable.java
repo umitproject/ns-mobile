@@ -60,6 +60,8 @@ public class SetupNativeRunnable implements Runnable,ScanCommunication {
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
             os.writeBytes("cd "+ nativeInstallDir + "\n");
 
+            os.writeBytes("mkdir " + nativeInstallDir +"/scanresults \n");
+
             os.writeBytes("chmod 755 " + nativeInstallDir + "/*" + "\n");
             os.writeBytes("chmod 755 " + nativeInstallDir + "/nmap/bin/*" +"\n");
 
