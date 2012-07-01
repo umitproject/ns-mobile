@@ -29,7 +29,7 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
         Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
         this.id = id;
         this.scanResults=scanResults;
-        this.scanArguments=scanArguments;
+        this.scanArguments=scanArguments + " -oX " + id + ".xml";
         this.rootAccess=hasRoot;
         this.mService=new Messenger(service);
         this.nativeInstallDir = nativeInstallDir;

@@ -40,7 +40,7 @@ public class nmap extends ScanClientActivity {
 
     public View.OnClickListener nmapLoad = new View.OnClickListener() {
         public void onClick(View v) {
-            startScan("./"+cmd.getText().toString()+" -oX nmap.xml");
+            startScan("./"+cmd.getText().toString());
         }
     };
 
