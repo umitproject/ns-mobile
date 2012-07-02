@@ -40,7 +40,6 @@ public class ScanService extends Service implements ScanCommunication{
 
     private int serviceNotificationID;
 
-
     public IBinder onBind(Intent intent) {
         Log.d("UmitScanner","ScanService.onBind()");
         startService(new Intent(this, ScanService.class));
@@ -147,6 +146,7 @@ public class ScanService extends Service implements ScanCommunication{
                         }
                         break;
                     }
+                    //Update replyTo in case client rebound, or was destroyed and recreated
                     if(msg.replyTo!=null)
                         scan.messengerActivity=msg.replyTo;
                     if(scan.started) {
@@ -178,6 +178,7 @@ public class ScanService extends Service implements ScanCommunication{
                         }
                         break;
                     }
+                    //Update replyTo in case client rebound, or was destroyed and recreated
                     if(msg.replyTo!=null)
                         scan.messengerActivity=msg.replyTo;
                     if(!scan.started) {
@@ -212,6 +213,9 @@ public class ScanService extends Service implements ScanCommunication{
                             }
                             break;
                         }
+                        //Update replyTo in case client rebound, or was destroyed and recreated
+                        if(msg.replyTo!=null)
+                            scan.messengerActivity=msg.replyTo;
                         if(!(scan.started)){
                             scan.tellActivity(RESP_PROGRESS_ERR,"ScanService:RESP_PROGRESS_ERR scan is not started");
                             break;
@@ -233,6 +237,10 @@ public class ScanService extends Service implements ScanCommunication{
                         }
                         break;
                     }
+
+                    //Update replyTo in case client rebound, or was destroyed and recreated
+                    if(msg.replyTo!=null)
+                        scan.messengerActivity=msg.replyTo;
 
                     if(!(scan.started)) {
                         scan.tellActivity(RESP_RESULTS_ERR,"ScanService:RESP_RESULTS_ERR scan is not started");
@@ -310,6 +318,7 @@ public class ScanService extends Service implements ScanCommunication{
                     scan.tellActivity(NOTIFY_SCAN_FINISHED);
                     break;
                 }
+
                 case NOTIFY_SCAN_PROBLEM:{
                     Log.d("UmitScanner","ScanService:NOTIFY_SCAN_PROBLEM");
                     mNM.notify(serviceNotificationID,getNotification(R.string.service_scan_problem));
@@ -337,7 +346,7 @@ public class ScanService extends Service implements ScanCommunication{
         public boolean finished;
 
         Scan(Messenger messengerActivity) {
-            id = random.nextInt();
+            id = Math.abs(random.nextInt());
             results = new StringBuffer();
             this.messengerActivity=messengerActivity;
             started = false;

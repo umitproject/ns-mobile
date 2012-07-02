@@ -11,25 +11,11 @@ import android.widget.Toast;
 import org.umit.ns.mobile.R;
 
 public abstract class ScanClientActivity extends Activity implements ScanCommunication {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
-        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),
-                serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        unbindService(serviceConnection);
-    }
-    //---Binding---
     private Messenger msgrService;
     private boolean mBound;
-
     private final Messenger msgrLocal = new Messenger(new IncomingHandler());
-
+    protected Scan scan;
     private ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             msgrService = new Messenger(service);
@@ -40,7 +26,6 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
             mBound = false;
         }
     };
-
 
     private final class Scan {
         Scan(){
@@ -57,7 +42,19 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         public boolean finished;
     }
 
-    protected Scan scan;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),
+                serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unbindService(serviceConnection);
+    }
 
     private class IncomingHandler extends Handler {
         @Override
