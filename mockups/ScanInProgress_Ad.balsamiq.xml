@@ -1,0 +1,127 @@
+<mockup version="1.0" skin="sketch" measuredW="1153" measuredH="672" mockupW="954" mockupH="643">
+  <controls>
+    <control controlID="75" controlTypeID="com.balsamiq.mockups::iPhone" x="199" y="137" w="-1" h="-1" measuredW="282" measuredH="510" zOrder="0" locked="false" isInGroup="-1"/>
+    <control controlID="76" controlTypeID="com.balsamiq.mockups::List" x="226" y="286" w="228" h="263" measuredW="100" measuredH="126" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <selectedIndex>2</selectedIndex>
+        <text>Notification%201%0ANotification%202%0AUmit%20Network%20Scanner%20SVC%205%20scans%20running%0ANotification%204%0A...</text>
+      </controlProperties>
+    </control>
+    <control controlID="77" controlTypeID="com.balsamiq.mockups::ButtonBar" x="226" y="236" w="221" h="29" measuredW="206" measuredH="29" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>WiFi%2C%20BT%2C%20GPS%2C%20Snd</text>
+      </controlProperties>
+    </control>
+    <control controlID="78" controlTypeID="com.balsamiq.mockups::RoundButton" x="226" y="541" w="228" h="23" measuredW="32" measuredH="32" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <shape>rectangle</shape>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="79" controlTypeID="com.balsamiq.mockups::RoundButton" x="330" y="543" w="20" h="18" measuredW="32" measuredH="32" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="80" controlTypeID="com.balsamiq.mockups::RoundButton" x="336" y="549" w="9" h="7" measuredW="32" measuredH="32" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="81" controlTypeID="com.balsamiq.mockups::TextInput" x="226" y="263" w="228" h="-1" measuredW="51" measuredH="27" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Date...</text>
+      </controlProperties>
+    </control>
+    <control controlID="82" controlTypeID="com.balsamiq.mockups::iPhone" x="523" y="137" w="-1" h="-1" measuredW="282" measuredH="510" zOrder="7" locked="false" isInGroup="-1"/>
+    <control controlID="83" controlTypeID="com.balsamiq.mockups::Arrow" x="429" y="304" w="94" h="41" measuredW="150" measuredH="100" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>bottom</direction>
+        <leftArrow>false</leftArrow>
+      </controlProperties>
+    </control>
+    <control controlID="84" controlTypeID="com.balsamiq.mockups::iPhoneMenu" x="549" y="236" w="230" h="-1" measuredW="215" measuredH="155" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Scan%201%20%20%2056%25%20%0AScan%202%20%20%2077%25%0AScan%203%20%20%2023%25%0AScan%204%20%20%2044%25%0AScan%205</text>
+      </controlProperties>
+    </control>
+    <control controlID="85" controlTypeID="com.balsamiq.mockups::ProgressBar" x="608" y="245" w="-1" h="-1" measuredW="100" measuredH="20" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <scrollBarValue>69</scrollBarValue>
+      </controlProperties>
+    </control>
+    <control controlID="86" controlTypeID="com.balsamiq.mockups::ProgressBar" x="608" y="275" w="100" h="20" measuredW="100" measuredH="20" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <scrollBarValue>99</scrollBarValue>
+      </controlProperties>
+    </control>
+    <control controlID="87" controlTypeID="com.balsamiq.mockups::ProgressBar" x="608" y="303" w="100" h="20" measuredW="100" measuredH="20" zOrder="12" locked="false" isInGroup="-1">
+      <controlProperties>
+        <scrollBarValue>77</scrollBarValue>
+      </controlProperties>
+    </control>
+    <control controlID="88" controlTypeID="com.balsamiq.mockups::ProgressBar" x="608" y="332" w="100" h="20" measuredW="100" measuredH="20" zOrder="13" locked="false" isInGroup="-1">
+      <controlProperties>
+        <scrollBarValue>32</scrollBarValue>
+      </controlProperties>
+    </control>
+    <control controlID="89" controlTypeID="com.balsamiq.mockups::ProgressBar" x="608" y="362" w="100" h="20" measuredW="100" measuredH="20" zOrder="14" locked="false" isInGroup="-1">
+      <controlProperties>
+        <scrollBarValue>68</scrollBarValue>
+      </controlProperties>
+    </control>
+    <control controlID="90" controlTypeID="com.balsamiq.mockups::TextArea" x="549" y="519" w="230" h="45" measuredW="200" measuredH="140" zOrder="15" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Place%20your%20Ad%20here%20%0Aetc...</text>
+      </controlProperties>
+    </control>
+    <control controlID="91" controlTypeID="com.balsamiq.mockups::Button" x="714" y="243" w="-1" h="-1" measuredW="51" measuredH="27" zOrder="16" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stop</text>
+      </controlProperties>
+    </control>
+    <control controlID="92" controlTypeID="com.balsamiq.mockups::Button" x="714" y="272" w="-1" h="-1" measuredW="51" measuredH="27" zOrder="17" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stop</text>
+      </controlProperties>
+    </control>
+    <control controlID="93" controlTypeID="com.balsamiq.mockups::Button" x="714" y="300" w="-1" h="-1" measuredW="51" measuredH="27" zOrder="18" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stop</text>
+      </controlProperties>
+    </control>
+    <control controlID="94" controlTypeID="com.balsamiq.mockups::Button" x="714" y="329" w="-1" h="-1" measuredW="51" measuredH="27" zOrder="19" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stop</text>
+      </controlProperties>
+    </control>
+    <control controlID="95" controlTypeID="com.balsamiq.mockups::Button" x="714" y="359" w="-1" h="-1" measuredW="51" measuredH="27" zOrder="20" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stop</text>
+      </controlProperties>
+    </control>
+    <control controlID="96" controlTypeID="com.balsamiq.mockups::iPhone" x="871" y="162" w="-1" h="-1" measuredW="282" measuredH="510" zOrder="21" locked="false" isInGroup="-1"/>
+    <control controlID="97" controlTypeID="com.balsamiq.mockups::Arrow" x="752" y="60" w="68" h="193" measuredW="150" measuredH="100" zOrder="23" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>bottom</direction>
+        <leftArrow>false</leftArrow>
+      </controlProperties>
+    </control>
+    <control controlID="98" controlTypeID="com.balsamiq.mockups::StickyNote" x="805" y="29" w="109" h="93" measuredW="109" measuredH="123" zOrder="22" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Stops%20the%20scan</text>
+      </controlProperties>
+    </control>
+    <control controlID="99" controlTypeID="com.balsamiq.mockups::Arrow" x="620" y="372" w="251" h="104" measuredW="150" measuredH="100" zOrder="24" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>top</direction>
+        <leftArrow>false</leftArrow>
+      </controlProperties>
+    </control>
+    <control controlID="100" controlTypeID="com.balsamiq.mockups::TextArea" x="901" y="265" w="215" h="318" measuredW="200" measuredH="140" zOrder="25" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Scanning%20Activity%20%28our%20nmap%20or%20other%29</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
