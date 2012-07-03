@@ -11,7 +11,7 @@ import java.io.InputStreamReader;
 
 public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
     private final boolean rootAccess;
-    private final StringBuffer scanResults;
+    private final String scanResultsFile;
     private final String scanArguments;
     private final Messenger mService;
     private final int id;
@@ -22,20 +22,19 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
     public NmapScanServiceRunnable(final int id,
                                    final IBinder service,
                                    final String scanArguments,
-                                   final StringBuffer scanResults,
+                                   final String scanResultsFile,
                                    final boolean hasRoot,
                                    final String nativeInstallDir) {
 
         Log.d("UmitScanner","NmapScanTask.NmapScanTask() ID:" + id);
         this.id = id;
-        this.scanResults=scanResults;
+        this.scanResultsFile=scanResultsFile;
         this.rootAccess=hasRoot;
         this.mService=new Messenger(service);
         this.nativeInstallDir = nativeInstallDir;
-        //TODO export scanresults dir to Resources
         //TODO expose time refresh to activity default is 500ms
         //output to /dev/null so we don't fill "ze buffer" up
-        this.scanArguments=scanArguments + " -vv --stats-every 500ms -oX " + nativeInstallDir + "/scanresults/" + id + ".xml > /dev/null";
+        this.scanArguments=scanArguments + " -vv --stats-every 1s -oX " + scanResultsFile + " > /dev/null";
     }
 
     private void tellService(int RESP_CODE){
@@ -70,10 +69,6 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
             Log.e("UmitScanner", "NmapScanTask.run() scanArguments is null");
             return;
         }
-        if(scanResults==null) {
-            Log.e("UmitScanner", "NmapScanTask.run() scanResults is null");
-            return;
-        }
 
         try{
             if(rootAccess)
@@ -93,30 +88,6 @@ public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
             catch (IOException e) {
                 //manage abrupt stopping
                 if(Thread.currentThread().isInterrupted()) {
-                    Log.d("UmitScanner","Interrupted from blocked I/O");
-                    p.destroy();
-                } else {
-                    tellService(NOTIFY_SCAN_PROBLEM,e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-
-            int read;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            char[] buffer = new char[1024];
-            try{
-                while ( ((read = reader.read(buffer)) > 0)) {
-                    //TODO I'll probably use a ContentProvider in the future
-                    scanResults.append(buffer, 0, read);
-                }
-
-                //scan finished
-                p.destroy();
-                tellService(NOTIFY_SCAN_FINISHED);
-            }
-            catch(IOException e) {
-                if(Thread.currentThread().isInterrupted()) {
-                    //manage abrupt stopping
                     Log.d("UmitScanner","Interrupted from blocked I/O");
                     p.destroy();
                 } else {

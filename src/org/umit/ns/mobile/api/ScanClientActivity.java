@@ -20,6 +20,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         public void onServiceConnected(ComponentName className, IBinder service) {
             msgrService = new Messenger(service);
             mBound = true;
+            tellService(RQST_REG_CLIENT,0,0,null,msgrLocal);
         }
         public void onServiceDisconnected(ComponentName className) {
             msgrService = null;
@@ -32,11 +33,14 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
             this.started = false;
             this.finished = false;
         }
+        public int clientID;
+        public boolean connected;
 
         public int id;
         public boolean rootAccess;
         public String scanArguments;
         public String scanResults;
+        public String scanResultsFile;
         public int progress;
         public boolean started;
         public boolean finished;
@@ -60,22 +64,17 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case RESP_SCAN_ID_OK:
-                    //Handle locally
-                    scan.id = msg.arg1;
-                    scan.rootAccess = (msg.arg2==1);
-                    if(scan.rootAccess)
-                        Toast.makeText(getApplicationContext(), R.string.service_acquire_root_ok,Toast.LENGTH_SHORT).show();
-                    else {
-                        Toast.makeText(getApplicationContext(), R.string.service_acquire_root_err,Toast.LENGTH_SHORT).show();
-                    }
+                case RESP_REG_CLIENT_OK:
+                    scan= new Scan();
+                    scan.clientID=msg.arg1;
+                    scan.rootAccess=(msg.arg2==1);
+                    onRegisterClient(scan.rootAccess);
+                    break;
 
-                    if(!mBound){
-                        return;
-                    }
-                    Bundle bundle = new Bundle();
-                    bundle.putString("ScanArguments",scan.scanArguments);
-                    tellService(RQST_START_SCAN, scan.id, 0, bundle, msgrLocal);
+                case RESP_NEW_SCAN_OK:
+                    scan.id=msg.arg1;
+                    scan.scanResultsFile=((Bundle)msg.obj).getString("Info");
+                    onNewScan(scan.id);
                     break;
 
                 case RESP_START_SCAN_OK:
@@ -84,34 +83,34 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
                     break;
 
                 case RESP_STOP_SCAN_OK:
-                    scan=new Scan();
+                    scan = new Scan();
                     onScanStop();
                     break;
 
-                case RESP_PROGRESS_OK:
-                    scan.progress=msg.arg2;
-                    onScanProgressReceive(scan.progress);
+                case RESP_REBIND_CLIENT_OK:
+                    //TODO
                     break;
 
-                case RESP_RESULTS_OK:
-                    scan.scanResults=((Bundle)msg.obj).getString("Info");
-                    onScanResultsReceive(scan.scanResults);
+                case NOTIFY_SCAN_PROGRESS:
+                    scan.progress = msg.arg2;
+                    onNotifyProgress();
                     break;
 
                 case NOTIFY_SCAN_FINISHED:
                     scan.finished=true;
-                    onScanFinish();
+                    //TODO get results from file here
+                    onNotifyFinished();
                     break;
 
-                case RESP_SCAN_ID_ERR:
+                case NOTIFY_SCAN_PROBLEM:
+                case RESP_REG_CLIENT_ERR:
+                case RESP_NEW_SCAN_ERR:
                 case RESP_START_SCAN_ERR:
                 case RESP_STOP_SCAN_ERR:
-                case RESP_PROGRESS_ERR:
-                case RESP_RESULTS_ERR:
-                case NOTIFY_SCAN_PROBLEM:
+                case RESP_REBIND_CLIENT_ERR:
                     String info = ( ((Bundle)msg.obj).containsKey("Info") ?
                             ((Bundle)msg.obj).getString("Info") : "" );
-                    onScanCrash(msg.arg1,info);
+                    onNotifyProblem(msg.what,info);
                     break;
 
                 default:
@@ -119,23 +118,74 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
             }
         }
     }
-    //--\Binding---
 
+    //========API
 
-    private boolean tellService(int RESP_CODE,
+    private final void newScan() {
+        if(!mBound)
+            return;
+
+        if(scan.started)
+            return;
+
+        tellService(RQST_NEW_SCAN, scan.clientID, 0, null, null);
+    }
+
+    private final void startScan(String scanArguments) {
+        if(!mBound)
+            return;
+
+        if(scan.started)
+            return;
+
+        scan.scanArguments = scanArguments;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("ScanArguments",scan.scanArguments);
+
+        tellService(RQST_START_SCAN, scan.clientID, scan.id, bundle, null);
+    }
+
+    private final void stopScan() {
+        if(!mBound)
+            return;
+
+        if(!scan.started)
+            return;
+
+        tellService(RQST_STOP_SCAN, scan.clientID, scan.id, null, null);
+    }
+
+    protected abstract void onRegisterClient(boolean rootAccess);
+
+    protected abstract void onNewScan(int id);
+
+    protected abstract void onScanStart();
+
+    protected abstract void onScanStop();
+
+    protected abstract void onNotifyProgress();
+
+    protected abstract void onNotifyProblem(int what, String info);
+
+    protected abstract void onNotifyFinished();
+
+    //=======\API
+
+    private boolean tellService(int RQST_CODE,
                                 int scanID,
                                 int msg_arg2,
                                 Bundle bundle,
                                 Messenger replyTo){
 
-        Log.d("UmitScanner","ScanActivity.tellService():RESP_CODE="+RESP_CODE);
+        Log.d("UmitScanner","ScanActivity.tellService():RESP_CODE="+RQST_CODE);
 
         Message msg;
 
         if(bundle != null)
-            msg = Message.obtain(null,RESP_CODE,scanID,msg_arg2,bundle);
+            msg = Message.obtain(null,RQST_CODE,scanID,msg_arg2,bundle);
         else
-            msg = Message.obtain(null,RESP_CODE,scanID,msg_arg2);
+            msg = Message.obtain(null,RQST_CODE,scanID,msg_arg2);
 
         if (replyTo!=null)
             msg.replyTo=replyTo;
@@ -148,55 +198,4 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         }
         return true;
     }
-
-    //---API---
-    public final void startScan(String scanArguments) {
-        //Check if bound
-        if(!mBound){
-            return;
-        }
-        //getID
-        tellService(RQST_SCAN_ID,0,0,null,msgrLocal);
-        scan = new Scan();
-        scan.scanArguments=scanArguments;
-        //The scan continues to start once we've gotten an ID: RESP_SCAN_ID
-    }
-
-
-    public final void stopScan() {
-        if(!mBound)
-            return;
-
-        if(!scan.started)
-            return;
-
-        tellService(RQST_STOP_SCAN,scan.id,0,null,msgrLocal);
-    }
-
-    public final void getScanResults() {
-        if(!mBound)
-            return;
-        if(!scan.started)
-            return;
-        //check if finished?
-        tellService(RQST_RESULTS,scan.id,0,null,msgrLocal);
-    }
-
-    public final void getScanProgress() {
-        if(!mBound)
-            return;
-        if(!scan.started)
-            return;
-        tellService(RQST_PROGRESS,scan.id,0,null,msgrLocal);
-    }
-    //--\API---
-
-    //---Events---
-    public abstract void onScanStart();
-    public abstract void onScanStop();
-    public abstract void onScanFinish();
-    public abstract void onScanResultsReceive(String scanResults);
-    public abstract void onScanProgressReceive(int progress);
-    public abstract void onScanCrash(int RESP_CODE,String info);
-    //--\Events---
 }

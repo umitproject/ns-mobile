@@ -53,9 +53,9 @@
         <text/>
       </controlProperties>
     </control>
-    <control controlID="123" controlTypeID="com.balsamiq.mockups::Label" x="166" y="171" w="-1" h="-1" measuredW="304" measuredH="21" zOrder="14" locked="false" isInGroup="-1">
+    <control controlID="123" controlTypeID="com.balsamiq.mockups::Label" x="229" y="171" w="-1" h="-1" measuredW="181" measuredH="21" zOrder="14" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>RQST_NEW_SCAN%20+%20clientID%20+%20scanOutputFilepath</text>
+        <text>RQST_NEW_SCAN%20+%20clientID</text>
       </controlProperties>
     </control>
     <control controlID="124" controlTypeID="com.balsamiq.mockups::IconLabel" x="541" y="171" w="-1" h="-1" measuredW="50" measuredH="45" zOrder="15" locked="false" isInGroup="-1">
@@ -76,9 +76,9 @@
         <text/>
       </controlProperties>
     </control>
-    <control controlID="127" controlTypeID="com.balsamiq.mockups::Label" x="213" y="231" w="-1" h="-1" measuredW="201" measuredH="21" zOrder="18" locked="false" isInGroup="-1">
+    <control controlID="127" controlTypeID="com.balsamiq.mockups::Label" x="157" y="231" w="-1" h="-1" measuredW="324" measuredH="21" zOrder="18" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>RESP_NEW_SCAN_OK%20+%20scanID</text>
+        <text>RESP_NEW_SCAN_OK%20+%20scanID%20+%20scanOutputFilepath</text>
       </controlProperties>
     </control>
     <control controlID="128" controlTypeID="com.balsamiq.mockups::IconLabel" x="541" y="231" w="-1" h="-1" measuredW="50" measuredH="45" zOrder="19" locked="false" isInGroup="-1">
@@ -99,9 +99,9 @@
         <text/>
       </controlProperties>
     </control>
-    <control controlID="136" controlTypeID="com.balsamiq.mockups::Label" x="186" y="330" w="254" h="21" measuredW="254" measuredH="21" zOrder="22" locked="false" isInGroup="-1">
+    <control controlID="136" controlTypeID="com.balsamiq.mockups::Label" x="144" y="330" w="-1" h="-1" measuredW="351" measuredH="21" zOrder="22" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>RQST_START_SCAN%20+%20clientID%20+%20scanID%20</text>
+        <text>RQST_START_SCAN%20+%20clientID%20+%20scanID%20+%20scanArguments</text>
       </controlProperties>
     </control>
     <control controlID="137" controlTypeID="com.balsamiq.mockups::IconLabel" x="541" y="330" w="-1" h="-1" measuredW="50" measuredH="45" zOrder="23" locked="false" isInGroup="-1">
