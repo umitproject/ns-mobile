@@ -17,6 +17,7 @@ public class nmap extends ScanClientActivity {
     TextView cmd;
     static TextView results;
     static boolean started = false;
+    private static boolean scan_ready=false;
     static Button start;
 
     @Override
@@ -40,27 +41,54 @@ public class nmap extends ScanClientActivity {
 
     public View.OnClickListener nmapLoad = new View.OnClickListener() {
         public void onClick(View v) {
-            startScan("./"+cmd.getText().toString());
+            if(scan_ready){
+                newScan();
+                scan_ready=false;
+            }
+            else
+                Toast.makeText(getApplicationContext(),"Scan not ready",Toast.LENGTH_SHORT).show();
         }
     };
+
+    public void onRegisterClient(boolean rootAccess){
+        scan_ready = true;
+        Toast.makeText(getApplicationContext(),"Scan ready",Toast.LENGTH_SHORT).show();
+    }
+
+    public void onRebindClient(){
+        scan_ready=true;
+        if(scan.started){
+            if(scan.finished){
+                results.append("\n"+scan.scanResults);
+            }
+        }
+    }
+
+    public void onNewScan(int id){
+        startScan("./"+cmd.getText().toString());
+    }
 
     public void onScanStart(){
         started=true;
     }
 
-    public void onScanStop(){}
-    public void onScanFinish(){
-        started = false;
-        getScanResults();
-        shellUtils.killProcess("./nmap");
+    public void onScanStop(){
+        started=false;
     }
-    public void onScanResultsReceive(String scanResults){
-        results.append("\n" + scanResults);
+
+    public void onNotifyProgress(int progress){
+        //TODO Test
     }
-    public void onScanProgressReceive(int progress){}
-    public void onScanCrash(int RESP_CODE,String info){
+
+    protected void onNotifyProblem(int what, String info){
         Log.e("UmitScanner","Scan has crashed. Info: "+info);
         Toast.makeText(getApplicationContext(),"Scanning problem: "+info,Toast.LENGTH_LONG).show();
+    }
+
+    public void onNotifyFinished(String scanResults){
+        started = false;
+        scan_ready=true;
+        results.append("\n" + scanResults);
     }
 
     @Override

@@ -50,16 +50,31 @@ public class ScanService extends Service implements ScanCommunication{
 
     @Override
     public boolean onUnbind(Intent intent) {
-        //Clients is always clean with proper use of the service
+
+        //If there are no clients, kill the service
         if(clients.size()==0)
+            stopSelf();
+
+        //if no running scans and all clients unbound then stop
+        boolean running = false;
+        for(Client client:clients.values())
+            if(!client.noScan()){
+                running=true;
+                break;
+            }
+
+        if(!running)
             stopSelf();
 
         return false; //TODO onRebind implement!
     }
 
+
+
     @Override
     public void onCreate() {
         super.onCreate();
+//        android.os.Debug.waitForDebugger();
         Log.d("UmitScanner","ScanService.onCreate()");
         //Check if the native binaries are already extracted
         SharedPreferences settings = getSharedPreferences("native", 0);
@@ -86,12 +101,6 @@ public class ScanService extends Service implements ScanCommunication{
                     getFilesDir().toString()+":"+nativeInstallDir);
     }
 
-//    @Override
-//    public int onStartCommand(Intent intent, int flags, int startId) {
-//        Log.d("UmitScanner","ScanService.onStartCommand()");
-//        return START_REDELIVER_INTENT;
-//    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -105,7 +114,6 @@ public class ScanService extends Service implements ScanCommunication{
 
     }
 
-    //TODO if the activity dies, there should be no scan? (the tellActivity will return false)
     //TODO take account of bound activities? (for notification PendingIntent!!!)
     private final class ScanServiceHandler extends Handler {
         @Override
@@ -122,7 +130,7 @@ public class ScanService extends Service implements ScanCommunication{
                     clients.put(client.id,client);
 
                     if(nativeInstalled && rootAcqisitionFinished) {
-                        client.sendMsg(RESP_REG_CLIENT_OK,client.id,(rootAccess?1:0),null);
+                        client.sendMsg(RESP_REG_CLIENT_OK, client.id, (rootAccess?1:0),null);
                     } else
                         pending_RQST_REG_CLIENT = true;
 
@@ -197,9 +205,6 @@ public class ScanService extends Service implements ScanCommunication{
                     }
                     boolean started = client.startScan(msg.arg2, ((Bundle)msg.obj).getString("ScanArguments"));
 
-                    if(!started && client.noScan())
-                        clients.remove(client.id);
-
                     //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
                     mNM.notify(serviceNotificationID, getNotification(R.string.service_scan_running));
                     break;
@@ -210,27 +215,30 @@ public class ScanService extends Service implements ScanCommunication{
                     if (client==null) {
                         break;
                     }
-                    client.stopScan(msg.arg2);
-                    scanID_clientID.remove(msg.arg2);
-                    if(client.noScan())
-                        clients.remove(client.id);
-
+                    if(client.stopScan(msg.arg2)){
+                        scanID_clientID.remove(msg.arg2);
+                    }
                     //TODO TEMPORARY - NOTIFICATION METHOD ONLY SUPPORTS ONE SCAN
                     mNM.notify(serviceNotificationID, getNotification(R.string.service_ready));
                     break;
                 }
                 case RQST_REBIND_CLIENT:{
                     Log.d("UmitScanner","ScanService:RQST_REBIND_CLIENT");
-                    Client client = clients.get(msg.arg1);
-                    if(client==null) {
-                        Log.d("UmitScanner","ScanService:RQST_REBIND_CLIENT- No such client id");
-                        break;
-                    }
+
                     if(msg.replyTo==null){
                         Log.d("UmitScanner","ScanService:RQST_REBIND_CLIENT no msg.replyTo present");
                         break;
                     }
-                    client.rebind(msg.replyTo);
+
+                    Client client = clients.get(msg.arg1);
+                    if(client==null) {
+                        client = new Client(msg.replyTo,msg.arg1);
+                        clients.put(client.id,client);
+                        Log.d("UmitScanner","ScanService:RQST_REBIND_CLIENT - No such client ID:"+msg.arg1+" Creating new one.");
+                    } else {
+                        client.rebind(msg.replyTo);
+                    }
+                    client.sendMsg(RESP_REBIND_CLIENT_OK,0,0,null);
                     break;
                 }
                 case NOTIFY_SCAN_FINISHED:{
@@ -242,11 +250,10 @@ public class ScanService extends Service implements ScanCommunication{
                     Client client = clients.get(clientID);
 
                     if(client!=null){
-                            client.finishScan(msg.arg1);
-                        if(client.noScan())
-                            clients.remove(client.id);
+                        client.finishScan(msg.arg1);
                     }
                     scanID_clientID.remove(msg.arg1);
+
                     break;
                 }
                 case NOTIFY_SCAN_PROBLEM:{
@@ -258,8 +265,6 @@ public class ScanService extends Service implements ScanCommunication{
 
                     if(client!=null){
                         client.problemScan(msg.arg1, ((Bundle)msg.obj).getString("Info"));
-                        if(client.noScan())
-                            clients.remove(client.id);
                     }
                     break;
                 }
@@ -270,7 +275,14 @@ public class ScanService extends Service implements ScanCommunication{
                     if(client!=null)
                         client.sendMsg(NOTIFY_SCAN_PROGRESS, msg.arg1, msg.arg2, null);
                 }
-
+                case RQST_UNREG_CLIENT: {
+                    Client client = clients.get(msg.arg1);
+                    if(client!=null) {
+                        client.sendMsg(RESP_UNREG_CLIENT_OK,0,0,null);
+                        client.stopAllScans();
+                        clients.remove(msg.arg1);
+                    }
+                }
                 default:
                     super.handleMessage(msg);
             }
@@ -278,15 +290,19 @@ public class ScanService extends Service implements ScanCommunication{
     }
 
     private class Client {
-        protected int id;
+        public int id;
         protected Messenger messenger;
-        private Message msg = Message.obtain();
 
         private HashMap<Integer,Scan> scans = new HashMap<Integer, Scan>();
         public Queue<Message> unsentMsgs = new LinkedList<Message>();
 
         public Client(Messenger messenger){
             id=Math.abs(random.nextInt());
+            this.messenger=messenger;
+        }
+
+        public Client(Messenger messenger,int id){
+            this.id=id;
             this.messenger=messenger;
         }
 
@@ -318,18 +334,10 @@ public class ScanService extends Service implements ScanCommunication{
                 sendMsg(RESP_STOP_SCAN_ERR,scanID,0,"ScanService:RQST_STOP_SCAN no scan with specified id present");
                 return false;
             }
-            if(!scan.started) {
-                sendMsg(RESP_STOP_SCAN_ERR, scan.id, 0, "ScanService:RQST_STOP_SCAN scan is not started");
-                return false;
-            }
             scan.stop();
             sendMsg(RESP_STOP_SCAN_OK,scan.id,0,null);
-
             scans.remove(scanID);
-            if(scans.size()==0)
-                stopSelf();
-
-            return false;
+            return true;
         }
 
         public void finishScan(int scanID) {
@@ -338,15 +346,17 @@ public class ScanService extends Service implements ScanCommunication{
         }
 
         public void sendMsg(int MSG_CODE, int MSG_ARG1, int MSG_ARG2, String info){
-            msg.what=MSG_CODE;
-            msg.arg1=MSG_ARG1;
-            msg.arg2=MSG_ARG2;
-            if(info==null)
-                msg.obj=null;
+            Message msg;
+
+            if(info==null){
+                msg=Message.obtain(null,MSG_CODE,MSG_ARG1,MSG_ARG2);
+                Log.d("UmitScanner","Sending message:"+MSG_CODE+":"+MSG_ARG1+":"+MSG_ARG2);
+            }
             else {
                 Bundle bundle = new Bundle();
                 bundle.putString("Info",info);
-                msg.obj=bundle;
+                msg=Message.obtain(null,MSG_CODE,MSG_ARG1,MSG_ARG2,bundle);
+                Log.d("UmitScanner","Sending message:"+MSG_CODE+":"+MSG_ARG1+":"+MSG_ARG2+":"+info+";");
             }
 
             try{
@@ -361,7 +371,7 @@ public class ScanService extends Service implements ScanCommunication{
                     scan.pendingProgress=true;
                     scan.setProgress(msg.arg2);
                 } else {
-                    unsentMsgs.offer(Message.obtain(msg));
+                    unsentMsgs.offer(msg);
                 }
             }
         }
@@ -376,7 +386,7 @@ public class ScanService extends Service implements ScanCommunication{
                }
             }
             while(!unsentMsgs.isEmpty()){
-                msg = unsentMsgs.poll();
+                Message msg = unsentMsgs.poll();
 
                 try{
                     messenger.send(msg);

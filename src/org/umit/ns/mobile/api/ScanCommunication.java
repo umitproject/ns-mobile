@@ -30,6 +30,9 @@ public interface ScanCommunication {
         int NOTIFY_ROOT_ACCESS=19;     // internal to threads and service
         int NOTIFY_NATIVE_SETUP=20;     // internal to threads and service
 
+        int RQST_UNREG_CLIENT=21;       //clientID
+        int RESP_UNREG_CLIENT_OK=22;
+
     static final int NATIVE_SETUP_SUCCESS=1;
     static final int NATIVE_SETUP_FAIL=0;
 
