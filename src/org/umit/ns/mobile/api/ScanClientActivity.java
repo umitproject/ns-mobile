@@ -76,9 +76,10 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
             was_connected=true;
             scan = retained_scan;
         }
-
-        bindService( new Intent("org.umit.ns.mobile.service.ScanService"),
-                serviceConnection, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
+        intent.putExtra("string","Booshwacka");
+        intent.putExtra("Binder", (Parcelable) msgrLocal.getBinder());
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         Log.d("UmitScanner","BoundToService");
     }
 
