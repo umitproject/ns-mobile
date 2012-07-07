@@ -6,6 +6,7 @@
     <string name="service_scan_name">Umit Network Scanner Service</string>
 
     <string name="service_ready">Scanner Service ready</string>
+    <string name="service_disabled">Scanner Service disabled</string>
     <string name="service_scan_running">Scanning in progress</string>
     <string name="service_scan_finished">Scanning finished</string>
     <string name="service_scan_problem">Problem with scan</string>

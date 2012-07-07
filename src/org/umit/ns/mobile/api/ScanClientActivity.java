@@ -7,30 +7,29 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 
 import android.os.*;
-import android.util.Log;
 import android.widget.Toast;
-import org.umit.ns.mobile.R;
 
 import java.io.*;
+import java.util.Random;
 
+//TODO Handle Runtime Changes
 public abstract class ScanClientActivity extends Activity implements ScanCommunication {
 
     private Messenger msgrService;
     private boolean mBound;
     private final Messenger msgrLocal = new Messenger(new IncomingHandler());
+    private Random random = new Random();
 
-    protected Scan scan;
-    public boolean was_connected=false;
+    //TODO keep when rebinding
+    //TODO maybe find a better solution to really give a unique ID (combine with myPID?)
+    private int clientID;
+    private Scan scan;
+    private boolean wasConnected=false;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             msgrService = new Messenger(service);
             mBound = true;
-            if(was_connected&&scan!=null){
-                tellService(RQST_REBIND_CLIENT,scan.clientID,0,null,msgrLocal);
-            } else {
-                tellService(RQST_REG_CLIENT,0,0,null,msgrLocal);
-            }
         }
         public void onServiceDisconnected(ComponentName className) {
             msgrService = null;
@@ -39,62 +38,62 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         }
     };
 
-    protected final class Scan {
-        Scan(){
-            this.started = false;
-            this.finished = false;
-        }
-        Scan(Scan s){
-            this.started=s.started;
-            this.finished=s.finished;
-            this.clientID=s.clientID;
-            this.id  = s.id;
-            this.rootAccess=s.rootAccess;
-            this.scanArguments=s.scanArguments;
-            this.scanResults=s.scanResults;
-            this.scanResultsFile=s.scanResultsFile;
-            this.progress=s.progress;
-        }
-        public int clientID;
+    private class Scan {
+        int ID;
+        int clientID;
+        boolean rootAccess;
 
-        public int id;
-        public boolean rootAccess;
-        public String scanArguments;
-        public String scanResults;
-        public String scanResultsFile;
-        public int progress;
-        public boolean started;
-        public boolean finished;
+        String scanArguments;
+        String scanResultsFilename;
+
+        String scanResults;
+
+        int progress=0;
+        boolean started=false;
+
+        public Scan(int clientID, int scanID, boolean rootAccess, String scanResultsFilename) {
+            this.clientID=clientID;
+            this.ID=scanID;
+            this.rootAccess=rootAccess;
+            this.scanResultsFilename=scanResultsFilename;
+        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        log("onCreate()-Start");
         super.onCreate(savedInstanceState);
 
-        Scan retained_scan = (Scan)getLastNonConfigurationInstance();
-        if(retained_scan!=null) {
-            was_connected=true;
+        Scan retained_scan = (Scan)getLastNonConfigurationInstance();  //TODO clientID
+        if(retained_scan!=null){
+            wasConnected=true;
             scan = retained_scan;
+            clientID = scan.clientID;
+        } else {
+            wasConnected=false;
+            clientID = random.nextInt();
         }
+
         Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
-        intent.putExtra("string","Booshwacka");
-        intent.putExtra("Binder", (Parcelable) msgrLocal.getBinder());
+        intent.putExtra("Messenger", msgrLocal);
+        intent.putExtra("ClientID",clientID);
+
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-        Log.d("UmitScanner","BoundToService");
+        log("onCreate()-Bound to service");
     }
 
     @Override
     public Object onRetainNonConfigurationInstance ()  {
         super.onRetainNonConfigurationInstance();
         final Scan s = scan;
-        return  s;
+        return s;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         if(isFinishing()) {
-
+            //TODO Pending intent may take place here so it rebinds or not... we'll see
         }
 
         unbindService(serviceConnection);
@@ -104,44 +103,62 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case RESP_REG_CLIENT_OK:
-                    scan = new Scan();
-                    scan.clientID=msg.arg1;
-                    scan.rootAccess=(msg.arg2==1);
-                    onRegisterClient(scan.rootAccess);
-                    break;
-
-                case RESP_NEW_SCAN_OK:
-                    scan.id=msg.arg1;
-                    scan.scanResultsFile=((Bundle)msg.obj).getString("Info");
-                    onNewScan(scan.id);
-                    break;
-
                 case RESP_START_SCAN_OK:
+                    int scanID = msg.arg1;
+                    boolean rootAccess = (msg.arg2==1);
+                    String scanResultsFilename = ((Bundle)msg.obj).containsKey("ScanResultsFilename")?
+                            ((Bundle)msg.obj).getString("ScanResultsFilename"):null;
+
+                    if(scanResultsFilename==null){
+                        log("RESP_START_SCAN_OK: ScanResultsFilename is null!");
+                        break;
+                    }
+
+                    log("RESP_START_SCAN_OK");
+
+                    scan = new Scan(clientID,scanID,rootAccess,scanResultsFilename);
                     scan.started=true;
                     onScanStart();
                     break;
 
                 case RESP_STOP_SCAN_OK:
-                    scan = new Scan();
+                    if(scan.ID!=msg.arg1){
+                        log("RESP_STOP_SCAN_OK: scanID not matching!");
+                        break;
+                    }
+                    scan = null;
                     onScanStop();
                     break;
 
-                case RESP_REBIND_CLIENT_OK:
-                    Log.d("UmitScanner","RESP_REBIND_CLIENT");
-                    onRebindClient();
-                    break;
 
                 case NOTIFY_SCAN_PROGRESS:
+                    if(scan==null){
+                        log("NOTIFY_SCAN_PROGRESS: scan object is null!");
+                        break;
+                    }
+
+                    if(scan.ID!=msg.arg1){
+                        log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
+                        break;
+                    }
+
                     scan.progress = msg.arg2;
                     onNotifyProgress(scan.progress);
                     break;
 
                 case NOTIFY_SCAN_FINISHED:
-                    scan.finished=true;
+                    if(scan==null){
+                        log("NOTIFY_SCAN_FINISHED: scan object is null!");
+                        break;
+                    }
+
+                    if(scan.ID!=msg.arg1){
+                        log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
+                        break;
+                    }
                     //TODO get results from file here
                     try {
-                        BufferedReader inputStream = new BufferedReader(new FileReader(scan.scanResultsFile));
+                        BufferedReader inputStream = new BufferedReader(new FileReader(scan.scanResultsFilename));
                         StringBuffer scanResults = new StringBuffer();
                         int read;
                         char[] buffer = new char[1024];
@@ -153,22 +170,17 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
                     } catch (FileNotFoundException e) {
                         Toast.makeText(getApplicationContext(),"Could not open scan results file.",Toast.LENGTH_SHORT).show();
                     } catch (IOException e) {
-                        Log.d("UmitScanner","Could not close fileInputStream:"+e.getMessage()) ;
+                        log("NOTIFY_SCAN_FINISHED:Could not close fileInputStream:"+e.getMessage());
                     }
 
                     onNotifyFinished(scan.scanResults);
                     break;
 
                 case NOTIFY_SCAN_PROBLEM:
-                case RESP_REG_CLIENT_ERR:
-                case RESP_NEW_SCAN_ERR:
-                case RESP_START_SCAN_ERR:
-                case RESP_STOP_SCAN_ERR:
-                case RESP_REBIND_CLIENT_ERR:
                     String info = ( ((Bundle)msg.obj).containsKey("Info") ?
                             ((Bundle)msg.obj).getString("Info") : "" );
-
-                    onNotifyProblem(msg.what, info);
+                    log("NOTIFY_SCAN_PROBLEM:"+info);
+                    onNotifyProblem(info);
                     break;
 
                 default:
@@ -179,63 +191,38 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
     //========API
 
-    public final void newScan() {
-
-        if(!mBound){
-            Log.d("UmitScanner","ScanClientActivity:newScan() not bound");
-            return;
-        }
-        if(was_connected){
-            int clientID = scan.clientID;
-            scan = new Scan();
-            scan.clientID=clientID;
-        }
-        if(scan.started){
-            Log.d("UmitScanner","ScanClientActivity:newScan() scan already started");
-            return;
-        }
-        tellService(RQST_NEW_SCAN, scan.clientID, 0, null, null);
-    }
-
-    public final void startScan(String scanArguments) {
+    public final void rqstStartScan(String scanArguments) {
         if(!mBound)
             return;
-
-        if(scan.started)
-            return;
-
-        scan.scanArguments = scanArguments;
 
         Bundle bundle = new Bundle();
-        bundle.putString("ScanArguments",scan.scanArguments);
+        bundle.putString("ScanArguments",scanArguments);
 
-        tellService(RQST_START_SCAN, scan.clientID, scan.id, bundle, null);
+        tellService(RQST_START_SCAN, clientID, 0, bundle, null);
     }
 
-    public final void stopScan() {
+    public final void rqstStopScan() {
         if(!mBound)
             return;
+
+        if(scan==null){
+            log("stopScan(): scan object is null!");
+            return;
+        }
 
         if(!scan.started)
             return;
 
-        tellService(RQST_STOP_SCAN, scan.clientID, scan.id, null, null);
+        tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
     }
-
-
-    protected abstract void onRegisterClient(boolean rootAccess);
-
-    protected abstract void onNewScan(int id);
 
     protected abstract void onScanStart();
 
     protected abstract void onScanStop();
 
-    protected abstract void onRebindClient();
-
     protected abstract void onNotifyProgress(int progress);
 
-    protected abstract void onNotifyProblem(int what, String info);
+    protected abstract void onNotifyProblem(String info);
 
     protected abstract void onNotifyFinished(String scanResults);
 
@@ -247,7 +234,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
                                 Bundle bundle,
                                 Messenger replyTo){
 
-        Log.d("UmitScanner","ScanActivity.tellService():RESP_CODE="+RQST_CODE);
+        log("tellService():RESP_CODE=" + RQST_CODE);
 
         Message msg;
 
@@ -262,9 +249,13 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
         try {
             msgrService.send(msg);
         } catch (RemoteException e) {
-            Log.d("UmitScanner", "ScanActivity.tellService():could not send message.");
+            log(".tellService():could not send message.");
             return false;
         }
         return true;
+    }
+
+    private void log(String log_message){
+        android.util.Log.d("UmitScanner","ScanClientActivity."+log_message);
     }
 }

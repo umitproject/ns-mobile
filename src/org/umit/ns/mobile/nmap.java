@@ -17,7 +17,6 @@ public class nmap extends ScanClientActivity {
     TextView cmd;
     static TextView results;
     static boolean started = false;
-    private static boolean scan_ready=false;
     static Button start;
 
     @Override
@@ -41,53 +40,42 @@ public class nmap extends ScanClientActivity {
 
     public View.OnClickListener nmapLoad = new View.OnClickListener() {
         public void onClick(View v) {
-            if(scan_ready){
-                newScan();
-                scan_ready=false;
+            if(!started){
+                rqstStartScan("./"+cmd.getText().toString());
+                started=true;
+                start.setEnabled(false);
             }
             else
                 Toast.makeText(getApplicationContext(),"Scan not ready",Toast.LENGTH_SHORT).show();
         }
     };
 
-    public void onRegisterClient(boolean rootAccess){
-        scan_ready = true;
-        Toast.makeText(getApplicationContext(),"Scan ready",Toast.LENGTH_SHORT).show();
-    }
-
-    public void onRebindClient(){
-        scan_ready=true;
-        if(scan.started){
-            if(scan.finished){
-                results.append("\n"+scan.scanResults);
-            }
-        }
-    }
-
-    public void onNewScan(int id){
-        startScan("./"+cmd.getText().toString());
-    }
-
     public void onScanStart(){
         started=true;
+        start.setEnabled(true);
+        start.setText("Stop");
     }
 
     public void onScanStop(){
         started=false;
+        start.setEnabled(true);
+        start.setText("Start");
     }
 
     public void onNotifyProgress(int progress){
         //TODO Test
     }
 
-    protected void onNotifyProblem(int what, String info){
+    protected void onNotifyProblem(String info){
         Log.e("UmitScanner","Scan has crashed. Info: "+info);
+        //TODO Report to developer ;-)
         Toast.makeText(getApplicationContext(),"Scanning problem: "+info,Toast.LENGTH_LONG).show();
     }
 
     public void onNotifyFinished(String scanResults){
         started = false;
-        scan_ready=true;
+        start.setEnabled(true);
+        start.setText("Start");
         results.append("\n" + scanResults);
     }
 
