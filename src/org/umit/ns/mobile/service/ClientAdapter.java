@@ -1,10 +1,14 @@
 package org.umit.ns.mobile.service;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import org.umit.ns.mobile.api.ScanCommunication;
+import org.umit.ns.mobile.provider.ScanOverview.Scan;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -31,10 +35,17 @@ class ClientAdapter implements ScanCommunication{
 
     private ScanWrapper pendingScan=null;
 
-    protected ClientAdapter(int clientID, Messenger messenger, String scanResultsPath){
+    private ContentResolver contentResolver;
+    private String action;
+
+    protected ClientAdapter(int clientID, Messenger messenger,
+                            String scanResultsPath, ContentResolver contentResolver,
+                            String action){
         this.scanResultsPath=scanResultsPath;
         this.ID=clientID;
         this.messenger=messenger;
+        this.contentResolver = contentResolver;
+        this.action=action;
     }
 
     protected void rebind(Messenger messenger) {
@@ -62,7 +73,7 @@ class ClientAdapter implements ScanCommunication{
         pendingScan = new ScanWrapper(scanID, scanArguments, scanResultsPath);
     }
 
-    //Start scan in tmp and put it in list, notify Client
+    //Start scan in tmp and put it in list, notify Client, add to database
     protected void startScan(boolean rootAccess) {
         this.rootAccess=rootAccess;
 
@@ -76,6 +87,19 @@ class ClientAdapter implements ScanCommunication{
         //notify client
         tellClient(RESP_START_SCAN_OK, pendingScan.getID(), (rootAccess?1:0),
                 "ScanResultsFilename", pendingScan.scanResultsFilename);
+
+        //TODO better uri organization CLIENT_ID and SCAN_ID need to be in the values for now
+        Uri uri = Uri.parse(Scan.SCAN_RECORD_BASE_URI+"/"+ID+"/"+pendingScan.getID());
+        ContentValues values = new ContentValues();
+        values.put(Scan.CLIENT_ID, ID);
+        values.put(Scan.SCAN_ID, pendingScan.getID());
+        values.put(Scan.CLIENT_ACTION, action);
+        values.put(Scan.ROOT_ACCESS, rootAccess?1:0);
+        values.put(Scan.SCAN_ARGUMENTS, pendingScan.arguments);
+        values.put(Scan.SCAN_PROGRESS,pendingScan.getProgress());
+        values.put(Scan.SCAN_STATE,Scan.SCAN_STATE_STARTED);
+
+        contentResolver.insert(uri, values);
 
         pendingScan=null;
     }

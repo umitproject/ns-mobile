@@ -40,8 +40,6 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.umit.ns.mobile.nsandroid;
-
 public class ZipUtils {
 
     public boolean unzipArchive(File archive, File outputDir) {
@@ -52,7 +50,6 @@ public class ZipUtils {
                 unzipEntry(zipfile, entry, outputDir);
             }
         } catch (Exception e) {
-            nsandroid.resultPublish("Error while extracting file " + archive + " " +  e.getMessage());
             return false;
         }
         return true;
@@ -107,7 +104,6 @@ public class ZipUtils {
             process.waitFor();
 
         } catch (IOException e) {
-            nsandroid.resultPublish(e.getMessage());
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- =========================================================================
-            nmap.xsl stylesheet version 0.9c
+            ScanActivity.xsl stylesheet version 0.9c
             last change: 2010-12-28
             Benjamin Erb, http://www.benjamin-erb.de
 ==============================================================================

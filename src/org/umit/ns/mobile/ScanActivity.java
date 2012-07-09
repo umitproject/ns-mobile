@@ -1,19 +1,14 @@
 package org.umit.ns.mobile;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.umit.ns.mobile.api.ScanClientActivity;
-import org.umit.ns.mobile.api.shellUtils;
 
-public class nmap extends ScanClientActivity {
+public class ScanActivity extends ScanClientActivity {
     TextView cmd;
     static TextView results;
     static boolean started = false;
@@ -23,7 +18,7 @@ public class nmap extends ScanClientActivity {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.nmap);
+        setContentView(R.layout.scan_activity);
 
         start = (Button)findViewById(R.id.startNmap);
         start.setOnClickListener(nmapLoad);
@@ -77,35 +72,5 @@ public class nmap extends ScanClientActivity {
         start.setEnabled(true);
         start.setText("Start");
         results.append("\n" + scanResults);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.layout.cmdmenu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.clear:
-                clearLogs();
-                return true;
-            case R.id.logs:
-                loadLogs();
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private void loadLogs() {
-        Intent n = new Intent(nmap.this, LogsViewer.class);
-        startActivityForResult(n, 0);
-    }
-
-    public void clearLogs() {
-        results.setText("");
     }
 }
