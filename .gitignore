@@ -23,7 +23,6 @@ obj/**
 ant.properties
 bin/*
 build.xml
-libs/*
 out/*
 project.properties
 .settings/*
