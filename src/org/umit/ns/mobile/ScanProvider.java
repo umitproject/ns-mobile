@@ -257,7 +257,6 @@ public class ScanProvider extends ContentProvider {
 
 				long rowID = db.insert(SCANS_TABLE_NAME, null, values);
 				if (rowID > 0) {
-					getContext().getContentResolver().notifyChange(uri, null);
 
 					//Create a hosts table too scanID_clientID
 					db.execSQL("CREATE TABLE " + hostsTableName + " ("
@@ -265,8 +264,10 @@ public class ScanProvider extends ContentProvider {
 							+ Hosts.IP + " TEXT,"
 							+ Hosts.NAME + " TEXT,"
 							+ Hosts.STATE + " INTEGER,"
-							+ Hosts.OS + " INTEGER"
+							+ Hosts.OS + " INTEGER,"
+							+ Hosts.DETAILS_TABLE_NAME + " TEXT"
 							+ ");");
+					getContext().getContentResolver().notifyChange(uri, null);
 					return uri;
 				}
 
