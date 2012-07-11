@@ -5,257 +5,263 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-
 import android.os.*;
-import android.widget.Toast;
+import android.os.Bundle;import android.os.Handler;import android.os.IBinder;import android.os.Message;import android.os.Messenger;import android.os.RemoteException;import android.widget.Toast;
+import org.umit.ns.mobile.R;
+import org.umit.ns.mobile.ScanActivity;import org.umit.ns.mobile.api.ScanCommunication;
 
-import java.io.*;
-import java.util.Random;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.*;import java.lang.Math;import java.lang.Object;import java.lang.Override;import java.lang.String;import java.lang.StringBuffer;import java.util.Random;
 
 //TODO Handle Runtime Changes
 public abstract class ScanClientActivity extends Activity implements ScanCommunication {
 
-    private Messenger msgrService;
-    private boolean mBound;
-    private final Messenger msgrLocal = new Messenger(new IncomingHandler());
-    private Random random = new Random();
+	private Messenger msgrService;
+	private boolean mBound;
+	private final Messenger msgrLocal = new Messenger(new IncomingHandler());
+	private Random random = new Random();
 
-    //TODO keep when rebinding
-    //TODO maybe find a better solution to really give a unique ID (combine with myPID?)
-    private int clientID;
-    private Scan scan;
-    private boolean wasConnected=false;
+	//TODO keep when rebinding
+	//TODO maybe find a better solution to really give a unique ID (combine with myPID?)
+	private int clientID;
+	private Scan scan;
+	private boolean wasConnected = false;
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            msgrService = new Messenger(service);
-            mBound = true;
-        }
-        public void onServiceDisconnected(ComponentName className) {
-            msgrService = null;
-            mBound = false;
+	private ServiceConnection serviceConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			msgrService = new Messenger(service);
+			mBound = true;
+		}
 
-        }
-    };
+		public void onServiceDisconnected(ComponentName className) {
+			msgrService = null;
+			mBound = false;
 
-    private class Scan {
-        int ID;
-        int clientID;
-        boolean rootAccess;
+		}
+	};
 
-        String scanArguments;
-        String scanResultsFilename;
+	private class Scan {
+		int ID;
+		int clientID;
+		boolean rootAccess;
 
-        String scanResults;
+		String scanArguments;
+		String scanResultsFilename;
 
-        int progress=0;
-        boolean started=false;
+		String scanResults;
 
-        public Scan(int clientID, int scanID, boolean rootAccess, String scanResultsFilename) {
-            this.clientID=clientID;
-            this.ID=scanID;
-            this.rootAccess=rootAccess;
-            this.scanResultsFilename=scanResultsFilename;
-        }
-    }
+		int progress = 0;
+		boolean started = false;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        log("onCreate()-Start");
-        super.onCreate(savedInstanceState);
+		public Scan(int clientID, int scanID, boolean rootAccess, String scanResultsFilename) {
+			this.clientID = clientID;
+			this.ID = scanID;
+			this.rootAccess = rootAccess;
+			this.scanResultsFilename = scanResultsFilename;
+		}
+	}
 
-        Scan retained_scan = (Scan)getLastNonConfigurationInstance();  //TODO clientID
-        if(retained_scan!=null){
-            wasConnected=true;
-            scan = retained_scan;
-            clientID = scan.clientID;
-        } else {
-            wasConnected=false;
-            clientID = random.nextInt();
-        }
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		log("onCreate()-Start");
+		super.onCreate(savedInstanceState);
 
-        Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
-        intent.putExtra("Messenger", msgrLocal);
-        intent.putExtra("ClientID",clientID);
+		Scan retained_scan = (Scan) getLastNonConfigurationInstance();  //TODO clientID
+		if (retained_scan != null) {
+			wasConnected = true;
+			scan = retained_scan;
+			clientID = scan.clientID;
+		} else {
+			wasConnected = false;
+            clientID = Math.abs(random.nextInt());
+		}
 
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-        log("onCreate()-Bound to service");
-    }
+		Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
+		intent.putExtra("Messenger", msgrLocal);
+		intent.putExtra("ClientID", clientID);
+        intent.putExtra("Action",getString(R.string.scanactivity_action));
 
-    @Override
-    public Object onRetainNonConfigurationInstance ()  {
-        super.onRetainNonConfigurationInstance();
-        final Scan s = scan;
-        return s;
-    }
+		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+		log("onCreate()-Bound to service");
+	}
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if(isFinishing()) {
-            //TODO Pending intent may take place here so it rebinds or not... we'll see
-        }
+	@Override
+	public Object onRetainNonConfigurationInstance() {
+		super.onRetainNonConfigurationInstance();
+		final Scan s = scan;
+		return s;
+	}
 
-        unbindService(serviceConnection);
-    }
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		if (isFinishing()) {
+			//TODO Pending intent may take place here so it rebinds or not... we'll see
+		}
 
-    private class IncomingHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case RESP_START_SCAN_OK:
-                    int scanID = msg.arg1;
-                    boolean rootAccess = (msg.arg2==1);
-                    String scanResultsFilename = ((Bundle)msg.obj).containsKey("ScanResultsFilename")?
-                            ((Bundle)msg.obj).getString("ScanResultsFilename"):null;
+		unbindService(serviceConnection);
+	}
 
-                    if(scanResultsFilename==null){
-                        log("RESP_START_SCAN_OK: ScanResultsFilename is null!");
-                        break;
-                    }
+	private class IncomingHandler extends Handler {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+				case RESP_START_SCAN_OK:
+					int scanID = msg.arg1;
+					boolean rootAccess = (msg.arg2 == 1);
+					String scanResultsFilename = ((Bundle) msg.obj).containsKey("ScanResultsFilename") ?
+							((Bundle) msg.obj).getString("ScanResultsFilename") : null;
 
-                    log("RESP_START_SCAN_OK");
+					if (scanResultsFilename == null) {
+						log("RESP_START_SCAN_OK: ScanResultsFilename is null!");
+						break;
+					}
 
-                    scan = new Scan(clientID,scanID,rootAccess,scanResultsFilename);
-                    scan.started=true;
-                    onScanStart();
-                    break;
+					log("RESP_START_SCAN_OK");
 
-                case RESP_STOP_SCAN_OK:
-                    if(scan.ID!=msg.arg1){
-                        log("RESP_STOP_SCAN_OK: scanID not matching!");
-                        break;
-                    }
-                    scan = null;
-                    onScanStop();
-                    break;
+					scan = new Scan(clientID, scanID, rootAccess, scanResultsFilename);
+					scan.started = true;
+					onScanStart();
+					break;
+
+				case RESP_STOP_SCAN_OK:
+					if (scan.ID != msg.arg1) {
+						log("RESP_STOP_SCAN_OK: scanID not matching!");
+						break;
+					}
+					scan = null;
+					onScanStop();
+					break;
 
 
-                case NOTIFY_SCAN_PROGRESS:
-                    if(scan==null){
-                        log("NOTIFY_SCAN_PROGRESS: scan object is null!");
-                        break;
-                    }
+				case NOTIFY_SCAN_PROGRESS:
+					if (scan == null) {
+						log("NOTIFY_SCAN_PROGRESS: scan object is null!");
+						break;
+					}
 
-                    if(scan.ID!=msg.arg1){
-                        log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
-                        break;
-                    }
+					if (scan.ID != msg.arg1) {
+						log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
+						break;
+					}
 
-                    scan.progress = msg.arg2;
-                    onNotifyProgress(scan.progress);
-                    break;
+					scan.progress = msg.arg2;
+					onNotifyProgress(scan.progress);
+					break;
 
-                case NOTIFY_SCAN_FINISHED:
-                    if(scan==null){
-                        log("NOTIFY_SCAN_FINISHED: scan object is null!");
-                        break;
-                    }
+				case NOTIFY_SCAN_FINISHED:
+					if (scan == null) {
+						log("NOTIFY_SCAN_FINISHED: scan object is null!");
+						break;
+					}
 
-                    if(scan.ID!=msg.arg1){
-                        log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
-                        break;
-                    }
-                    //TODO get results from file here
-                    try {
-                        BufferedReader inputStream = new BufferedReader(new FileReader(scan.scanResultsFilename));
-                        StringBuffer scanResults = new StringBuffer();
-                        int read;
-                        char[] buffer = new char[1024];
-                        while ( ((read = inputStream.read(buffer)) > 0)) {
-                            //TODO I'll probably use a ContentProvider in the future
-                            scanResults.append(buffer, 0, read);
-                        }
-                        scan.scanResults=scanResults.toString();
-                    } catch (FileNotFoundException e) {
-                        Toast.makeText(getApplicationContext(),"Could not open scan results file.",Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        log("NOTIFY_SCAN_FINISHED:Could not close fileInputStream:"+e.getMessage());
-                    }
+					if (scan.ID != msg.arg1) {
+						log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
+						break;
+					}
+					//TODO get results from file here
+					try {
+						BufferedReader inputStream = new BufferedReader(new FileReader(scan.scanResultsFilename));
+						java.lang.StringBuffer scanResults = new StringBuffer();
+						int read;
+						char[] buffer = new char[1024];
+						while (((read = inputStream.read(buffer)) > 0)) {
+							//TODO I'll probably use a ContentProvider in the future
+							scanResults.append(buffer, 0, read);
+						}
+						scan.scanResults = scanResults.toString();
+					} catch (FileNotFoundException e) {
+						Toast.makeText(getApplicationContext(), "Could not open scan results file.", Toast.LENGTH_SHORT).show();
+					} catch (IOException e) {
+						log("NOTIFY_SCAN_FINISHED:Could not close fileInputStream:" + e.getMessage());
+					}
 
-                    onNotifyFinished(scan.scanResults);
-                    break;
+					onNotifyFinished(scan.scanResults);
+					break;
 
-                case NOTIFY_SCAN_PROBLEM:
-                    String info = ( ((Bundle)msg.obj).containsKey("Info") ?
-                            ((Bundle)msg.obj).getString("Info") : "" );
-                    log("NOTIFY_SCAN_PROBLEM:"+info);
-                    onNotifyProblem(info);
-                    break;
+				case NOTIFY_SCAN_PROBLEM:
+					String info = (((Bundle) msg.obj).containsKey("Info") ?
+							((Bundle) msg.obj).getString("Info") : "");
+					log("NOTIFY_SCAN_PROBLEM:" + info);
+					onNotifyProblem(info);
+					break;
 
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
+				default:
+					super.handleMessage(msg);
+			}
+		}
+	}
 
-    //========API
+	//========API
 
-    public final void rqstStartScan(String scanArguments) {
-        if(!mBound)
-            return;
+	public final void rqstStartScan(String scanArguments) {
+		if (!mBound)
+			return;
 
-        Bundle bundle = new Bundle();
-        bundle.putString("ScanArguments",scanArguments);
+		Bundle bundle = new Bundle();
+		bundle.putString("ScanArguments", scanArguments);
 
-        tellService(RQST_START_SCAN, clientID, 0, bundle, null);
-    }
+		tellService(RQST_START_SCAN, clientID, 0, bundle, null);
+	}
 
-    public final void rqstStopScan() {
-        if(!mBound)
-            return;
+	public final void rqstStopScan() {
+		if (!mBound)
+			return;
 
-        if(scan==null){
-            log("stopScan(): scan object is null!");
-            return;
-        }
+		if (scan == null) {
+			log("stopScan(): scan object is null!");
+			return;
+		}
 
-        if(!scan.started)
-            return;
+		if (!scan.started)
+			return;
 
-        tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
-    }
+		tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
+	}
 
-    protected abstract void onScanStart();
+	protected abstract void onScanStart();
 
-    protected abstract void onScanStop();
+	protected abstract void onScanStop();
 
-    protected abstract void onNotifyProgress(int progress);
+	protected abstract void onNotifyProgress(int progress);
 
-    protected abstract void onNotifyProblem(String info);
+	protected abstract void onNotifyProblem(String info);
 
-    protected abstract void onNotifyFinished(String scanResults);
+	protected abstract void onNotifyFinished(String scanResults);
 
-    //=======\API
+	//=======\API
 
-    private boolean tellService(int RQST_CODE,
-                                int scanID,
-                                int msg_arg2,
-                                Bundle bundle,
-                                Messenger replyTo){
+	private boolean tellService(int RQST_CODE,
+	                            int scanID,
+	                            int msg_arg2,
+	                            Bundle bundle,
+	                            Messenger replyTo) {
 
-        log("tellService():RESP_CODE=" + RQST_CODE);
+		log("tellService():RESP_CODE=" + RQST_CODE);
 
-        Message msg;
+		Message msg;
 
-        if(bundle != null)
-            msg = Message.obtain(null,RQST_CODE,scanID,msg_arg2,bundle);
-        else
-            msg = Message.obtain(null,RQST_CODE,scanID,msg_arg2);
+		if (bundle != null)
+			msg = Message.obtain(null, RQST_CODE, scanID, msg_arg2, bundle);
+		else
+			msg = Message.obtain(null, RQST_CODE, scanID, msg_arg2);
 
-        if (replyTo!=null)
-            msg.replyTo=replyTo;
+		if (replyTo != null)
+			msg.replyTo = replyTo;
 
-        try {
-            msgrService.send(msg);
-        } catch (RemoteException e) {
-            log(".tellService():could not send message.");
-            return false;
-        }
-        return true;
-    }
+		try {
+			msgrService.send(msg);
+		} catch (RemoteException e) {
+			log(".tellService():could not send message.");
+			return false;
+		}
+		return true;
+	}
 
-    private void log(String log_message){
-        android.util.Log.d("UmitScanner","ScanClientActivity."+log_message);
-    }
+	private void log(String log_message) {
+		android.util.Log.d("UmitScanner", "ScanClientActivity." + log_message);
+	}
 }
