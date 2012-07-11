@@ -10,7 +10,7 @@ import org.umit.ns.mobile.api.ScanCommunication;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-public class RootAcquisitionRunnable implements Runnable,ScanCommunication {
+class RootAcquisitionRunnable implements Runnable,ScanCommunication {
 
     private Messenger mService;
 

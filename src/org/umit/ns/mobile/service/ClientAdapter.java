@@ -10,9 +10,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;import org.umit.ns.mobile.service.ScanWrapper;
+import android.os.RemoteException;
 
-import java.lang.Integer;import java.lang.String;import java.util.LinkedHashMap;
+import java.lang.Integer;
+import java.lang.String;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -94,12 +96,11 @@ class ClientAdapter implements ScanCommunication {
 		ContentValues values = new ContentValues();
 		values.put(Scans.CLIENT_ACTION, action);
 		values.put(Scans.ROOT_ACCESS, rootAccess ? 1 : 0);
+		//TODO these should be the arguments passed from the actiivty
 		values.put(Scans.SCAN_ARGUMENTS, pendingScan.arguments);
 		values.put(Scans.SCAN_PROGRESS, pendingScan.getProgress());
 		values.put(Scans.SCAN_STATE, Scans.SCAN_STATE_STARTED);
-
 		contentResolver.insert(uri, values);
-
 
 		pendingScan = null;
 	}

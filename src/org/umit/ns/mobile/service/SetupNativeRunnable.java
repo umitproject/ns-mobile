@@ -10,7 +10,7 @@ import org.umit.ns.mobile.api.ZipUtils;
 import java.io.*;
 
 //SetupNative doesn't require root access
-public class SetupNativeRunnable implements Runnable, ScanCommunication {
+class SetupNativeRunnable implements Runnable, ScanCommunication {
 
 	private final Messenger service;
 	private final Context context;

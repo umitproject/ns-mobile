@@ -7,7 +7,7 @@ import org.umit.ns.mobile.api.ScanCommunication;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class NmapScanServiceRunnable implements Runnable, ScanCommunication {
+class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 	private final boolean rootAccess;
 	private final String scanResultsFile;
 	private final String scanArguments;

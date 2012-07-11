@@ -5,8 +5,9 @@ import android.os.IBinder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class ScanWrapper {
+class ScanWrapper {
 	private final int ID;
+	//TODO these should be the arguments passed from the actiivty
 	protected final String arguments;
 	protected final String scanResultsFilename;
 
