@@ -4,13 +4,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.*;
+import org.apache.http.impl.io.ContentLengthInputStream;
 import org.umit.ns.mobile.R;
-import org.umit.ns.mobile.ScanActivity;
-import org.umit.ns.mobile.ScanOverviewActivity;
 import org.umit.ns.mobile.api.ScanCommunication;
 
 import java.util.*;
@@ -18,8 +16,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 //TODO Notification for Service and ScanProgressActivity
-//TODO clean the contentprovider once killed
-//TODO upon binding the client sends action
 
 public class ScanService extends Service implements ScanCommunication{
     private boolean enabled=true;
@@ -41,8 +37,6 @@ public class ScanService extends Service implements ScanCommunication{
 
     private static String scanResultsPath;
     private int serviceNotificationID;
-
-    private ContentResolver contentResolver;
 
     @Override
     public void onCreate() {
@@ -77,7 +71,6 @@ public class ScanService extends Service implements ScanCommunication{
             log("Critical fault! nmap_install_dir string resource not matching package:" +
                     getFilesDir().toString()+":"+nativeInstallDir);
 
-        contentResolver = getContentResolver();
     }
 
     @Override
@@ -95,23 +88,14 @@ public class ScanService extends Service implements ScanCommunication{
 
         Messenger messenger = intent.getParcelableExtra("Messenger");
         if(messenger==null){
-            log("onBind() no Messenger in Intent. Finishing");
+            log("onBind() no messenger in Intent. Finishing");
             return null;
         }
         log("onBind()-got Messenger!");
 
-        String action = intent.getStringExtra("Action");
-        if(action==null){
-            log("onBind() no Action in Intent. Finishing");
-            return null;
-        }
-        log("onBind()-got Action! Oh yeah! :D");
-
-
         ClientAdapter client = clients.get(clientID);
         if(client==null){
-            client = new ClientAdapter(clientID, messenger,
-                    scanResultsPath,contentResolver,action);
+            client = new ClientAdapter(clientID, messenger,scanResultsPath);
             clients.put(clientID,client);
         } else {
             //Update the messenger and rebind (resend all messages in queue)
@@ -324,8 +308,10 @@ public class ScanService extends Service implements ScanCommunication{
         CharSequence text = getText(resStringID);
         Notification notification = new Notification(R.drawable.icon_service, text,
                 System.currentTimeMillis());
+
+        //TODO PendingIntent
         PendingIntent contentIntent = PendingIntent.getActivity(this,0,
-                new Intent(this, ScanOverviewActivity.class),0);
+                new Intent(this,org.umit.ns.mobile.nmap.class),0);
         notification.setLatestEventInfo(this, getText(R.string.service_scan_name),
                 text, contentIntent);
         return notification;

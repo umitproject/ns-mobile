@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Umit Network Scanner</string>
-    <string name="scanactivity_action">org.umit.ns.mobile.action.ScanActivity</string>
-
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
     <string name="service_scan_name">Umit Network Scanner Service</string>

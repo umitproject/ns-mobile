@@ -8,8 +8,6 @@ import android.content.ServiceConnection;
 
 import android.os.*;
 import android.widget.Toast;
-import org.umit.ns.mobile.R;
-import org.umit.ns.mobile.ScanActivity;
 
 import java.io.*;
 import java.util.Random;
@@ -73,13 +71,12 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
             clientID = scan.clientID;
         } else {
             wasConnected=false;
-            clientID = Math.abs(random.nextInt());
+            clientID = random.nextInt();
         }
 
         Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
         intent.putExtra("Messenger", msgrLocal);
         intent.putExtra("ClientID",clientID);
-        intent.putExtra("Action",getString(R.string.scanactivity_action));
 
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         log("onCreate()-Bound to service");

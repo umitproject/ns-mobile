@@ -12,28 +12,29 @@
 
     <application android:debuggable="true" android:icon="@drawable/icon" android:label="@string/app_name">
 
-        <provider android:name=".ScanProvider"
-                  android:authorities="org.umit.ns.mobile.provider.ScanOverview"/>
-
-        <activity android:name="ScanActivity"
+        <activity android:name="nmap"
                   android:label="@string/app_name">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <intent-filter>
-                <action android:name="@string/scanactivity_action"/>
-                <data android:scheme="content"
-                      android:host="org.umit.ns.mobile.provider.ScanOverview"
-                      android:pathPattern="scanoverview/.+/.+"/>
-                <!--data:pathPattern first is clientID, second is scanID-->
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
         </activity>
 
-        <activity android:name=".ScanOverviewActivity"/>
+        <activity android:name="PortScanner"
+        		android:label="Port Scanner">
+		</activity>
+
+		<activity android:name="Traceroute"
+        		android:label="Traceroute">
+		</activity>
+
+		<activity android:name="SavedScans"
+        		android:label="Saved Scans">
+		</activity>
+
+		<activity android:name="LogsViewer"
+        		android:label="Logs">
+		</activity>
 
         <service android:name=".service.ScanService"
                  android:exported="true"

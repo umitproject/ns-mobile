@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+    <ProgressBar style="@android:style/Widget.ProgressBar.Horizontal" android:id="@+id/progress" android:layout_height="wrap_content" android:layout_width="match_parent"></ProgressBar>
+
+    <TableRow android:id="@+id/tableRow2" android:layout_height="wrap_content" android:layout_width="match_parent">
+	<EditText android:id="@+id/target" android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="" android:layout_weight="1"></EditText>
+        <EditText android:id="@+id/from" android:layout_height="wrap_content" android:layout_width="80dip" android:text="" android:layout_weight="1"></EditText>
+        <EditText android:id="@+id/to" android:layout_height="wrap_content" android:layout_width="80dip" android:text="" android:layout_weight="1"></EditText>
+    </TableRow>
+    
+    <RelativeLayout android:id="@+id/relativeLayout1" android:layout_height="wrap_content" android:layout_width="match_parent">
+        <ListView android:id="@+id/listView1" android:layout_height="250dip" android:layout_width="160dip"></ListView>
+        
+    </RelativeLayout>
+	<TextView android:text="PortScanner" android:id="@+id/hostd" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+	    <TableRow android:id="@+id/tableRow1" android:layout_height="wrap_content" android:layout_width="match_parent">
+        <Button android:layout_height="wrap_content" android:text="Start" android:id="@+id/scan" android:layout_width="wrap_content"></Button>
+        <Button android:layout_height="wrap_content" android:text="Stop" android:id="@+id/stop" android:layout_width="wrap_content"></Button>
+        <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/icon" android:id="@+id/imageView1"></ImageView>
+    </TableRow>
+</LinearLayout>
