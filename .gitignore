@@ -14,7 +14,6 @@ Desktop.ini
 *.dex
 gen
 local.properties
-*.jar
 .classpath
 obj/**
 *.iml
