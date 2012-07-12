@@ -5,7 +5,7 @@ import android.os.*;
 import android.util.Log;
 import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.api.ScanCommunication;
-import org.umit.ns.mobile.api.ZipUtils;
+import org.umit.ns.mobile.util.ZipUtils;
 
 import java.io.*;
 

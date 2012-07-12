@@ -60,7 +60,7 @@ public class ScanProvider extends ContentProvider {
 		scansProjection.put(Scans.CLIENT_ACTION, Scans.CLIENT_ACTION);
 		scansProjection.put(Scans.SCAN_ID, Scans.SCAN_ID);
 		scansProjection.put(Scans.SCAN_STATE, Scans.SCAN_STATE);
-		scansProjection.put(Scans.SCAN_PROGRESS, Scans.SCAN_PROGRESS);
+		scansProjection.put(Scans.TASK_PROGRESS, Scans.TASK_PROGRESS);
 		scansProjection.put(Scans.ROOT_ACCESS, Scans.ROOT_ACCESS);
 		scansProjection.put(Scans.SCAN_ARGUMENTS, Scans.SCAN_ARGUMENTS);
 
@@ -94,7 +94,7 @@ public class ScanProvider extends ContentProvider {
 					+ Scans.ROOT_ACCESS + " INTEGER,"
 					+ Scans.SCAN_ID + " INTEGER,"
 					+ Scans.SCAN_ARGUMENTS + " TEXT,"
-					+ Scans.SCAN_PROGRESS + " INTEGER,"
+					+ Scans.TASK_PROGRESS + " INTEGER,"
 					+ Scans.SCAN_STATE + " INTEGER,"
 					+ Scans.TASK + " TEXT,"
 					+ Scans.HOSTS_TABLE_NAME + " TEXT"
@@ -393,7 +393,7 @@ public class ScanProvider extends ContentProvider {
 				Cursor c = query(uri,null,null,null,null);
 
 				if(c.getCount()==0) {
-					return (insert(uri,values)==null ? 0: 1);
+					return (insert(uri,values)==null ? -1: 1);
 				}
 
 				String clientIDString = uri.getPathSegments().get(1);
@@ -408,7 +408,7 @@ public class ScanProvider extends ContentProvider {
 			case MATCH_URI_HOST: {
 				Cursor c = query(uri,null,null,null,null);
 				if(c.getCount()==0){
-					return (insert(uri,values)==null ? 0: 1);
+					return (insert(uri,values)==null ? -1: 1);
 				}
 
 				String clientID = uri.getPathSegments().get(1);
@@ -437,7 +437,7 @@ public class ScanProvider extends ContentProvider {
 			case MATCH_URI_DETAIL: {
 				Cursor c = query(uri,null,null,null,null);
 				if(c.getCount()==0){
-					return (insert(uri,values)==null ? 0: 1);
+					return (insert(uri,values)==null ? -1: 1);
 				}
 
 				String clientID = uri.getPathSegments().get(1);

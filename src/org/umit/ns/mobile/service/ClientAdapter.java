@@ -98,7 +98,7 @@ class ClientAdapter implements ScanCommunication {
 		values.put(Scans.ROOT_ACCESS, rootAccess ? 1 : 0);
 		//TODO these should be the arguments passed from the actiivty
 		values.put(Scans.SCAN_ARGUMENTS, pendingScan.arguments);
-		values.put(Scans.SCAN_PROGRESS, pendingScan.getProgress());
+		values.put(Scans.TASK_PROGRESS, 0);
 		values.put(Scans.SCAN_STATE, Scans.SCAN_STATE_STARTED);
 		contentResolver.insert(uri, values);
 

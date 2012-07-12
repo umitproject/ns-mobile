@@ -50,16 +50,22 @@ public final class Scanner {
 		public static final String SCAN_STATE = "state";
 
 		/**
-		 * Scan Progress
+		 * TASK Progress
 		 * <P>Type: INTEGER</P>
 		 */
-		public static final String SCAN_PROGRESS = "progress";
+		public static final String TASK_PROGRESS = "progress";
 
 		/**
 		 * Parameters for the scan
 		 * <P>Type: TEXT</P>
 		 */
 		public static final String SCAN_ARGUMENTS = "arguments";
+
+		/**
+		 * Running task
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String TASK = "task";
 
 		public static final String HOSTS_TABLE_NAME = "hoststablename";
 
@@ -74,7 +80,6 @@ public final class Scanner {
 	public static final class Hosts implements BaseColumns {
 		private Hosts() {
 		}
-
 
 		/**
 		 * Host IP address
@@ -105,6 +110,10 @@ public final class Scanner {
 
 		public static final int STATE_DOWN = 0;
 		public static final int STATE_UP = 1;
+		public static final int STATE_UNKNOWN = 2;
+		public static final int STATE_SKIPPED = 3;
+		public static final int STATE_NULL = -1;
+
 
 		public static final int OS_FREEBSD = 0;
 		public static final int OS_IRIX = 1;
@@ -122,12 +131,34 @@ public final class Scanner {
 		private Details() {
 		}
 
+		/**
+		 * Details Name: Port number / Script name ...
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String TYPE = "type";
 
 		/**
 		 * Details Type: Port results / Script results / OS/Service fingerprinting
 		 * <P>Type: TEXT</P>
 		 */
 		public static final String NAME = "name";
+
+		/**
+		 * State of Details: 0=NOT_PORT etc...
+		 * <P>Type: INTEGER</P>
+		 */
+		public static final String STATE = "state";
+
+		public static final int STATE_NOT_PORT = 0;
+		public static final int STATE_PORT_OPEN = 1;
+		public static final int STATE_PORT_FILTERED = 2;
+		public static final int STATE_PORT_UNFILTERED = 3;
+		public static final int STATE_PORT_CLOSED = 4;
+		public static final int STATE_PORT_OPENFILTERED = 5;
+		public static final int STATE_PORT_CLOSEDFILTERED = 6;
+		public static final int STATE_PORT_UNKNOWN = 7;
+
+
 
 		/**
 		 * The details themselves
