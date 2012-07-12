@@ -96,6 +96,7 @@ public class ScanProvider extends ContentProvider {
 					+ Scans.SCAN_ARGUMENTS + " TEXT,"
 					+ Scans.SCAN_PROGRESS + " INTEGER,"
 					+ Scans.SCAN_STATE + " INTEGER,"
+					+ Scans.TASK + " TEXT,"
 					+ Scans.HOSTS_TABLE_NAME + " TEXT"
 					+ ");");
 		}
@@ -232,7 +233,7 @@ public class ScanProvider extends ContentProvider {
 					return null;
 				}
 				if (false == values.containsKey(Scans.ROOT_ACCESS)) {
-					Log.e(LOG_TAG, "scans.insert: No ROOT_ACTION specified");
+					Log.e(LOG_TAG, "scans.insert: No ROOT_ACCESS specified");
 					return null;
 				}
 				if (false == values.containsKey(Scans.SCAN_STATE)) {
@@ -389,6 +390,12 @@ public class ScanProvider extends ContentProvider {
 		int count;
 		switch (uriMatcher.match(uri)) {
 			case MATCH_URI_SCAN: {
+				Cursor c = query(uri,null,null,null,null);
+
+				if(c.getCount()==0) {
+					return (insert(uri,values)==null ? 0: 1);
+				}
+
 				String clientIDString = uri.getPathSegments().get(1);
 				String scanIDString = uri.getPathSegments().get(2);
 
@@ -399,6 +406,11 @@ public class ScanProvider extends ContentProvider {
 				break;
 			}
 			case MATCH_URI_HOST: {
+				Cursor c = query(uri,null,null,null,null);
+				if(c.getCount()==0){
+					return (insert(uri,values)==null ? 0: 1);
+				}
+
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostsTableName = "h_" + clientID + "_" + scanID;
@@ -423,6 +435,11 @@ public class ScanProvider extends ContentProvider {
 				break;
 			}
 			case MATCH_URI_DETAIL: {
+				Cursor c = query(uri,null,null,null,null);
+				if(c.getCount()==0){
+					return (insert(uri,values)==null ? 0: 1);
+				}
+
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
