@@ -1,77 +1,143 @@
 package org.umit.ns.mobile;
 
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-import org.umit.ns.mobile.R;import org.umit.ns.mobile.api.ScanClientActivity;import java.lang.Override;import java.lang.String;
+import android.widget.*;
 
-public class ScanActivity extends ScanClientActivity {
-    TextView cmd;
-    static TextView results;
-    static boolean started = false;
-    static Button start;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
+import org.umit.ns.mobile.api.ScanClientActivity;
+import org.umit.ns.mobile.provider.Scanner.Hosts;
+import org.umit.ns.mobile.provider.Scanner.Details;
 
-        setContentView(R.layout.scan_activity);
+public class ScanActivity extends ScanClientActivity{
+	TextView scanArguments;
+	Button startButton;
+	Button clearResultsButton;
+	Spinner profilesSpinner;
+	ListView hostsListView;
+	ListView portsListView;
+	boolean started = false;
+	boolean finished = false;
 
-        start = (Button)findViewById(R.id.startNmap);
-        start.setOnClickListener(nmapLoad);
+	Uri hostsUri;
+	Uri scanUri;
+	Uri detailsUri;
 
-        cmd = (TextView)findViewById(R.id.nmapcmd);
-	      cmd.setText("nmap -sC 192.168.1.1/24");
+	Cursor h;
+	Cursor p;
 
-        results = (TextView)findViewById(R.id.nmapOutput);
-    }
+	ContentResolver contentResolver;
+	SimpleCursorAdapter hostsAdapter;
+	SimpleCursorAdapter portsAdapter;
+	ArrayAdapter<String> arrayAdapter;
 
-    @Override
-    public void onDestroy(){
-        super.onDestroy();
-    }
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.scan_activity);
+		startButton = (Button) findViewById(R.id.startscan);
+		clearResultsButton= (Button) findViewById(R.id.clearresults);
+		scanArguments = (TextView) findViewById(R.id.scanarguments);
+		profilesSpinner = (Spinner) findViewById(R.id.profiles);
+		hostsListView = (ListView) findViewById(R.id.hostsresults);
+		portsListView = (ListView) findViewById(R.id.portsresults);
+//		setListViewScrollable(hostsListView);
 
-    public View.OnClickListener nmapLoad = new View.OnClickListener() {
-        public void onClick(View v) {
-            if(!started){
-                rqstStartScan("./"+cmd.getText().toString());
-                started=true;
-                start.setEnabled(false);
-            }
-            else
-                Toast.makeText(getApplicationContext(),"Scan not ready",Toast.LENGTH_SHORT).show();
-        }
-    };
+		String[] hostFromColumns = { Hosts.IP };
+		int[] hostToViews = {R.id.host_listview_item};
 
-    public void onScanStart(){
-        started=true;
-        start.setEnabled(true);
-        start.setText("Stop");
-    }
+		String[] portsFromColumns = {Details.NAME };
+		int[] portsToViews = {R.id.port_listview_item};
 
-    public void onScanStop(){
-        started=false;
-        start.setEnabled(true);
-        start.setText("Start");
-    }
+		hostsAdapter = new SimpleCursorAdapter(this, R.layout.host_item,
+				null,	hostFromColumns, hostToViews);
+		hostsListView.setAdapter(hostsAdapter);
+		hostsListView.setOnItemClickListener(hostClickListener);
+		hostsListView.setEnabled(false);
 
-    public void onNotifyProgress(int progress){
-        //TODO Test
-    }
+		portsAdapter = new SimpleCursorAdapter(this,R.layout.port_item,
+				null,portsFromColumns,portsToViews);
+		portsListView.setAdapter(portsAdapter);
+		portsListView.setEnabled(false);
 
-    protected void onNotifyProblem(String info){
-        Log.e("UmitScanner","Scan has crashed. Info: "+info);
-        //TODO Report to developer ;-)
-        Toast.makeText(getApplicationContext(),"Scanning problem: "+info,Toast.LENGTH_LONG).show();
-    }
+		scanArguments.setText("nmap -sC 192.168.1.1/24");
+	}
 
-    public void onNotifyFinished(String scanResults){
-        started = false;
-        start.setEnabled(true);
-        start.setText("Start");
-        results.append("\n" + scanResults);
-    }
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+	}
+
+	public void startScan(View view) {
+		if(!started)
+			rqstStartScan("./"+scanArguments.getText().toString());
+		else if(!finished){
+			rqstStopScan();
+		}
+	}
+
+	public void onScanStart(int clientID, int scanID) {
+		hostsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/hosts/"+clientID+"/"+scanID);
+		scanUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/scans/"+clientID+"/"+scanID);
+		detailsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/details/"+clientID+"/"+scanID);
+		started = true;
+		startButton.setText("Stop");
+	}
+
+	public void onScanStop() {
+		started=false;
+		startButton.setText("Start");
+	}
+
+	public void onNotifyProgress(int progress) {
+	}
+
+	protected void onNotifyProblem(String info) {
+		Log.e("UmitScanner", "Scan has crashed. Info: " + info);
+		Toast.makeText(getApplicationContext(), "Scanning problem: " + info, Toast.LENGTH_LONG).show();
+	}
+
+	public void onNotifyFinished() {
+		finished=true;
+		startButton.setText("Finished");
+		startButton.setEnabled(false);
+		//show results
+		h = getContentResolver().query(hostsUri,null,null,null,null);
+		hostsListView.setEnabled(true);
+		hostsAdapter.changeCursor(h);
+		startManagingCursor(h);
+		portsListView.setEnabled(true);
+	}
+
+	public void clearResults(View view) {
+		//TODO Clear database
+		hostsAdapter.changeCursor(null);
+		hostsListView.setEnabled(false);
+		stopManagingCursor(h);
+
+		portsAdapter.changeCursor(null);
+		portsListView.setEnabled(false);
+		stopManagingCursor(p);
+
+		startButton.setText("Start");
+		startButton.setEnabled(true);
+		started=false;
+		finished=false;
+	}
+
+	AdapterView.OnItemClickListener hostClickListener = new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+
+			Uri singleDetailUri = detailsUri.buildUpon().appendPath(((TextView)view).getText().toString()).build();
+			p = getContentResolver().query(singleDetailUri,null,null,null,null);
+			startManagingCursor(p);
+			portsAdapter.changeCursor(p);
+
+		}
+	};
 }

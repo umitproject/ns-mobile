@@ -27,8 +27,30 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	//TODO keep when rebinding
 	//TODO maybe find a better solution to really give a unique ID (combine with myPID?)
 	private int clientID;
-	private Scan scan;
+	protected Scan scan;
 	private boolean wasConnected = false;
+
+	protected class Scan {
+		public int ID;
+		public int clientID;
+		boolean rootAccess;
+
+		String scanArguments;
+		String scanResultsFilename;
+
+		String scanResults;
+
+		int progress = 0;
+		boolean started = false;
+
+
+		public Scan(int clientID, int scanID, boolean rootAccess, String scanResultsFilename) {
+			this.clientID = clientID;
+			this.ID = scanID;
+			this.rootAccess = rootAccess;
+			this.scanResultsFilename = scanResultsFilename;
+		}
+	}
 
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -42,27 +64,6 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 		}
 	};
-
-	private class Scan {
-		int ID;
-		int clientID;
-		boolean rootAccess;
-
-		String scanArguments;
-		String scanResultsFilename;
-
-		String scanResults;
-
-		int progress = 0;
-		boolean started = false;
-
-		public Scan(int clientID, int scanID, boolean rootAccess, String scanResultsFilename) {
-			this.clientID = clientID;
-			this.ID = scanID;
-			this.rootAccess = rootAccess;
-			this.scanResultsFilename = scanResultsFilename;
-		}
-	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -124,7 +125,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 					scan = new Scan(clientID, scanID, rootAccess, scanResultsFilename);
 					scan.started = true;
-					onScanStart();
+					onScanStart(clientID,scanID);
 					break;
 
 				case RESP_STOP_SCAN_OK:
@@ -162,24 +163,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 						log("NOTIFY_SCAN_PROGRESS: scanID not matching!");
 						break;
 					}
-					//TODO get results from file here
-					try {
-						BufferedReader inputStream = new BufferedReader(new FileReader(scan.scanResultsFilename));
-						java.lang.StringBuffer scanResults = new StringBuffer();
-						int read;
-						char[] buffer = new char[1024];
-						while (((read = inputStream.read(buffer)) > 0)) {
-							//TODO I'll probably use a ContentProvider in the future
-							scanResults.append(buffer, 0, read);
-						}
-						scan.scanResults = scanResults.toString();
-					} catch (FileNotFoundException e) {
-						Toast.makeText(getApplicationContext(), "Could not open scan results file.", Toast.LENGTH_SHORT).show();
-					} catch (IOException e) {
-						log("NOTIFY_SCAN_FINISHED:Could not close fileInputStream:" + e.getMessage());
-					}
-
-					onNotifyFinished(scan.scanResults);
+					onNotifyFinished();
 					break;
 
 				case NOTIFY_SCAN_PROBLEM:
@@ -222,7 +206,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
 	}
 
-	protected abstract void onScanStart();
+	protected abstract void onScanStart(int clientID, int scanID);
 
 	protected abstract void onScanStop();
 
@@ -230,7 +214,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 	protected abstract void onNotifyProblem(String info);
 
-	protected abstract void onNotifyFinished(String scanResults);
+	protected abstract void onNotifyFinished();
 
 	//=======\API
 

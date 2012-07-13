@@ -247,8 +247,8 @@ public class nsandroid extends Activity {
     }
 
     private void nmapActivity() {
-        Intent n = new Intent(nsandroid.this, nmap.class);
-        startActivityForResult(n, 0);        
+//        Intent n = new Intent(nsandroid.this, nmap.class);
+//        startActivityForResult(n, 0);
     }
 
     /**

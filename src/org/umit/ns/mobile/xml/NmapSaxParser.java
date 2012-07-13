@@ -125,8 +125,10 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		host_address.setStartElementListener( new StartElementListener() {
 			@Override
 			public void start(Attributes attributes) {
-				h.IP=attributes.getValue(ADDR);
-				writer.writeHost(h.IP,h.getContentValues());
+				if(TextUtils.isEmpty(h.IP)){
+					h.IP=attributes.getValue(ADDR);
+					writer.writeHost(h.IP,h.getContentValues());
+				}
 			}
 		});
 

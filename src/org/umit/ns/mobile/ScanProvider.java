@@ -126,6 +126,7 @@ public class ScanProvider extends ContentProvider {
 	public Cursor query(Uri uri, String[] projection, String selection,
 	                    String[] selectionArgs, String sortOrder) {
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
 		switch (uriMatcher.match(uri)) {
 			case MATCH_URI_SCANS: {
@@ -145,6 +146,10 @@ public class ScanProvider extends ContentProvider {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostsTableName = "h_"+clientID + "_" + scanID;
+				//If the hosts table doesn't exits
+				Cursor tmp = db.query("sqlite_master",new String[]{"name"},"type='table' and name='"+hostsTableName+"'",null,null,null,null);
+				if(tmp.getCount()!=1)
+					return null;
 				qb.setTables(hostsTableName);
 				qb.setProjectionMap(hostsProjection);
 				break;
@@ -153,10 +158,15 @@ public class ScanProvider extends ContentProvider {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostsTableName = "h_"+clientID + "_" + scanID;
+				//If the hosts table doesn't exits
+				Cursor tmp = db.query("sqlite_master",new String[]{"name"},"type='table' and name='"+hostsTableName+"'",null,null,null,null);
+				if(tmp.getCount()!=1)
+					return null;
+
 				qb.setTables(hostsTableName);
 				qb.setProjectionMap(hostsProjection);
 				String hostIP = uri.getPathSegments().get(3);
-				qb.appendWhere(Hosts.IP + "='" + sth.convertStringToHex(hostIP)+"'");
+				qb.appendWhere(Hosts.IP + "='" + hostIP+"'");
 				break;
 			}
 			case MATCH_URI_DETAILS: {
@@ -164,6 +174,10 @@ public class ScanProvider extends ContentProvider {
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
 				String detailsTableName = "d_"+clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+				//If the hosts table doesn't exits
+				Cursor tmp = db.query("sqlite_master",new String[]{"name"},"type='table' and name='"+detailsTableName+"'",null,null,null,null);
+				if(tmp.getCount()!=1)
+					return null;
 				qb.setTables(detailsTableName);
 				qb.setProjectionMap(detailsProjection);
 				break;
@@ -173,6 +187,9 @@ public class ScanProvider extends ContentProvider {
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
 				String detailsTableName = "d_"+clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+				Cursor tmp = db.query("sqlite_master",new String[]{"name"},"type='table' and name='"+detailsTableName+"'",null,null,null,null);
+				if(tmp.getCount()!=1)
+					return null;
 				qb.setTables(detailsTableName);
 				qb.setProjectionMap(detailsProjection);
 				qb.appendWhere(Details.NAME + "='" + uri.getPathSegments().get(4)+"'");
@@ -189,7 +206,6 @@ public class ScanProvider extends ContentProvider {
 			orderBy = sortOrder;
 		}
 
-		SQLiteDatabase db = databaseHelper.getReadableDatabase();
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy);
 		c.setNotificationUri(getContext().getContentResolver(), uri);
 		return c;
@@ -297,7 +313,7 @@ public class ScanProvider extends ContentProvider {
 				String hostsTableName = "h_" + clientID + "_" + scanID;
 
 				String hostIP = uri.getPathSegments().get(3);
-				values.put(Hosts.IP, sth.convertStringToHex(hostIP));
+				values.put(Hosts.IP, hostIP);
 
 				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
 
@@ -428,7 +444,7 @@ public class ScanProvider extends ContentProvider {
 				String hostIP = uri.getPathSegments().get(3);
 
 				count = db.update(hostsTableName, values,
-						Hosts.IP + "='" + sth.convertStringToHex(hostIP)+"'", whereArgs);
+						Hosts.IP + "='" + hostIP+"'", whereArgs);
 
 				//If host is up create details table
 				if (count > 0 && values.containsKey(Hosts.STATE) &&

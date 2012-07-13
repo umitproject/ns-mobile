@@ -7,6 +7,7 @@ import org.umit.ns.mobile.api.ScanCommunication;
 import org.umit.ns.mobile.xml.NmapSaxParser;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 
 class NmapScanServiceRunnable implements Runnable, ScanCommunication {
@@ -114,6 +115,8 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 			NmapSaxParser parser = new NmapSaxParser(contentResolver,
 					Integer.toString(clientID),Integer.toString(scanID),scanResultsFile);
 			parser.parse();
+			File file = new File(scanResultsFile);
+			file.delete();
 
 			tellService(NOTIFY_SCAN_FINISHED);
 
