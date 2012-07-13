@@ -164,7 +164,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		port_state.setStartElementListener( new StartElementListener() {
 			@Override
 			public void start(Attributes attributes) {
-				String ps = attributes.getValue("state");
+				String ps = attributes.getValue(PORT_STATE_AT_STATE);
 				if(TextUtils.equals(ps,"open")){
 					d.state=Details.STATE_PORT_OPEN;
 				} else if(TextUtils.equals(ps,"filtered")) {

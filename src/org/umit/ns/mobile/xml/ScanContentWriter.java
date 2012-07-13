@@ -13,8 +13,8 @@ class ScanContentWriter {
 	                  String clientIDString,
 	                  String scanIDString){
 		this.contentResolver=contentResolver;
-		this.clientID = Integer.valueOf(clientIDString);
-		this.scanID = Integer.valueOf(scanIDString);
+		this.clientID = Integer.parseInt(clientIDString);
+		this.scanID = Integer.parseInt(scanIDString);
 	}
 	private ContentResolver contentResolver;
 	private int clientID;

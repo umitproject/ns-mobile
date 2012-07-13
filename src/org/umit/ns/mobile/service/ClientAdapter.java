@@ -60,7 +60,7 @@ class ClientAdapter implements ScanCommunication {
 
 		for (ScanWrapper scan : scans.values()) {
 			if (scan.getNotifyProgress()) {
-				if (tellClient(NOTIFY_SCAN_PROGRESS, scan.getID(), scan.getProgress(), null, null)) {
+				if (tellClient(NOTIFY_SCAN_PROGRESS, scan.getScanID(), scan.getProgress(), null, null)) {
 					scan.setNotifyProgress(false);
 				}
 			}
@@ -70,11 +70,11 @@ class ClientAdapter implements ScanCommunication {
 	//Parse args; Create a new scan and put it in pendingScan, unique non-duplicate id.
 	protected void newScan(String scanArguments) {
 		//generate unique scanID
-		int scanID = random.nextInt();
+		int scanID = Math.abs(random.nextInt());
 		while (scanID_clientID.containsKey(scanID))
-			scanID = random.nextInt();
+			scanID = Math.abs(random.nextInt());
 
-		pendingScan = new ScanWrapper(scanID, scanArguments, scanResultsPath);
+		pendingScan = new ScanWrapper(scanID,ID,contentResolver,scanArguments, scanResultsPath);
 	}
 
 	//Start scan in tmp and put it in list, notify Client, add to database
@@ -85,14 +85,14 @@ class ClientAdapter implements ScanCommunication {
 		pendingScan.start(rootAccess);
 
 		//put in lists
-		scans.put(pendingScan.getID(), pendingScan);
-		scanID_clientID.put(pendingScan.getID(), ID);
+		scans.put(pendingScan.getScanID(), pendingScan);
+		scanID_clientID.put(pendingScan.getScanID(), ID);
 
 		//notify client
-		tellClient(RESP_START_SCAN_OK, pendingScan.getID(), (rootAccess ? 1 : 0),
+		tellClient(RESP_START_SCAN_OK, pendingScan.getScanID(), (rootAccess ? 1 : 0),
 				"ScanResultsFilename", pendingScan.scanResultsFilename);
 
-		Uri uri = Uri.parse(Scanner.SCANS_URI + "/" + ID + "/" + pendingScan.getID());
+		Uri uri = Uri.parse(Scanner.SCANS_URI + "/" + ID + "/" + pendingScan.getScanID());
 		ContentValues values = new ContentValues();
 		values.put(Scans.CLIENT_ACTION, action);
 		values.put(Scans.ROOT_ACCESS, rootAccess ? 1 : 0);

@@ -15,6 +15,7 @@ import org.umit.ns.mobile.model.Scanner;
 import org.umit.ns.mobile.model.Scanner.Details;
 import org.umit.ns.mobile.model.Scanner.Hosts;
 import org.umit.ns.mobile.model.Scanner.Scans;
+import org.umit.ns.mobile.util.StringToHex;
 
 import java.lang.Integer;import java.lang.Override;import java.lang.String;import java.util.HashMap;
 
@@ -40,6 +41,8 @@ public class ScanProvider extends ContentProvider {
 	private static HashMap<String, String> scansProjection;
 	private static HashMap<String, String> hostsProjection;
 	private static HashMap<String, String> detailsProjection;
+
+	private final static StringToHex sth = new StringToHex();
 
 
 	static {
@@ -69,14 +72,16 @@ public class ScanProvider extends ContentProvider {
 		hostsProjection.put(Hosts._ID, Hosts._ID);
 		hostsProjection.put(Hosts.IP, Hosts.IP);
 		hostsProjection.put(Hosts.NAME, Hosts.NAME);
-		hostsProjection.put(Hosts.OS, Hosts.OS);
 		hostsProjection.put(Hosts.STATE, Hosts.STATE);
+		hostsProjection.put(Hosts.OS, Hosts.OS);
 		hostsProjection.put(Hosts.DETAILS_TABLE_NAME, Hosts.DETAILS_TABLE_NAME);
 
 		detailsProjection = new HashMap<String, String>();
 		detailsProjection.put(Details._ID, Details._ID);
 		detailsProjection.put(Details.NAME, Details.NAME);
 		detailsProjection.put(Details.DATA, Details.DATA);
+		detailsProjection.put(Details.TYPE, Details.TYPE);
+		detailsProjection.put(Details.STATE, Details.STATE);
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -133,32 +138,33 @@ public class ScanProvider extends ContentProvider {
 				qb.setProjectionMap(scansProjection);
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
-				qb.appendWhere(Scans.CLIENT_ID + "=" + clientID);
-				qb.appendWhere(Scans.SCAN_ID + "=" + scanID);
+				qb.appendWhere(Scans.CLIENT_ID + "=" + clientID + " AND " + Scans.SCAN_ID + "=" + scanID);
+				break;
 			}
 			case MATCH_URI_HOSTS: {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
-				String hosts_table = clientID + "_" + scanID;
-				qb.setTables(hosts_table);
+				String hostsTableName = "h_"+clientID + "_" + scanID;
+				qb.setTables(hostsTableName);
 				qb.setProjectionMap(hostsProjection);
 				break;
 			}
 			case MATCH_URI_HOST: {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
-				String hosts_table = clientID + "_" + scanID;
-				qb.setTables(hosts_table);
+				String hostsTableName = "h_"+clientID + "_" + scanID;
+				qb.setTables(hostsTableName);
 				qb.setProjectionMap(hostsProjection);
-				qb.appendWhere(Hosts.IP + "=" + uri.getPathSegments().get(3));
+				String hostIP = uri.getPathSegments().get(3);
+				qb.appendWhere(Hosts.IP + "='" + sth.convertStringToHex(hostIP)+"'");
 				break;
 			}
 			case MATCH_URI_DETAILS: {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
-				String details_table = clientID + "_" + scanID + "_" + hostIP;
-				qb.setTables(details_table);
+				String detailsTableName = "d_"+clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+				qb.setTables(detailsTableName);
 				qb.setProjectionMap(detailsProjection);
 				break;
 			}
@@ -166,10 +172,10 @@ public class ScanProvider extends ContentProvider {
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
-				String details_table = clientID + "_" + scanID + "_" + hostIP;
-				qb.setTables(details_table);
+				String detailsTableName = "d_"+clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+				qb.setTables(detailsTableName);
 				qb.setProjectionMap(detailsProjection);
-				qb.appendWhere(Details.NAME + "=" + uri.getPathSegments().get(4));
+				qb.appendWhere(Details.NAME + "='" + uri.getPathSegments().get(4)+"'");
 				break;
 			}
 			default:
@@ -283,15 +289,17 @@ public class ScanProvider extends ContentProvider {
 					Log.e(LOG_TAG, "hosts.insert: No STATE specified");
 					return null;
 				}
-
+				if (false == values.containsKey(Hosts.NAME)) {
+					values.put(Hosts.NAME,"");
+				}
 				String clientID = uri.getPathSegments().get(1);
 				String scanID = uri.getPathSegments().get(2);
 				String hostsTableName = "h_" + clientID + "_" + scanID;
 
 				String hostIP = uri.getPathSegments().get(3);
-				values.put(Hosts.IP, hostIP);
+				values.put(Hosts.IP, sth.convertStringToHex(hostIP));
 
-				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + hostIP;
+				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
 
 				values.put(Hosts.DETAILS_TABLE_NAME, detailsTableName);
 
@@ -306,7 +314,9 @@ public class ScanProvider extends ContentProvider {
 						db.execSQL("CREATE TABLE " + detailsTableName + " ("
 								+ Details._ID + " INTEGER PRIMARY KEY,"
 								+ Details.NAME + " TEXT,"
-								+ Details.DATA + " TEXT"
+								+ Details.DATA + " TEXT,"
+								+ Details.TYPE + " TEXT,"
+								+ Details.STATE + " INTEGER"
 								+ ");");
 					}
 					getContext().getContentResolver().notifyChange(uri, null);
@@ -324,7 +334,7 @@ public class ScanProvider extends ContentProvider {
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
 				String detailName = uri.getPathSegments().get(4);
-				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + hostIP;
+				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
 
 				values.put(Details.NAME,detailName);
 
@@ -350,13 +360,13 @@ public class ScanProvider extends ContentProvider {
 
 		String clientIDString = uri.getPathSegments().get(1);
 		String scanIDString = uri.getPathSegments().get(2);
-		String hostsTable = "h_" + clientIDString + "_" + scanIDString;
+		String hostsTableName = "h_" + clientIDString + "_" + scanIDString;
 
 		SQLiteDatabase db = databaseHelper.getWritableDatabase();
 
 		//Delete the details table for each host
 		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-		qb.setTables(hostsTable);
+		qb.setTables(hostsTableName);
 		Cursor c = qb.query(db, new String[]{Hosts.DETAILS_TABLE_NAME}, null, null, null, null, null);
 		if (null != c) {
 			int index = c.getColumnIndex(Hosts.DETAILS_TABLE_NAME);
@@ -368,7 +378,7 @@ public class ScanProvider extends ContentProvider {
 		}
 
 		//Delete the hosts table
-		db.execSQL("DROP TABLE IF EXISTS " + hostsTable + ";");
+		db.execSQL("DROP TABLE IF EXISTS " + hostsTableName + ";");
 
 		//Clean up a little :)
 		db.execSQL("VACUUM;");
@@ -418,18 +428,20 @@ public class ScanProvider extends ContentProvider {
 				String hostIP = uri.getPathSegments().get(3);
 
 				count = db.update(hostsTableName, values,
-						Hosts.IP + "=" + hostIP, whereArgs);
+						Hosts.IP + "='" + sth.convertStringToHex(hostIP)+"'", whereArgs);
 
 				//If host is up create details table
 				if (count > 0 && values.containsKey(Hosts.STATE) &&
 						(values.getAsInteger(Hosts.STATE) == Hosts.STATE_UP)) {
 
-					String detailsTableName = "d_" +clientID + "_" + scanID + "_" + hostIP;
+					String detailsTableName = "d_" +clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
 
 					db.execSQL("CREATE TABLE IF NOT EXISTS " + detailsTableName + " ("
 							+ Details._ID + " INTEGER PRIMARY KEY,"
 							+ Details.NAME + " TEXT,"
-							+ Details.DATA + " TEXT"
+							+ Details.DATA + " TEXT,"
+							+ Details.TYPE + " TEXT,"
+							+ Details.STATE + " INTEGER"
 							+ ");");
 				}
 				break;
@@ -444,10 +456,10 @@ public class ScanProvider extends ContentProvider {
 				String scanID = uri.getPathSegments().get(2);
 				String hostIP = uri.getPathSegments().get(3);
 				String detailName = uri.getPathSegments().get(4);
-				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + hostIP;
+				String detailsTableName = "d_" + clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
 
 				count = db.update(detailsTableName, values,
-						Details.NAME + "=" + detailName, whereArgs);
+						Details.NAME + "='" + detailName+"'", whereArgs);
 				break;
 			}
 			default:

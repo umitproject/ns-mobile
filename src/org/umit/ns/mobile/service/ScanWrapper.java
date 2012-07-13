@@ -1,12 +1,15 @@
 package org.umit.ns.mobile.service;
 
+import android.content.ContentResolver;
 import android.os.IBinder;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 class ScanWrapper {
-	private final int ID;
+	private final int scanID;
+	private final int clientID;
+	private final ContentResolver contentResolver;
 	//TODO these should be the arguments passed from the actiivty
 	protected final String arguments;
 	protected final String scanResultsFilename;
@@ -26,18 +29,22 @@ class ScanWrapper {
 	private boolean notifyProgress;
 
 	public ScanWrapper(int scanID,
+	                   int clientID,
+	                   ContentResolver contentResolver,
 	                   String scanArguments,
 	                   String scanResultsPath) {
 
 		this.arguments = scanArguments;
-		this.ID = scanID;
-		this.scanResultsFilename = scanResultsPath + ID;
+		this.scanID = scanID;
+		this.clientID = clientID;
+		this.contentResolver = contentResolver;
+		this.scanResultsFilename = scanResultsPath + this.scanID;
 	}
 
 	//Update runnning
 	public void start(boolean rootAccess) {
 		future = executorService.submit(
-				new NmapScanServiceRunnable(ID, serviceBinder, arguments,
+				new NmapScanServiceRunnable(scanID,clientID,contentResolver, serviceBinder, arguments,
 						scanResultsFilename, rootAccess, nativeInstallDir));
 		running = true;
 	}
@@ -51,8 +58,8 @@ class ScanWrapper {
 		}
 	}
 
-	public int getID() {
-		return this.ID;
+	public int getScanID() {
+		return this.scanID;
 	}
 
 	protected void setProgress(int progress) {

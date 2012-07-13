@@ -24,6 +24,7 @@ public class ScanActivity extends ScanClientActivity {
         start.setOnClickListener(nmapLoad);
 
         cmd = (TextView)findViewById(R.id.nmapcmd);
+	      cmd.setText("nmap -sC 192.168.1.1/24");
 
         results = (TextView)findViewById(R.id.nmapOutput);
     }

@@ -132,13 +132,13 @@ public final class Scanner {
 		}
 
 		/**
-		 * Details Name: Port number / Script name ...
+		 * Details Type: Port results / Script results / OS/Service fingerprinting
 		 * <P>Type: TEXT</P>
 		 */
 		public static final String TYPE = "type";
 
 		/**
-		 * Details Type: Port results / Script results / OS/Service fingerprinting
+		 * Details Name: Port number / Script name ...
 		 * <P>Type: TEXT</P>
 		 */
 		public static final String NAME = "name";
@@ -157,8 +157,6 @@ public final class Scanner {
 		public static final int STATE_PORT_OPENFILTERED = 5;
 		public static final int STATE_PORT_CLOSEDFILTERED = 6;
 		public static final int STATE_PORT_UNKNOWN = 7;
-
-
 
 		/**
 		 * The details themselves

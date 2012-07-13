@@ -1,8 +1,10 @@
 package org.umit.ns.mobile.service;
 
+import android.content.ContentResolver;
 import android.os.*;
 import android.util.Log;
 import org.umit.ns.mobile.api.ScanCommunication;
+import org.umit.ns.mobile.xml.NmapSaxParser;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -12,32 +14,37 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 	private final String scanResultsFile;
 	private final String scanArguments;
 	private final Messenger mService;
-	private final int id;
+	private final int scanID;
+	private final int clientID;
+	private final ContentResolver contentResolver;
 	private final String nativeInstallDir;
 
 	private java.lang.Process p;
 
-	public NmapScanServiceRunnable(final int id,
+	public NmapScanServiceRunnable(final int scanID,
+	                               final int clientID,
+	                               final ContentResolver contentResolver,
 	                               final IBinder service,
 	                               final String scanArguments,
 	                               final String scanResultsFile,
 	                               final boolean hasRoot,
 	                               final String nativeInstallDir) {
 
-		Log.d("UmitScanner", "NmapScanRunnable.NmapScanRunnable() ID:" + id);
-		this.id = id;
+		Log.d("UmitScanner", "NmapScanRunnable.NmapScanRunnable() ID:" + scanID);
+		this.scanID = scanID;
+		this.clientID = clientID;
+		this.contentResolver=contentResolver;
 		this.scanResultsFile = scanResultsFile;
 		this.rootAccess = hasRoot;
 		this.mService = new Messenger(service);
 		this.nativeInstallDir = nativeInstallDir;
-		//TODO expose time refresh to activity default is 1s
 		//output to /dev/null so we don't fill "ze buffer" up
 		this.scanArguments = scanArguments + " -vv --stats-every 1s -oX " + scanResultsFile + " > /dev/null";
 	}
 
 	private void tellService(int RESP_CODE) {
 		Log.d("UmitScanner", "tellService():RESP_CODE=" + RESP_CODE);
-		Message msg = Message.obtain(null, RESP_CODE, id, 0);
+		Message msg = Message.obtain(null, RESP_CODE, scanID, 0);
 		try {
 			mService.send(msg);
 		} catch (RemoteException e) {
@@ -48,7 +55,7 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 
 	private void tellService(int RESP_CODE, String info) {
 		Log.d("UmitScanner", "tellService():RESP_CODE=" + RESP_CODE + "; info=" + info);
-		Message msg = Message.obtain(null, RESP_CODE, id, 0);
+		Message msg = Message.obtain(null, RESP_CODE, scanID, 0);
 		Bundle bundle = new Bundle();
 		bundle.putString("Info", info);
 		msg.obj = bundle;
@@ -103,6 +110,11 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				}
 			}
 			//scan finished
+
+			NmapSaxParser parser = new NmapSaxParser(contentResolver,
+					Integer.toString(clientID),Integer.toString(scanID),scanResultsFile);
+			parser.parse();
+
 			tellService(NOTIFY_SCAN_FINISHED);
 
 		} catch (IOException e) {

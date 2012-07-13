@@ -59,7 +59,7 @@ public class ScanService extends Service implements ScanCommunication {
 		scanResultsPath = nativeInstallDir + "/scanresults/";
 
 		//Setup notifications and foreground
-		serviceNotificationID = random.nextInt();
+		serviceNotificationID = Math.abs(random.nextInt());
 		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		startForeground(serviceNotificationID, getNotification(R.string.service_ready));
 
