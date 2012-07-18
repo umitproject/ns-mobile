@@ -10,11 +10,13 @@ import android.widget.*;
 
 
 import org.umit.ns.mobile.api.ScanClientActivity;
+import org.umit.ns.mobile.model.ScanArgsConst;
+import org.umit.ns.mobile.model.ScanArgumentsTokenizer;
 import org.umit.ns.mobile.provider.Scanner.Hosts;
 import org.umit.ns.mobile.provider.Scanner.Details;
 
-public class ScanActivity extends ScanClientActivity{
-	TextView scanArguments;
+public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
+	MultiAutoCompleteTextView scanArgsTextView;
 	Button startButton;
 	Button clearResultsButton;
 	Spinner profilesSpinner;
@@ -41,12 +43,17 @@ public class ScanActivity extends ScanClientActivity{
 		setContentView(R.layout.scan_activity);
 		startButton = (Button) findViewById(R.id.startscan);
 		clearResultsButton= (Button) findViewById(R.id.clearresults);
-		scanArguments = (TextView) findViewById(R.id.scanarguments);
+		scanArgsTextView = (MultiAutoCompleteTextView) findViewById(R.id.scanarguments);
 		profilesSpinner = (Spinner) findViewById(R.id.profiles);
 		hostsListView = (ListView) findViewById(R.id.hostsresults);
 		portsListView = (ListView) findViewById(R.id.portsresults);
-//		setListViewScrollable(hostsListView);
 
+		//Set up ScanArguments input
+		ArrayAdapter<String> argsAdapter = new ArrayAdapter<String>(this,R.layout.scan_args_list_1item, ARGS);
+		scanArgsTextView.setAdapter(argsAdapter);
+		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
+
+		//Set up hosts and ports ListView adapters
 		String[] hostFromColumns = { Hosts.IP };
 		int[] hostToViews = {R.id.host_listview_item};
 
@@ -64,7 +71,7 @@ public class ScanActivity extends ScanClientActivity{
 		portsListView.setAdapter(portsAdapter);
 		portsListView.setEnabled(false);
 
-		scanArguments.setText("nmap -sC 192.168.1.1/24");
+
 	}
 
 	@Override
@@ -74,7 +81,7 @@ public class ScanActivity extends ScanClientActivity{
 
 	public void startScan(View view) {
 		if(!started)
-			rqstStartScan("./"+scanArguments.getText().toString());
+			rqstStartScan("./ nmap"+ scanArgsTextView.getText().toString());
 		else if(!finished){
 			rqstStopScan();
 		}

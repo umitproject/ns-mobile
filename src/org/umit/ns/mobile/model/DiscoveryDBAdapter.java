@@ -51,7 +51,7 @@ public class DiscoveryDBAdapter {
     public static final String KEY_TARGET = "target";
     public static final String KEY_RANGE = "range";
     public static final String KEY_TOTAL = "total";
-    public static final String KEY_ARGS = "args";
+    public static final String KEY_ARGS = "ARGS";
     
     /* Discovery */
     public static final String KEY_HOSTS = "hosts";

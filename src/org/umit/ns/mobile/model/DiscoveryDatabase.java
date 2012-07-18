@@ -39,7 +39,7 @@ public class DiscoveryDatabase extends SQLiteOpenHelper {
     
     public static final String DATABASE_NAME = "discovery";
     public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_CREATE = "CREATE TABLE discovery (id INTEGER PRIMARY KEY autoincrement, time TEXT, profile TEXT, type TEXT, target TEXT, range TEXT, total TEXT, args TEXT, hosts TEXT)";
+    public static final String DATABASE_CREATE = "CREATE TABLE discovery (id INTEGER PRIMARY KEY autoincrement, time TEXT, profile TEXT, type TEXT, target TEXT, range TEXT, total TEXT, ARGS TEXT, hosts TEXT)";
     
     public DiscoveryDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

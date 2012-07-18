@@ -42,7 +42,7 @@ public class PortScanDatabase extends SQLiteOpenHelper {
     public static final String DATABASE_CREATE = "CREATE TABLE portscan " +
     		"(id INTEGER PRIMARY KEY autoincrement, time TEXT, " + 
     		"profile TEXT, type TEXT, target TEXT, " +
-    		"args TEXT, open TEXT, closed TEXT, range TEXT, " +
+    		"ARGS TEXT, open TEXT, closed TEXT, range TEXT, " +
     		"filtered TEXT, protocol TEXT, d_id TEXT, total NUMERIC)";
     
 

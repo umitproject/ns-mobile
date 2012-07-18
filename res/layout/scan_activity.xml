@@ -4,13 +4,15 @@
                 android:layout_height="fill_parent"
                 android:padding="5dp">
 
-    <EditText android:id="@+id/scanarguments"
-              android:text=""
-              android:inputType="text"
-              android:hint="Scan Arguments"
-              android:layout_height="wrap_content"
-              android:layout_width="match_parent"
-              android:layout_alignParentTop="true"/>
+    <MultiAutoCompleteTextView
+            android:id="@+id/scanarguments"
+           android:inputType="text"
+           android:layout_alignParentTop="true"
+           android:hint="Scan Arguments"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:completionThreshold="1"/>
 
     <Spinner android:id="@+id/profiles"
              android:layout_below="@+id/scanarguments"

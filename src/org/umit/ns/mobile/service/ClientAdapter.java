@@ -67,7 +67,7 @@ class ClientAdapter implements ScanCommunication {
 		}
 	}
 
-	//Parse args; Create a new scan and put it in pendingScan, unique non-duplicate id.
+	//Parse ARGS; Create a new scan and put it in pendingScan, unique non-duplicate id.
 	protected void newScan(String scanArguments) {
 		//generate unique scanID
 		int scanID = Math.abs(random.nextInt());

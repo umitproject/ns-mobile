@@ -28,10 +28,16 @@
         <item>Normal</item>
         <item>Insane</item>
     </string-array>
-	<string-array name="portscan_array">
+
+    <string-array name="portscan_array">
         <item>TCP Connect() Scan</item>
         <item>UDP Scan</item>
         <item>SYN Scan</item>
         <item>FIN Scan</item>
     </string-array>
+
+    <string-array name="scan_arguments_array">
+        <item></item>
+    </string-array>
+
 </resources>
