@@ -12,11 +12,12 @@ import android.widget.*;
 import org.umit.ns.mobile.api.ScanClientActivity;
 import org.umit.ns.mobile.model.ScanArgsConst;
 import org.umit.ns.mobile.model.ScanArgumentsTokenizer;
+import org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView;
 import org.umit.ns.mobile.provider.Scanner.Hosts;
 import org.umit.ns.mobile.provider.Scanner.Details;
 
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
-	MultiAutoCompleteTextView scanArgsTextView;
+	ScanMultiAutoCompleteTextView scanArgsTextView;
 	Button startButton;
 	Button clearResultsButton;
 	Spinner profilesSpinner;
@@ -35,7 +36,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	ContentResolver contentResolver;
 	SimpleCursorAdapter hostsAdapter;
 	SimpleCursorAdapter portsAdapter;
-	ArrayAdapter<String> arrayAdapter;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -43,13 +43,14 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		setContentView(R.layout.scan_activity);
 		startButton = (Button) findViewById(R.id.startscan);
 		clearResultsButton= (Button) findViewById(R.id.clearresults);
-		scanArgsTextView = (MultiAutoCompleteTextView) findViewById(R.id.scanarguments);
+		scanArgsTextView = (ScanMultiAutoCompleteTextView) findViewById(R.id.scanarguments);
 		profilesSpinner = (Spinner) findViewById(R.id.profiles);
 		hostsListView = (ListView) findViewById(R.id.hostsresults);
 		portsListView = (ListView) findViewById(R.id.portsresults);
 
 		//Set up ScanArguments input
-		ArrayAdapter<String> argsAdapter = new ArrayAdapter<String>(this,R.layout.scan_args_list_1item, ARGS);
+		ArrayAdapter<String> argsAdapter = new ArrayAdapter<String>(this,R.layout.scan_args_list_1item, FULL_ARGS);
+
 		scanArgsTextView.setAdapter(argsAdapter);
 		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
 

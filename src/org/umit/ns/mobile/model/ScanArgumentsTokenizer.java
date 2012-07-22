@@ -29,19 +29,18 @@ public class ScanArgumentsTokenizer implements MultiAutoCompleteTextView.Tokeniz
 	}
 
 	public CharSequence terminateToken(CharSequence text) {
+
 		int i = text.length();
 
 		while (i > 0 && text.charAt(i - 1) == ' ') {
 			i--;
 		}
 
-		StringBuilder token = new StringBuilder();
 		while(i>0 && text.charAt(i-1)!=' '){
-			token.append(text.charAt(i-1));
 			i--;
 		}
 
-		if(NO_SPACE_ARGS.contains(token))
+		if(NO_SPACE_ARGS.contains(text))
 			return text;
 		else
 			return text + " ";

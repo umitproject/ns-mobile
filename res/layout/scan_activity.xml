@@ -4,7 +4,7 @@
                 android:layout_height="fill_parent"
                 android:padding="5dp">
 
-    <MultiAutoCompleteTextView
+    <org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView
             android:id="@+id/scanarguments"
            android:inputType="text"
            android:layout_alignParentTop="true"
