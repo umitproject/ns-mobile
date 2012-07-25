@@ -92,23 +92,14 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				pOut.writeBytes("exit\n");
 				pOut.flush();
 				p.waitFor();
-			} catch (IOException e) {
-				//manage abrupt stopping
-				if (Thread.currentThread().isInterrupted()) {
-					Log.d("UmitScanner", "Interrupted from blocked I/O");
-					p.destroy();
-				} else {
-					tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
-					e.printStackTrace();
-				}
 			} catch (InterruptedException e) {
-				if (Thread.currentThread().isInterrupted()) {
-					Log.d("UmitScanner", "Interrupted from blocked I/O");
-					p.destroy();
-				} else {
-					tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
-					e.printStackTrace();
-				}
+				//manage abrupt stopping
+				Log.d("UmitScanner", "Interrupted from blocked I/O");
+				p.destroy();
+				return;
+			} catch (IOException e) {
+				tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
+				e.printStackTrace();
 			}
 			//scan finished
 
