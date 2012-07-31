@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScanOverviewItem"
+    android:layout_width="match_parent"
+    android:layout_height="44dp">
+
+    <Button android:id="@+id/StopButton"
+            android:text="Stop"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_alignParentRight="true"
+            />
+
+    <TextView
+            android:id="@+id/ScanArguments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_toLeftOf="@id/StopButton"
+            android:layout_alignParentLeft="true"
+            android:textSize="15dp"
+
+            android:paddingLeft="5dp"
+            />
+
+    <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+
+            android:id="@+id/ProgressTaskLayout"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ScanArguments"
+            android:layout_toLeftOf="@id/StopButton"
+            android:layout_alignParentLeft="true"
+            android:paddingLeft="5dp">
+
+        <ProgressBar
+                android:id="@+id/Progress"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:indeterminate="false"
+
+                android:layout_alignBottom="@id/StopButton"
+                android:layout_alignParentLeft="true"
+                android:layout_centerInParent="true"
+                android:paddingBottom="6dp"
+
+                android:max="100"
+                />
+
+        <TextView
+                android:id="@+id/TaskName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:textSize="15dp"
+
+                android:paddingLeft="25dp"
+                />
+
+    </RelativeLayout>
+
+</RelativeLayout>

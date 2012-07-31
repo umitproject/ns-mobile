@@ -10,7 +10,6 @@ class ScanWrapper {
 	private final int scanID;
 	private final int clientID;
 	private final ContentResolver contentResolver;
-	//TODO these should be the arguments passed from the actiivty
 	protected final String arguments;
 	protected final String scanResultsFilename;
 

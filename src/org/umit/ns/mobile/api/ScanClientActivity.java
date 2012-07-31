@@ -25,7 +25,6 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	private Random random = new Random();
 
 	//TODO keep when rebinding
-	//TODO maybe find a better solution to really give a unique ID (combine with myPID?)
 	private int clientID;
 	protected Scan scan;
 	private boolean wasConnected = false;

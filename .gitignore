@@ -23,5 +23,4 @@ ant.properties
 bin/*
 build.xml
 out/*
-project.properties
 .settings/*

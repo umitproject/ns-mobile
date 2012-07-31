@@ -64,6 +64,7 @@ public class ScanProvider extends ContentProvider {
 		scansProjection.put(Scans.SCAN_ID, Scans.SCAN_ID);
 		scansProjection.put(Scans.SCAN_STATE, Scans.SCAN_STATE);
 		scansProjection.put(Scans.TASK_PROGRESS, Scans.TASK_PROGRESS);
+		scansProjection.put(Scans.TASK, Scans.TASK);
 		scansProjection.put(Scans.ROOT_ACCESS, Scans.ROOT_ACCESS);
 		scansProjection.put(Scans.SCAN_ARGUMENTS, Scans.SCAN_ARGUMENTS);
 

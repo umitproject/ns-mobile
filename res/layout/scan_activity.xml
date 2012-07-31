@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:padding="5dp">
+                android:padding="5dp"
+                android:keepScreenOn="true">
 
     <org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView
             android:id="@+id/scanarguments"
@@ -19,36 +20,98 @@
              android:layout_width="match_parent"
              android:layout_height="wrap_content"/>
 
-    <ListView android:id="@+id/hostsresults"
-              android:layout_below="@id/profiles"
-              android:layout_above="@+id/startscan"
-              android:layout_height="wrap_content"
-              android:layout_width="200dp"
-              android:layout_alignParentLeft="true"
-              android:scrollingCache="true"
-              android:fastScrollEnabled="true"
-              android:smoothScrollbar="true"
-              android:scrollbarAlwaysDrawVerticalTrack="true"
-              />
+    <LinearLayout android:id="@+id/scanresults"
+            android:orientation="horizontal"
 
-    <ListView android:id="@+id/portsresults"
-              android:layout_below="@id/profiles"
-              android:layout_above="@+id/startscan"
-              android:layout_height="400dp"
-              android:layout_width="300dp"
-              android:layout_toRightOf="@id/hostsresults"
-              android:layout_alignParentRight="true"
-               android:scrollingCache="true"
-            android:fastScrollEnabled="true"
-            android:smoothScrollbar="true"
-            android:scrollbarAlwaysDrawVerticalTrack="true"
-            />
+            android:layout_below="@id/profiles"
+            android:layout_above="@id/progress"
 
-    <Button android:id="@+id/actionbutton"
-            android:text="Start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"/>
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+
+            android:paddingTop="2dp"
+            android:paddingBottom="7dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            >
+
+        <ListView android:id="@+id/hostsresults"
+
+                  android:layout_height="match_parent"
+                  android:layout_width="0dp"
+
+                  android:layout_gravity="left"
+                  android:layout_weight="4"
+
+                  android:fastScrollEnabled="true"
+                  android:smoothScrollbar="true"
+                  android:scrollbarAlwaysDrawVerticalTrack="true"
+                  android:hapticFeedbackEnabled="true"
+
+                  android:paddingRight= "2dp"
+                  android:scrollbars="vertical"/>
+
+        <ListView android:id="@+id/portsresults"
+
+                  android:layout_height="match_parent"
+                  android:layout_width="0dp"
+
+                  android:layout_weight="3"
+                  android:layout_gravity="right"
+
+                  android:scrollingCache="true"
+                  android:fastScrollEnabled="true"
+                  android:smoothScrollbar="true"
+                  android:scrollbarAlwaysDrawVerticalTrack="true"
+                  android:scrollbars="vertical"/>
+
+    </LinearLayout>
+
+    <RelativeLayout android:id="@+id/taskandbuttonbar"
+
+                  android:orientation="horizontal"
+
+                  android:layout_alignParentLeft="true"
+                  android:layout_alignParentRight="true"
+                  android:layout_alignParentBottom="true"
+
+                  android:layout_height="40dp"
+                  android:layout_width="match_parent">
+
+        <TextView android:id="@+id/taskname"
+
+                  android:layout_alignParentTop="true"
+                  android:layout_alignParentBottom="true"
+                  android:layout_alignParentLeft="true"
+
+                  android:layout_height="match_parent"
+                  android:layout_width="wrap_content"
+
+                  android:gravity="center_vertical"/>
+
+        <Button android:id="@+id/actionbutton"
+                android:text="Start"
+
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+
+                android:gravity="center_vertical"/>
+
+    </RelativeLayout>
+
+    <ProgressBar android:id="@+id/progress"
+                 style="@android:style/Widget.ProgressBar.Horizontal"
+                 android:layout_above="@id/taskandbuttonbar"
+                 android:layout_height="10dp"
+                 android:layout_width="match_parent"
+                 android:indeterminate="false"
+                 android:padding="2dp"/>
 
 </RelativeLayout>

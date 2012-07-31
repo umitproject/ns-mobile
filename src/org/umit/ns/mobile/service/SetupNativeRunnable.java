@@ -62,6 +62,7 @@ class SetupNativeRunnable implements Runnable, ScanCommunication {
 			os.writeBytes("mkdir " + nativeInstallDir + "/scanresults \n");
 
 			os.writeBytes("chmod 755 " + nativeInstallDir + "/*" + "\n");
+			os.writeBytes("chmod 666 -R " + nativeInstallDir + "/nmap/share/*" + "\n");
 			os.writeBytes("chmod 755 " + nativeInstallDir + "/nmap/bin/*" + "\n");
 
 			os.writeBytes("exit\n");

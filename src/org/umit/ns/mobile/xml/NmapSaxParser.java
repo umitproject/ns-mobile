@@ -27,44 +27,46 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 	public void parse() {
 		RootElement root = new RootElement(ROOT);
 
-		root.getChild(TASK_BEGIN)
-				.setStartElementListener( new StartElementListener () {
-			@Override
-			public void start(Attributes attributes) {
-				String task = attributes.getValue(TASK);
-				String progress = "0";
-				ContentValues values = new ContentValues();
-				values.put(Scans.TASK,task);
-				values.put(Scans.TASK_PROGRESS,progress);
-				writer.writeScan(values);
-			}
-		});
+		//Commented out the code for getting taskprogress as this is now acquired from stdout
 
-		root.getChild(TASK_PROGRESS)
-				.setStartElementListener(new StartElementListener() {
-					@Override
-					public void start(Attributes attributes) {
-						String task = attributes.getValue(TASK);
-						String progress = attributes.getValue(PERCENT);
-						ContentValues values = new ContentValues();
-						values.put(Scans.TASK,task);
-						values.put(Scans.TASK_PROGRESS,progress);
-						writer.writeScan(values);
-					}
-				});
-
-		root.getChild(TASK_END)
-				.setStartElementListener(new StartElementListener() {
-					@Override
-					public void start(Attributes attributes) {
-						String task = attributes.getValue(TASK);
-						String progress = "100";
-						ContentValues values = new ContentValues();
-						values.put(Scans.TASK,task);
-						values.put(Scans.TASK_PROGRESS,progress);
-						writer.writeScan(values);
-					}
-				});
+//		root.getChild(TASK_BEGIN)
+//				.setStartElementListener( new StartElementListener () {
+//			@Override
+//			public void start(Attributes attributes) {
+//				String task = attributes.getValue(TASK);
+//				String progress = "0";
+//				ContentValues values = new ContentValues();
+//				values.put(Scans.TASK,task);
+//				values.put(Scans.TASK_PROGRESS,progress);
+//				writer.writeScan(values);
+//			}
+//		});
+//
+//		root.getChild(TASK_PROGRESS)
+//				.setStartElementListener(new StartElementListener() {
+//					@Override
+//					public void start(Attributes attributes) {
+//						String task = attributes.getValue(TASK);
+//						String progress = attributes.getValue(PERCENT);
+//						ContentValues values = new ContentValues();
+//						values.put(Scans.TASK,task);
+//						values.put(Scans.TASK_PROGRESS,progress);
+//						writer.writeScan(values);
+//					}
+//				});
+//
+//		root.getChild(TASK_END)
+//				.setStartElementListener(new StartElementListener() {
+//					@Override
+//					public void start(Attributes attributes) {
+//						String task = attributes.getValue(TASK);
+//						String progress = "100";
+//						ContentValues values = new ContentValues();
+//						values.put(Scans.TASK,task);
+//						values.put(Scans.TASK_PROGRESS,progress);
+//						writer.writeScan(values);
+//					}
+//				});
 
 		//TODO add support for prescript and postscript
 //		root.getChild(PRESCRIPT)
@@ -151,7 +153,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 				String protocol = attributes.getValue(PORT_AT_PROTOCOL);
 				String port_id = attributes.getValue(PORT_AT_ID);
 				d = new Detail();
-				d.name = protocol+" : "+port_id;
+				d.name = port_id + ":" + protocol;
 				writer.writeDetail(h.IP, d.name, d.getContentValues());
 			}
 		});

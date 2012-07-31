@@ -19,7 +19,6 @@ import java.util.concurrent.Executors;
 
 //TODO Notification for Service and ScanProgressActivity
 //TODO clean the contentprovider once killed
-//TODO upon binding the client sends action
 
 public class ScanService extends Service implements ScanCommunication {
 	private boolean enabled = true;
@@ -48,7 +47,7 @@ public class ScanService extends Service implements ScanCommunication {
 	public void onCreate() {
 		log("onCreate()");
 		super.onCreate();
-		android.os.Debug.waitForDebugger();
+//		android.os.Debug.waitForDebugger();
 
 		binderLocal = msgrLocal.getBinder();
 
@@ -175,7 +174,6 @@ public class ScanService extends Service implements ScanCommunication {
 					}
 
 					//A client cannot start two scans while Service is setting up
-					//TODO maybe it should be able to _post_release_
 					//but on the other hand this is the first response from the service
 					//and unless the activity manages the communication ok, with flags about
 					//the message being sent or not, the user may click the start button many
@@ -270,18 +268,18 @@ public class ScanService extends Service implements ScanCommunication {
 					}
 					break;
 				}
-				case NOTIFY_SCAN_PROGRESS: {  //TODO externalize to ContentProvider
-					int scanID = msg.arg1;
-					int progress = msg.arg2;
-					log("NOTIFY_SCAN_PROGRESS " + scanID + " " + progress);
-					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
-					client.scanProgress(scanID, progress);
+				case NOTIFY_SCAN_PROGRESS: {
+					//Unused ContentProvider Provides :)
 					break;
 				}
 				case NOTIFY_SCAN_FINISHED: {
 					int scanID = msg.arg1;
-					log("NOTIFY_SCAN_FINISHED" + scanID);
+					log("NOTIFY_SCAN_FINISHED: ScanID=" + scanID);
 					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
+					if (client == null) {
+						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
+						break;
+					}
 					client.scanFinished(scanID);
 					break;
 				}

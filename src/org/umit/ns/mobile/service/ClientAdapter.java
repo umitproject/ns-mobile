@@ -34,7 +34,6 @@ class ClientAdapter implements ScanCommunication {
 	private LinkedHashMap<Integer, ScanWrapper> scans =
 			new LinkedHashMap<Integer, ScanWrapper>();
 
-	//TODO clean up when stopping all
 	private Queue<Message> unsentMessages = new LinkedList<Message>();
 
 	private ScanWrapper pendingScan = null;
@@ -96,7 +95,6 @@ class ClientAdapter implements ScanCommunication {
 		ContentValues values = new ContentValues();
 		values.put(Scans.CLIENT_ACTION, action);
 		values.put(Scans.ROOT_ACCESS, rootAccess ? 1 : 0);
-		//TODO these should be the arguments passed from the actiivty
 		values.put(Scans.SCAN_ARGUMENTS, pendingScan.arguments);
 		values.put(Scans.TASK_PROGRESS, 0);
 		values.put(Scans.SCAN_STATE, Scans.SCAN_STATE_STARTED);

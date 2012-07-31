@@ -1,7 +1,7 @@
 package org.umit.ns.mobile;
 
-import android.content.ContentResolver;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,7 +16,7 @@ import org.umit.ns.mobile.api.ScanClientActivity;
 import org.umit.ns.mobile.model.ScanArgsConst;
 import org.umit.ns.mobile.model.ScanArgumentsTokenizer;
 import org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView;
-import org.umit.ns.mobile.provider.Scanner;
+import org.umit.ns.mobile.provider.Scanner.Scans;
 import org.umit.ns.mobile.provider.Scanner.Hosts;
 import org.umit.ns.mobile.provider.Scanner.Details;
 
@@ -26,6 +26,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	Spinner profilesSpinner;
 	ListView hostsListView;
 	ListView portsListView;
+	TextView taskName;
+	ProgressBar progressBar;
 
 	static Uri hostsUri;
 	static Uri scanUri;
@@ -34,7 +36,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	Cursor h;
 	Cursor p;
 
-	ContentResolver contentResolver;
 	HostsListAdapter hostsAdapter;
 	SimpleCursorAdapter portsAdapter;
 
@@ -46,10 +47,14 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.scan_activity);
+
 		actionButton = (Button) findViewById(R.id.actionbutton);
 		actionButton.setOnClickListener(startScan);
+
 		scanArgsTextView = (ScanMultiAutoCompleteTextView) findViewById(R.id.scanarguments);
 		profilesSpinner = (Spinner) findViewById(R.id.profiles);
+		taskName = (TextView) findViewById(R.id.taskname);
+		progressBar = (ProgressBar) findViewById(R.id.progress);
 
 		//Set up ScanArguments input
 		ArrayAdapter<String> argsAdapter = new ArrayAdapter<String>(this, R.layout.scan_args_list_1item, FULL_ARGS);
@@ -108,7 +113,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			stopManagingCursor(p);
 
 			actionButton.setText("Start");
-			actionButton.setOnClickListener(startScan);;
+			actionButton.setOnClickListener(startScan);
 		}
 	};
 
@@ -119,6 +124,11 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		hostsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/hosts/"+clientID+"/"+scanID);
 		detailsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/details/"+clientID+"/"+scanID);
 
+		//Set up scanContentObserver for Task Name and Progress
+		this.getApplicationContext().getContentResolver().registerContentObserver(scanUri, true, scanContentObserver);
+		taskName.setText("");
+		progressBar.setProgress(0);
+
 		actionButton.setText("Stop");
 		actionButton.setOnClickListener(stopScan);
 	}
@@ -126,6 +136,11 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	public void onScanStop() {
 		actionButton.setText("Start");
 		actionButton.setOnClickListener(startScan);
+
+		//Unregister ContentObserver
+		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
+		taskName.setText("");
+		progressBar.setProgress(0);
 	}
 
 	public void onNotifyProgress(int progress) {
@@ -134,11 +149,20 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	protected void onNotifyProblem(String info) {
 		Log.e("UmitScanner", "Scan has crashed. Info: " + info);
 		Toast.makeText(getApplicationContext(), "Scanning problem: " + info, Toast.LENGTH_LONG).show();
+		//Unregister ContentObserver
+//		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
+		taskName.setText("");
+		progressBar.setProgress(0);
 	}
 
 	public void onNotifyFinished() {
 		actionButton.setText("Clear");
 		actionButton.setOnClickListener(clearResults);
+
+		//Unregister ContentObserver
+		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
+		taskName.setText("");
+		progressBar.setProgress(0);
 
 		//show results
 		h = getContentResolver().query(hostsUri,null,null,null,null);
@@ -163,6 +187,40 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		}
 	};
 
+	private class ScanContentObserver extends ContentObserver {
+		public ScanContentObserver() {
+			super(null);
+		}
+		@Override
+		public void onChange(boolean selfChange) {
+			super.onChange(selfChange);
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					onScanChange();
+				}
+			});
+		}
+	}
+
+	private void onScanChange() {
+		Cursor s = getContentResolver().query(scanUri,null,null,null,null);
+
+		int task_progress_column = s.getColumnIndex(Scans.TASK_PROGRESS);
+		int task_name_column = s.getColumnIndex(Scans.TASK);
+		if(s.getCount()==1){
+			s.moveToFirst();
+			int task_progress = s.getInt(task_progress_column);
+			progressBar.setProgress(task_progress);
+			String task_name = s.getString(task_name_column);
+			if(task_name!=null){
+				taskName.setText("Task: " + task_name);
+			}
+		}
+	}
+
+	ScanContentObserver scanContentObserver = new ScanContentObserver();
+
 	public static class HostsListAdapter extends CursorAdapter{
 		public static final int BLACK_COLOR = 0xFF000000;
 		public static final int RED_COLOR = 0xFF330000;
@@ -177,6 +235,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			final LayoutInflater inflater = LayoutInflater.from(context);
 			final TextView view = (TextView) inflater.inflate(
 					R.layout.host_item, parent, false);
+
 			view.setText(cursor.getString(hostsColumnIP));
 			switch (cursor.getInt(hostsColumnState)){
 				case Hosts.STATE_UP:
