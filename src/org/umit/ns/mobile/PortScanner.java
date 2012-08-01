@@ -496,8 +496,7 @@ public class PortScanner extends Activity{
            try {
                p.waitFor();
            } catch (InterruptedException e1) {
-               // TODO Auto-generated catch block
-               e1.printStackTrace();
+               Log.d("UmitScanner",e1.toString());
            }
            
            int read;

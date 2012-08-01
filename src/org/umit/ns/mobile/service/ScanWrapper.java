@@ -19,6 +19,7 @@ class ScanWrapper {
 	//THIS IS ONLY UPDATED WHEN A MESSAGE DOESN'T REACH THE CLIENT
 	private int progress = 0;
 
+	private NmapScanServiceRunnable runnable;
 	protected Future<?> future;
 
 	//Must use the same one to get the benefit of managed threads
@@ -42,9 +43,9 @@ class ScanWrapper {
 
 	//Update runnning
 	public void start(boolean rootAccess) {
-		future = executorService.submit(
-				new NmapScanServiceRunnable(scanID,clientID,contentResolver, serviceBinder, arguments,
-						scanResultsFilename, rootAccess, nativeInstallDir));
+		runnable = new NmapScanServiceRunnable(scanID,clientID,contentResolver, serviceBinder, arguments,
+				scanResultsFilename, rootAccess, nativeInstallDir);
+		future = executorService.submit(runnable);
 		running = true;
 	}
 
@@ -52,6 +53,7 @@ class ScanWrapper {
 	//Stop only if started
 	public void stop() {
 		if (running) {
+			runnable.rqstStop();
 			future.cancel(true);
 			running = false;
 		}

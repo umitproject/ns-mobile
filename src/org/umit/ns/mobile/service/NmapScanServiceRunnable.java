@@ -26,6 +26,8 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 	private final ContentResolver contentResolver;
 	private final String nativeInstallDir;
 
+	private volatile boolean stopRequested;
+
 	private java.lang.Process p;
 
 	public NmapScanServiceRunnable(final int scanID,
@@ -47,6 +49,12 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		this.mService = new Messenger(service);
 		this.nativeInstallDir = nativeInstallDir;
 		this.scanArguments = scanArguments + " -vv --stats-every 500ms -oX " + scanResultsFile;
+
+		this.stopRequested =false;
+	}
+
+	public synchronized void rqstStop() {
+		stopRequested=true;
 	}
 
 	private void tellService(int RESP_CODE) {
@@ -112,7 +120,7 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 					StringBuffer output = new StringBuffer();
 					StringBuilder keep = new StringBuilder();
 
-					while ((read = reader.read(buffer)) > 0) {
+					while ((read = reader.read(buffer)) > 0 && ! stopRequested) {
 						output.append(buffer, 0, read);
 						String [] splitOutput = output.toString().split("\n",-1);
 
@@ -141,6 +149,7 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 					}
 				} catch(IOException e) {
 					Log.d("UmitScannerService", e.toString());
+					return;
 				}
 
 				p.waitFor();
@@ -167,7 +176,9 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				return;
 			} catch (IOException e) {
 				tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
-				e.printStackTrace();
+				Log.d("UmitScanner.ScanService","ScanProblem:"+e.toString());
+				return;
+
 			}
 			//scan finished
 //			File file = new File(scanResultsFile);
@@ -181,9 +192,11 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				//manage abrupt stopping
 				Log.d("UmitScanner", "Interrupted from blocked I/O");
 				p.destroy();
+				return;
 			} else {
 				tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
-				e.printStackTrace();
+				Log.d("UmitScanner.ScanService", "ScanProblem:" + e.toString());
+				return;
 			}
 		}
 	}

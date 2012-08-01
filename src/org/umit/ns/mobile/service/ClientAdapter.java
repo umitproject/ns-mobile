@@ -113,6 +113,11 @@ class ClientAdapter implements ScanCommunication {
 		scan.stop();
 		scans.remove(scanID);
 		scanID_clientID.remove(scanID);
+
+		//Clean the record from the DB
+		Uri scanUri = Uri.parse(Scanner.SCANS_URI.toString() + "/" + ID + "/" + scanID);
+		contentResolver.delete(scanUri, null, null);
+
 		tellClient(RESP_STOP_SCAN_OK, scanID, 0, null, null);
 	}
 
@@ -124,6 +129,10 @@ class ClientAdapter implements ScanCommunication {
 			scan.stop();
 			scans.remove(scanID);
 			scanID_clientID.remove(scanID);
+
+			//Clean the record from the DB
+			Uri scanUri = Uri.parse(Scanner.SCANS_URI.toString() + "/" + ID + "/" + scanID);
+			contentResolver.delete(scanUri, null, null);
 		}
 	}
 

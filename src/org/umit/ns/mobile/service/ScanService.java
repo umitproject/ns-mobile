@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 //TODO Notification for Service and ScanProgressActivity
-//TODO clean the contentprovider once killed
 
 public class ScanService extends Service implements ScanCommunication {
 	private boolean enabled = true;
@@ -269,7 +268,7 @@ public class ScanService extends Service implements ScanCommunication {
 					break;
 				}
 				case NOTIFY_SCAN_PROGRESS: {
-					//Unused ContentProvider Provides :)
+					//Unused because ContentProvider Provides :)
 					break;
 				}
 				case NOTIFY_SCAN_FINISHED: {

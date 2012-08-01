@@ -82,7 +82,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
 		intent.putExtra("Messenger", msgrLocal);
 		intent.putExtra("ClientID", clientID);
-        intent.putExtra("Action",getString(R.string.scanactivity_action));
+    intent.putExtra("Action",getString(R.string.scanactivity_action));
 
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 		log("onCreate()-Bound to service");
@@ -204,6 +204,8 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 		tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
 	}
+
+	//TODO remove unused methods and fields
 
 	protected abstract void onScanStart(int clientID, int scanID);
 
