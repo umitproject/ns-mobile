@@ -205,8 +205,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 	 * @return String Array with the first element Task Name and second Task progress
 	**/
 	private void matchTaskProgress(String line) {
-		//TODO implement Scan Progress Matching
-
 		ContentValues tp;
 
 		Pattern pRun = Pattern.compile("^(.*)\\sTiming:\\sAbout\\s(\\d*)\\.?.*%\\sdone.*");

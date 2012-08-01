@@ -88,7 +88,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 //					}
 //				});
 
-
+		//TODO test out script results
 		Element host = root.getChild(HOST);
 		host.setElementListener(new ElementListener() {
 			@Override

@@ -69,7 +69,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		log("onCreate()-Start");
 		super.onCreate(savedInstanceState);
 
-		Scan retained_scan = (Scan) getLastNonConfigurationInstance();  //TODO clientID
+		Scan retained_scan = (Scan) getLastNonConfigurationInstance();
 		if (retained_scan != null) {
 			wasConnected = true;
 			scan = retained_scan;
