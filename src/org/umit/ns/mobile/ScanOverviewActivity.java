@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.*;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,11 +30,14 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 	static int taskProgressColumn;
 	static int clientIDColumn;
 	static int scanIDColumn;
+	static int clientActionColumn;
 
 	private Messenger msgrService;
-	private boolean mBound;
+	private volatile boolean mBound;
 
-	private int fakeClientID = 0xc0ff33; // we need this really bad
+	Cursor cursor;
+
+	private int fakeClientID = new Random().nextInt(); // we need this really bad
 
 	private final Messenger fakeMsgrLocal = new Messenger(new Handler());
 
@@ -44,7 +48,7 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 
 		scansListView = (ListView)findViewById(R.id.Scans);
 
-		Cursor cursor = getContentResolver().query(Scanner.SCANS_URI, null, null, null, null);
+		cursor = getContentResolver().query(Scanner.SCANS_URI, null, null, null, null);
 		startManagingCursor(cursor);
 
 		scanArgumentsColumn = cursor.getColumnIndex(Scans.SCAN_ARGUMENTS);
@@ -52,26 +56,37 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		taskProgressColumn = cursor.getColumnIndex(Scans.TASK_PROGRESS);
 		clientIDColumn = cursor.getColumnIndex(Scans.CLIENT_ID);
 		scanIDColumn = cursor.getColumnIndex(Scans.SCAN_ID);
+		clientActionColumn = cursor.getColumnIndex(Scans.CLIENT_ACTION);
 
 		scansAdapter = new ScansAdapter(this,cursor);
 		scansListView.setAdapter(scansAdapter);
 		int count = scansListView.getCount();
+	}
 
+	@Override
+	protected void onResume(){
+		super.onResume();
 		//Bind to service
-
 		Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
 		intent.putExtra("Messenger", fakeMsgrLocal);
 		intent.putExtra("ClientID", fakeClientID);
 		intent.putExtra("Action",getString(R.string.scanactivity_action));
-
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 		Log.d("UmitScanner.ScanOverviewActivity", "onCreate()-Bound to service");
 	}
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		unbindService(serviceConnection);
+	protected void onPause() {
+		super.onPause();
+		if(mBound){
+			unbindService(serviceConnection);
+		}
+		stopManagingCursor(cursor);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
 	}
 
 	private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -83,7 +98,6 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		public void onServiceDisconnected(ComponentName className) {
 			msgrService = null;
 			mBound = false;
-
 		}
 	};
 
@@ -139,21 +153,26 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 
 			Integer clientID = cursor.getInt(clientIDColumn);
 			Integer scanID = cursor.getInt(scanIDColumn);
-
 			stopButton.setTag(R.id.clientIDkey,clientID);
 			stopButton.setTag(R.id.scanIDkey,scanID);
 
-			stopButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View view) {
-					int clientID = (Integer)view.getTag(R.id.clientIDkey);
-					int scanID = (Integer)view.getTag(R.id.scanIDkey);
-					scanOverviewActivity.rqstStopScan(clientID,scanID);
-				}
-			});
+			stopButton.setOnClickListener(stopClickListener);
+
+			String clientAction = cursor.getString(clientActionColumn);
+			Uri contentUri = Uri.parse(Scanner.SCANS_URI.toString()+"/"+clientID+"/"+scanID);
+
+			scanArguments.setTag(R.id.clientActionkey, clientAction);
+			scanArguments.setTag(R.id.scanContentkey, contentUri);
+			scanArguments.setOnClickListener(scanActivityInitiator);
+
+			progress.setTag(R.id.clientActionkey, clientAction);
+			progress.setTag(R.id.scanContentkey, contentUri);
+			progress.setOnClickListener(scanActivityInitiator);
 
 			return view;
 		}
+
+
 
 		@Override
 		public void bindView(View v, Context context, Cursor cursor) {
@@ -174,15 +193,41 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 			stopButton.setTag(R.id.clientIDkey,clientID);
 			stopButton.setTag(R.id.scanIDkey,scanID);
 
-			stopButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View view) {
-					int clientID = (Integer)view.getTag(R.id.clientIDkey);
-					int scanID = (Integer)view.getTag(R.id.scanIDkey);
-					scanOverviewActivity.rqstStopScan(clientID,scanID);
-				}
-			});
+			stopButton.setOnClickListener(stopClickListener);
+
+			String clientAction = cursor.getString(clientActionColumn);
+			Uri contentUri = Uri.parse(Scanner.SCANS_URI.toString()+"/"+clientID+"/"+scanID);
+
+			scanArguments.setTag(R.id.clientActionkey,clientAction);
+			scanArguments.setTag(R.id.scanContentkey,contentUri);
+			scanArguments.setOnClickListener(scanActivityInitiator);
+
+			progress.setTag(R.id.clientActionkey,clientAction);
+			progress.setTag(R.id.scanContentkey,contentUri);
+			progress.setOnClickListener(scanActivityInitiator);
 		}
+
+		View.OnClickListener scanActivityInitiator = new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				String clientAction = (String)view.getTag(R.id.clientActionkey);
+				Uri content = (Uri)view.getTag(R.id.scanContentkey);
+
+				Intent intent = new Intent(clientAction, content);
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				view.getContext().startActivity(intent);
+			}
+		};
+
+		View.OnClickListener stopClickListener =  new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				int clientID = (Integer)view.getTag(R.id.clientIDkey);
+				int scanID = (Integer)view.getTag(R.id.scanIDkey);
+				scanOverviewActivity.rqstStopScan(clientID,scanID);
+			}
+		};
+
 	}
 
 	public final void rqstStopScan(int clientID, int scanID) {
