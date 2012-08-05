@@ -25,6 +25,7 @@ import org.umit.ns.mobile.provider.Scanner.Details;
 import java.util.List;
 
 
+
 //TODO check script output in ports listview
 
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{

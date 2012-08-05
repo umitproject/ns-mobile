@@ -2,7 +2,9 @@
 <resources>
     <string name="app_name">Umit Network Scanner</string>
     <string name="scanactivity_action">org.umit.ns.mobile.SCAN_ACTIVITY</string>
+
     <string name="hostdetailsactivity_action">org.umit.ns.mobile.HostDetails</string>
+
 
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
