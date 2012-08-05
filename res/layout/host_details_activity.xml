@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="5dp"
+              android:background="#ff000000">
+
+    <ListView
+            android:id="@+id/hostDetails"
+
+              android:layout_height="match_parent"
+              android:layout_width="100dp"
+              android:layout_weight=".50"
+
+              android:layout_alignParentTop="true"
+              android:layout_alignParentLeft="true"
+
+              android:background="#ff220000"
+            />
+
+    <TextView android:id="@+id/hostDetailsItem"
+
+              android:layout_height="match_parent"
+              android:layout_width="100dp"
+              android:layout_weight=".50"
+
+              android:layout_alignParentTop="true"
+              android:layout_alignParentRight="true"
+              android:layout_toRightOf="@id/hostDetails"
+
+              android:background="#ff110000"
+            />
+
+</RelativeLayout>

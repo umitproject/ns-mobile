@@ -4,4 +4,10 @@
           name="clientIDkey" />
     <item type="id"
           name="scanIDkey" />
+    <item type="id"
+          name="clientActionkey"/>
+    <item type="id"
+          name="scanContentkey"/>
+    <item type="id"
+          name="clientID" />
 </resources>

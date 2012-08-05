@@ -34,8 +34,6 @@ class ClientAdapter implements ScanCommunication {
 	private LinkedHashMap<Integer, ScanWrapper> scans =
 			new LinkedHashMap<Integer, ScanWrapper>();
 
-	private Queue<Message> unsentMessages = new LinkedList<Message>();
-
 	private ScanWrapper pendingScan = null;
 
 	private ContentResolver contentResolver;
@@ -53,17 +51,6 @@ class ClientAdapter implements ScanCommunication {
 
 	protected void rebind(Messenger messenger) {
 		this.messenger = messenger;
-		for (Message message = unsentMessages.poll(); unsentMessages.isEmpty(); message = unsentMessages.poll()) {
-			tellClient(message);
-		}
-
-		for (ScanWrapper scan : scans.values()) {
-			if (scan.getNotifyProgress()) {
-				if (tellClient(NOTIFY_SCAN_PROGRESS, scan.getScanID(), scan.getProgress(), null, null)) {
-					scan.setNotifyProgress(false);
-				}
-			}
-		}
 	}
 
 	//Parse ARGS; Create a new scan and put it in pendingScan, unique non-duplicate id.
@@ -89,7 +76,7 @@ class ClientAdapter implements ScanCommunication {
 
 		//notify client
 		tellClient(RESP_START_SCAN_OK, pendingScan.getScanID(), (rootAccess ? 1 : 0),
-				"ScanResultsFilename", pendingScan.scanResultsFilename);
+				"ScanResultsFilename", null);
 
 		Uri uri = Uri.parse(Scanner.SCANS_URI + "/" + ID + "/" + pendingScan.getScanID());
 		ContentValues values = new ContentValues();
@@ -185,18 +172,6 @@ class ClientAdapter implements ScanCommunication {
 			messenger.send(message);
 			return true;
 		} catch (RemoteException e) {
-			//Enqueue if the message was unsent
-			if (RESP_CODE == NOTIFY_SCAN_PROGRESS) {
-				//Do not insert progress messages into queue!
-				int scanID = ARG1;
-				int progress = ARG2;
-				//problem if the scan has finished and is removed
-				ScanWrapper scan = scans.get(scanID);
-				scan.setProgress(progress);
-				scan.setNotifyProgress(true);
-			} else {
-				unsentMessages.offer(message);
-			}
 			return false;
 		}
 	}
@@ -210,7 +185,6 @@ class ClientAdapter implements ScanCommunication {
 			messenger.send(message);
 			return true;
 		} catch (RemoteException e) {
-			unsentMessages.offer(message);
 			return false;
 		}
 	}

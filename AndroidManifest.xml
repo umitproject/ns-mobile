@@ -18,7 +18,10 @@
         <activity android:name=".ScanActivity"
                   android:label="@string/app_name"
                   android:launchMode="singleInstance"
-                android:screenOrientation="portrait">
+                android:screenOrientation="portrait"
+                android:windowSoftInputMode="stateVisible"
+                android:clearTaskOnLaunch="true"
+                >
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,18 +29,27 @@
             </intent-filter>
 
             <intent-filter>
-                <action android:name="@string/scanactivity_action"/>
-                <data android:scheme="content"
-                      android:host="org.umit.ns.mobile.provider.ScanOverview"
-                      android:pathPattern=".+/.+"/>
-                <!--data:pathPattern first is clientID, second is scanID-->
+                <action android:name="org.umit.ns.mobile.SCAN_ACTIVITY"/>
+                <data android:mimeType="vnd.android.cursor.item/vnd.umit.scan"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
 
         <activity android:name=".ScanOverviewActivity"
                   android:launchMode="singleInstance"
-                  android:screenOrientation="portrait"/>
+                  android:screenOrientation="portrait"
+                  android:windowSoftInputMode="stateAlwaysHidden"/>
+
+        <activity android:name=".HostDetails"
+                android:launchMode="singleInstance"
+                android:windowSoftInputMode="stateAlwaysHidden"
+                >
+            <intent-filter>
+                <action android:name="org.umit.ns.mobile.HostDetails"/>
+                <data android:mimeType="vnd.android.cursor.dir/vnd.umit.detail"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
 
         <service android:name=".service.ScanService"
                  android:exported="true"
