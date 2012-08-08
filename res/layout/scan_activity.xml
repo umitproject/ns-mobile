@@ -15,10 +15,38 @@
             android:textSize="17sp"
             android:completionThreshold="1"/>
 
+    <Button android:id="@+id/SaveProfileButton"
+            android:text="Save"
+
+            android:layout_below="@id/scanarguments"
+            android:layout_alignParentRight="true"
+
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+
+            android:gravity="center_vertical"/>
+
+    <Button android:id="@+id/DeleteProfileButton"
+            android:text="Del"
+
+            android:layout_below="@id/scanarguments"
+            android:layout_alignBottom="@id/SaveProfileButton"
+            android:layout_toLeftOf="@id/SaveProfileButton"
+
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+
+            android:gravity="center_vertical"/>
+
     <Spinner android:id="@+id/profiles"
+
              android:layout_below="@+id/scanarguments"
+             android:layout_alignBottom="@id/SaveProfileButton"
              android:layout_width="match_parent"
-             android:layout_height="wrap_content"/>
+             android:layout_height="wrap_content"
+
+             android:layout_toLeftOf="@id/DeleteProfileButton"
+             android:layout_alignParentLeft="true"/>
 
     <LinearLayout android:id="@+id/scanresults"
             android:orientation="horizontal"

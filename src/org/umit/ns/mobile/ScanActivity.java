@@ -1,6 +1,8 @@
 package org.umit.ns.mobile;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
@@ -35,6 +37,8 @@ import java.util.Set;
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	ScanMultiAutoCompleteTextView scanArgsTextView;
 	Button actionButton;
+	Button saveProfileButton;
+	Button deleteProfileButton;
 	Spinner profilesSpinner;
 	ListView hostsListView;
 	ListView portsListView;
@@ -92,7 +96,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		portsListView = (ListView) findViewById(R.id.portsresults);
 		portsListView.setEnabled(false);
-
 
 		loadScanProfiles();
 	}
@@ -192,7 +195,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 	public void onScanStart(int clientID, int scanID) {
 
-		scanUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/scans/"+clientID+"/"+scanID);
+		scanUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/scans/" + clientID + "/" + scanID);
 		hostsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/hosts/"+clientID+"/"+scanID);
 		detailsUri = Uri.parse("content://org.umit.ns.mobile.provider.Scanner/details/"+clientID+"/"+scanID);
 
@@ -313,7 +316,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		}
 	}
 
-
 	public static class HostsListAdapter extends CursorAdapter{
 		public static final int BLACK_COLOR = 0xFF000000;
 		public static final int RED_COLOR = 0xFF330000;
@@ -366,7 +368,39 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		public String convertToString(Cursor cursor) {
 			return cursor.getString(hostsColumnIP);
 		}
+	}
 
+	private void deleteScanProfile(String name){
+		SharedPreferences sharedPreferences = getSharedPreferences("profiles",MODE_WORLD_WRITEABLE);
+		String test = sharedPreferences.getString(name,"No");
+		if(TextUtils.equals(test,"No")){
+			Toast.makeText(this,"A profile with that name doesn't exists.",Toast.LENGTH_SHORT).show();
+			return;
+		}
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.remove(name);
+		if(TextUtils.equals(name,""))
+			editor.putString("","");
+		editor.commit();
+		loadScanProfiles();
+	}
+
+	private void saveScanProfile(String name, String inputArgs) {
+		SharedPreferences sharedPreferences = getSharedPreferences("profiles",MODE_WORLD_WRITEABLE);
+		String test = sharedPreferences.getString(name,"No");
+
+		if( ! TextUtils.equals(test,"No") ){
+			Toast.makeText(this,"A profile with that name already exists.",Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.putString(name,inputArgs);
+		editor.commit();
+		loadScanProfiles();
+		int pos = profilesAdapter.getPosition(name);
+		if(pos>0)
+			profilesSpinner.setSelection(pos);
 	}
 
 	private void loadScanProfiles() {
@@ -411,6 +445,64 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 					scanArgsTextView.setText("");
 				}
 		});
+
+		saveProfileButton=(Button)findViewById(R.id.SaveProfileButton);
+		deleteProfileButton=(Button)findViewById(R.id.DeleteProfileButton);
+
+		saveProfileButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				AlertDialog.Builder alert = new AlertDialog.Builder(view.getContext());
+
+				alert.setTitle("Save Scanning Profile");
+				alert.setMessage("Insert name for new scanning profile.");
+
+				final EditText input = new EditText(view.getContext());
+				alert.setView(input);
+
+				alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String name = input.getText().toString();
+						String inputArgs = scanArgsTextView.getText().toString();
+						saveScanProfile(name,inputArgs);
+					}
+				});
+
+				alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+
+				alert.show();
+			}
+		});
+
+		deleteProfileButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				AlertDialog.Builder alert = new AlertDialog.Builder(view.getContext());
+
+				alert.setTitle("Delete Scanning Profile");
+				alert.setMessage("Really delete selected Scanning Profile?");
+
+				alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String name = (String)profilesSpinner.getSelectedItem();
+						deleteScanProfile(name);
+					}
+				});
+
+				alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+
+				alert.show();
+			}
+		});
+
 	}
 }
 
