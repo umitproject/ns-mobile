@@ -4,6 +4,7 @@
     <string name="scanactivity_action">org.umit.ns.mobile.SCAN_ACTIVITY</string>
     <string name="hostdetailsactivity_action">org.umit.ns.mobile.HostDetails</string>
 
+
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
     <string name="service_scan_name">Umit Network Scanner Service</string>

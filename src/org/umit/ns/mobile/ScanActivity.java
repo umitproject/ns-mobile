@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 //TODO check script output in ports listview
 
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
@@ -94,11 +93,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		portsListView = (ListView) findViewById(R.id.portsresults);
 		portsListView.setEnabled(false);
 
+
 		loadScanProfiles();
-
-		//TODO TESTING LINE remove this:
-		scanArgsTextView.setText("192.168.1.1/24 -A");
-
 	}
 
 	@Override
@@ -370,6 +366,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		public String convertToString(Cursor cursor) {
 			return cursor.getString(hostsColumnIP);
 		}
+
 	}
 
 	private void loadScanProfiles() {
@@ -416,3 +413,4 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		});
 	}
 }
+
