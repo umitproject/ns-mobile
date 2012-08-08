@@ -68,7 +68,6 @@ public class ScanProvider extends ContentProvider {
 		scansProjection.put(Scans.ROOT_ACCESS, Scans.ROOT_ACCESS);
 		scansProjection.put(Scans.SCAN_ARGUMENTS, Scans.SCAN_ARGUMENTS);
 
-
 		hostsProjection = new HashMap<String, String>();
 		hostsProjection.put(Hosts._ID, Hosts._ID);
 		hostsProjection.put(Hosts.IP, Hosts.IP);

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Umit Network Scanner</string>
-    <string name="scanactivity_action">org.umit.ns.mobile.action.ScanActivity</string>
+    <string name="scanactivity_action">org.umit.ns.mobile.SCAN_ACTIVITY</string>
+    <string name="hostdetailsactivity_action">org.umit.ns.mobile.HostDetails</string>
 
     <string name="discovery_prompt">Discovery Method</string>
     <string name="portscan_prompt">Portscan method</string>
@@ -9,7 +10,7 @@
 
     <string name="service_ready">Scanner Service ready</string>
     <string name="service_disabled">Scanner Service disabled</string>
-    <string name="service_scan_running">Scanning in progress</string>
+    <string name="scanning_in_progress">Scanning in progress</string>
     <string name="service_scan_finished">Scanning finished</string>
     <string name="service_scan_problem">Problem with scan</string>
 
@@ -34,10 +35,6 @@
         <item>UDP Scan</item>
         <item>SYN Scan</item>
         <item>FIN Scan</item>
-    </string-array>
-
-    <string-array name="scan_arguments_array">
-        <item></item>
     </string-array>
 
 </resources>

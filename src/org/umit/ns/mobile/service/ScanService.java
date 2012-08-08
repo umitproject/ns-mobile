@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.*;
+import android.widget.Toast;
 import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.ScanOverviewActivity;
 import org.umit.ns.mobile.api.ScanCommunication;
@@ -42,6 +43,8 @@ public class ScanService extends Service implements ScanCommunication {
 
 	private ContentResolver contentResolver;
 
+	private int scanCounter =0;
+
 	@Override
 	public void onCreate() {
 		log("onCreate()");
@@ -53,6 +56,7 @@ public class ScanService extends Service implements ScanCommunication {
 		//Check if the native binaries are already extracted
 		SharedPreferences settings = getSharedPreferences("native", 0);
 		nativeInstalled = settings.getBoolean("nativeInstalled", false);
+
 		nativeInstallDir = getString(R.string.native_install_dir);
 		scanResultsPath = nativeInstallDir + "/scanresults/";
 
@@ -189,6 +193,8 @@ public class ScanService extends Service implements ScanCommunication {
 					if (rootAcqisitionFinished && nativeInstalled) {
 						client.newScan(scanArguments);
 						client.startScan(rootAccess);
+						scanCounter++;
+						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 					} else {
 						client.newScan(scanArguments);
 						client.pendingStartScan = true;
@@ -212,6 +218,13 @@ public class ScanService extends Service implements ScanCommunication {
 
 					int scanID = msg.arg2;
 					client.stopScan(scanID);
+
+					scanCounter--;
+					if(scanCounter==0)
+						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
+					else
+						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 					break;
 				}
 				case NOTIFY_ROOT_ACCESS: {
@@ -219,10 +232,18 @@ public class ScanService extends Service implements ScanCommunication {
 					rootAcqisitionFinished = true;
 					log("NOTIFY_ROOT_ACCESS=" + (rootAccess ? "Yes" : "No"));
 
+					if(! rootAccess)
+						Toast.makeText(getApplicationContext(),"Umit Network Scanner Service:\n" +
+								"No root access, some options will be disabled.", Toast.LENGTH_SHORT).show();
+
 					if (nativeInstalled) {
 						for (ClientAdapter client : clients.values()) {
 							if (client.pendingStartScan) {
 								client.startScan(rootAccess);
+
+								scanCounter++;
+								mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 								client.pendingStartScan = false;
 							}
 						}
@@ -261,6 +282,10 @@ public class ScanService extends Service implements ScanCommunication {
 						for (ClientAdapter client : clients.values()) {
 							if (client.pendingStartScan) {
 								client.startScan(rootAccess);
+
+								scanCounter++;
+								mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 								client.pendingStartScan = false;
 							}
 						}
@@ -280,6 +305,13 @@ public class ScanService extends Service implements ScanCommunication {
 						break;
 					}
 					client.scanFinished(scanID);
+
+					scanCounter--;
+					if(scanCounter==0)
+						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
+					else
+						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 					break;
 				}
 				case NOTIFY_SCAN_PROBLEM: {
@@ -292,6 +324,13 @@ public class ScanService extends Service implements ScanCommunication {
 					String info = ((Bundle) msg.obj).getString("Info");
 					log("NOTIFY_SCAN_PROBLEM: info=" + info);
 					client.scanProblem(scanID, info);
+
+					scanCounter--;
+					if(scanCounter==0)
+						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
+					else
+						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 					break;
 				}
 
@@ -319,6 +358,17 @@ public class ScanService extends Service implements ScanCommunication {
 
 	private Notification getNotification(int resStringID) {
 		CharSequence text = getText(resStringID);
+		Notification notification = new Notification(R.drawable.icon_service, text,
+				System.currentTimeMillis());
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				new Intent(this, ScanOverviewActivity.class),0);
+		notification.setLatestEventInfo(this, getText(R.string.service_scan_name),
+				text, contentIntent);
+		return notification;
+	}
+
+	private Notification getNotification(String resString) {
+		CharSequence text = resString;
 		Notification notification = new Notification(R.drawable.icon_service, text,
 				System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
