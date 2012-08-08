@@ -21,11 +21,12 @@ public class ScanArgumentsArrayAdapter<T> extends ArrayAdapter<T> implements Sca
 	private Context mContext;
 	private LayoutInflater mInflater;
 
-	public static final int RED_COLOR = 0xFF330000;
+	public static final int RED_COLOR = 0xFFAA0000;
+	public static final int BLACK_COLOR = 0xFF000000;
 
 	private boolean mRootAccess;
 
-	ScanArgumentsArrayAdapter(Context context, int textViewResourceId, List<T> objects, boolean rootAccess) {
+	public ScanArgumentsArrayAdapter(Context context, int textViewResourceId, List<T> objects, boolean rootAccess) {
 		super(context, textViewResourceId, objects);
 		init(context, textViewResourceId, 0, objects);
 		mRootAccess = rootAccess;
@@ -69,15 +70,21 @@ public class ScanArgumentsArrayAdapter<T> extends ArrayAdapter<T> implements Sca
 					"ArrayAdapter requires the resource ID to be a TextView", e);
 		}
 
+		String plainArg;
 		T item = getItem(position);
 		if (item instanceof CharSequence) {
 			text.setText((CharSequence) item);
+			plainArg = ARGS_MAP.get(((CharSequence) item).toString());
 		} else {
 			text.setText(item.toString());
+			plainArg = ARGS_MAP.get(item.toString());
 		}
 
-		if(ROOT_ARGS.contains(text.getText().toString().trim())){
+
+		if(ROOT_ARGS.contains( plainArg )){
 			text.setTextColor(RED_COLOR);
+		} else {
+			text.setTextColor(BLACK_COLOR);
 		}
 
 		return view;

@@ -22,6 +22,7 @@ import android.widget.*;
 
 import org.umit.ns.mobile.api.ScanClientActivity;
 import org.umit.ns.mobile.model.ScanArgsConst;
+import org.umit.ns.mobile.model.ScanArgumentsArrayAdapter;
 import org.umit.ns.mobile.model.ScanArgumentsTokenizer;
 import org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView;
 import org.umit.ns.mobile.provider.Scanner.Scans;
@@ -84,8 +85,10 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		progressBar = (ProgressBar) findViewById(R.id.progress);
 
 		//Set up ScanArguments input
-		ArrayAdapter<String> argsAdapter = new ArrayAdapter<String>(this, R.layout.scan_args_list_1item, FULL_ARGS);
-		scanArgsTextView.setAdapter(argsAdapter);
+		//TODO update root access before this starts.
+		ScanArgumentsArrayAdapter<String> scanArgsAdapter =
+				new ScanArgumentsArrayAdapter<String>(this, R.layout.scan_args_list_1item, FULL_ARGS,false);
+		scanArgsTextView.setAdapter(scanArgsAdapter);
 		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
 
 		//Set up hosts and ports ListView adapters
