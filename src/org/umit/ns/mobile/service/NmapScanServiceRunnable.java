@@ -158,9 +158,10 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 
 				tp=new ContentValues();
 				tp.put(Scans.TASK,"Parsing Results");
-				tp.put(Scans.TASK_PROGRESS,0);
+				tp.put(Scans.TASK_PROGRESS,100);
 				contentResolver.update(scanUri,tp,null,null);
 
+				//TODO possible optimization of parser by batching db operations in parser
 				parser.parse();
 
 				tp = new ContentValues();
@@ -210,19 +211,11 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		Pattern pRun = Pattern.compile("^(.*)\\sTiming:\\sAbout\\s(\\d*)\\.?.*%\\sdone.*");
 		Matcher mRun = pRun.matcher(line);
 
-//		Pattern pFinish = Pattern.compile("^Completed\\s(.*)\\sat\\s\\d*:\\d*,.*elapsed.*");
-//		Matcher mFinish = pFinish.matcher(line);
-
 		if(mRun.matches() && mRun.groupCount()==2) {
 			tp = new ContentValues();
 			tp.put(Scans.TASK,mRun.group(1));
 			tp.put(Scans.TASK_PROGRESS, mRun.group(2));
 			contentResolver.update(scanUri,tp,null,null);
-		} //else if(mFinish.matches() && mFinish.groupCount()==1) {
-//			tp = new ContentValues();
-//			tp.put(Scans.TASK,mRun.group(1));
-//			tp.put(Scans.TASK_PROGRESS, 100);
-//			contentResolver.update(scanUri,tp,null,null);
-//		}
+		}
 	}
 }

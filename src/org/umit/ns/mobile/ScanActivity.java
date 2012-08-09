@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-//TODO check script output in ports listview
-
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	ScanMultiAutoCompleteTextView scanArgsTextView;
 	Button actionButton;
@@ -453,13 +451,27 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 				profileNamesArray);
 		profilesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		profilesSpinner.setAdapter(profilesAdapter);
+
 		profilesSpinner.setOnItemSelectedListener(
 			new AdapterView.OnItemSelectedListener() {
 				@Override
 				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 					String profileName = profilesAdapter.getItem(pos).toString();
 					String profileArgs = (String)profiles.get(profileName);
-					scanArgsTextView.setText(profileArgs);
+
+					String existingArgs = scanArgsTextView.getText().toString();
+
+					int endPos = existingArgs.indexOf('-');
+					StringBuilder keepArgs=new StringBuilder();
+
+					if(endPos==-1)
+						keepArgs.append(existingArgs);
+					else
+						keepArgs.append(existingArgs.substring(0,endPos));
+
+					keepArgs.append(' ').append(profileArgs);
+					scanArgsTextView.setText(keepArgs.toString());
+
 					int position = scanArgsTextView.length();
 					Editable argsEdit = scanArgsTextView.getText();
 					Selection.setSelection(argsEdit,position);
