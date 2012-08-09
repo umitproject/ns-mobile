@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import android.util.Log;
 import org.umit.ns.mobile.nsandroid;
 
 
@@ -103,8 +104,7 @@ public class shellUtils {
             try {
                 p.waitFor();
             } catch (InterruptedException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+	            Log.d("UmitScanner:shellUtils.killprocess Exception:",e1.toString());
             }
             
             int read;

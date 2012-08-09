@@ -12,7 +12,7 @@ public interface ScanArgsConst {
 			"-iR",
 			"--exclude",
 			"-sL",
-			"-sn",  //TODO -PR arp ping
+			"-sn",  //TODO -PR arp ping and maybe others?
 			"-Pn",
 			"-PS",
 			"-PA",

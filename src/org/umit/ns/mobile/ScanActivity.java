@@ -65,6 +65,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	Map<String,?> profiles;
 	ArrayAdapter<CharSequence> profilesAdapter;
 
+	private static String scanArgumentsBundleKey = "ScanArgumentsBundleKey";
+	private static String selectedProfileBundleKey = "SelectedProfileBundleKey";
+
 	@Override
 	protected void onNewIntent (Intent intent){
 		super.onNewIntent(intent);
@@ -101,6 +104,19 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		portsListView.setEnabled(false);
 
 		loadScanProfiles();
+
+		//Reload Activity parameters
+		if(savedInstanceState !=null){
+			String scanArgs = savedInstanceState.getString(scanArgumentsBundleKey,"");
+			String selectedProfileName = savedInstanceState.getString(selectedProfileBundleKey,"");
+
+			int pos = profilesAdapter.getPosition(selectedProfileName);
+			if(pos>0){
+				profilesSpinner.setSelection(pos);
+			}
+
+			scanArgsTextView.setText(selectedProfileName);
+		}
 	}
 
 	@Override
@@ -134,7 +150,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 					//Set up scanContentObserver for Task Name and Progress
 					this.getApplicationContext().getContentResolver().registerContentObserver(scanUri, true, scanContentObserver);
 					taskName.setText("");
-					progressBar.setProgress(0);
+					progressBar.setProgress(100);
 					onNotifyFinished();
 					break;
 				default:
@@ -152,6 +168,12 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		stopManagingCursor(p);
 		stopManagingCursor(s);
 		this.getContentResolver().unregisterContentObserver(scanContentObserver);
+		if(isFinishing()){
+			Bundle outState = new Bundle();
+			outState.putString(scanArgumentsBundleKey ,scanArgsTextView.getText().toString());
+			outState.putString(selectedProfileBundleKey, (String)profilesSpinner.getSelectedItem());
+			onSaveInstanceState(outState);
+		}
 	}
 
 	@Override

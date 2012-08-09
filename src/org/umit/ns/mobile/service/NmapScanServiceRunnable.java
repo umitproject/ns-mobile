@@ -165,7 +165,7 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 
 				tp = new ContentValues();
 				tp.put(Scans.TASK,"Scan Finished");
-				tp.put(Scans.TASK_PROGRESS,0);
+				tp.put(Scans.TASK_PROGRESS,100);
 				tp.put(Scans.SCAN_STATE, Scans.SCAN_STATE_FINISHED);
 				contentResolver.update(scanUri,tp,null,null);
 

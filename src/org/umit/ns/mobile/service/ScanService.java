@@ -18,8 +18,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-//TODO Notification for Service redesign
-
 public class ScanService extends Service implements ScanCommunication {
 	private boolean enabled = true;
 
