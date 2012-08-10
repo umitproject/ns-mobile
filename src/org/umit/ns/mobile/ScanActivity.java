@@ -36,6 +36,7 @@ import java.util.Set;
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	ScanMultiAutoCompleteTextView scanArgsTextView;
 	Button actionButton;
+	Button newScanButton;
 	Button saveProfileButton;
 	Button deleteProfileButton;
 	Spinner profilesSpinner;
@@ -79,6 +80,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		actionButton = (Button) findViewById(R.id.actionbutton);
 		actionButton.setOnClickListener(startScan);
+
+		newScanButton = (Button) findViewById(R.id.newscanbutton);
+		newScanButton.setOnClickListener( newScanClickListener );
 
 		scanArgsTextView = (ScanMultiAutoCompleteTextView) findViewById(R.id.scanarguments);
 		profilesSpinner = (Spinner) findViewById(R.id.profiles);
@@ -186,6 +190,14 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			InputMethodManager imm =
 					(InputMethodManager)view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+		}
+	};
+
+	public View.OnClickListener newScanClickListener =  new View.OnClickListener() {
+		@Override
+		public void onClick(View view) {
+			Intent intent = new Intent(getApplicationContext(),ScanActivity.class);
+			startActivity(intent);
 		}
 	};
 

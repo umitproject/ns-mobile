@@ -91,11 +91,11 @@ class ClientAdapter implements ScanCommunication {
 	}
 
 	//stop scan with id, notify client, clean from list
-	protected void stopScan(int scanID) {
+	protected boolean stopScan(int scanID) {
 		ScanWrapper scan = scans.get(scanID);
 		if (scan == null) {
 			scanProblem(scanID, "No running scan with that scanID");
-			return;
+			return false;
 		}
 		scan.stop();
 		scans.remove(scanID);
@@ -106,6 +106,7 @@ class ClientAdapter implements ScanCommunication {
 		contentResolver.delete(scanUri, null, null);
 
 		tellClient(RESP_STOP_SCAN_OK, scanID, 0, null, null);
+		return true;
 	}
 
 	//send info message, stop scan, clean from list

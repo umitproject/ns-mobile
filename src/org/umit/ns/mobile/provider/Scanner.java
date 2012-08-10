@@ -117,6 +117,7 @@ public final class Scanner {
 		public static final int OS_LINUX = 2;
 		public static final int OS_MACOSX = 3;
 		public static final int OS_OPENBSD = 4;
+		public static final int OS_NETBSD = 10;
 		public static final int OS_REDHAT = 5;
 		public static final int OS_UBUNTU = 6;
 		public static final int OS_SOLARIS = 7;

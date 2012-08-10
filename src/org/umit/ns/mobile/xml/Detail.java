@@ -10,7 +10,7 @@ class Detail{
 	public String type = "";
 	public String name = "";
 	public int state = -1;
-	public String data = "";
+	public StringBuilder data = new StringBuilder();
 
 	public ContentValues getContentValues() {
 		ContentValues values= new ContentValues();
@@ -24,9 +24,10 @@ class Detail{
 		if(state != -1)
 			values.put(Details.STATE,state);
 
-		if( ! TextUtils.isEmpty(data))
-			values.put(Details.DATA,data);
+		if( ! TextUtils.isEmpty(data.toString()))
+			values.put(Details.DATA,data.toString());
 
 		return values;
 	}
+
 }

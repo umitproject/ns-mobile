@@ -12,6 +12,7 @@ import android.widget.Toast;
 import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.ScanOverviewActivity;
 import org.umit.ns.mobile.api.ScanCommunication;
+import org.umit.ns.mobile.provider.Scanner;
 
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -130,7 +131,10 @@ public class ScanService extends Service implements ScanCommunication {
 		if (!enabled)
 			return false;
 
-		if (clients.size() == 0)
+		int finishedScansCount = getContentResolver()
+				.query(Scanner.SCANS_URI,null,null,null,null).getCount();
+
+		if (clients.size() == 0 && scanCounter==0 && finishedScansCount==0)
 			stopSelf();
 
 		//Stop the service if there are no scans running
@@ -191,7 +195,7 @@ public class ScanService extends Service implements ScanCommunication {
 					if (rootAcqisitionFinished && nativeInstalled) {
 						client.newScan(scanArguments);
 						client.startScan(rootAccess);
-						scanCounter++;
+						incrementScanCounter();
 						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 					} else {
 						client.newScan(scanArguments);
@@ -215,9 +219,10 @@ public class ScanService extends Service implements ScanCommunication {
 						break;
 
 					int scanID = msg.arg2;
-					client.stopScan(scanID);
+					boolean stopped = client.stopScan(scanID);
+					if(stopped)
+						decrementScanCounter();
 
-					scanCounter--;
 					if(scanCounter==0)
 						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
 					else
@@ -239,7 +244,7 @@ public class ScanService extends Service implements ScanCommunication {
 							if (client.pendingStartScan) {
 								client.startScan(rootAccess);
 
-								scanCounter++;
+								incrementScanCounter();
 								mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
 								client.pendingStartScan = false;
@@ -281,7 +286,7 @@ public class ScanService extends Service implements ScanCommunication {
 							if (client.pendingStartScan) {
 								client.startScan(rootAccess);
 
-								scanCounter++;
+								incrementScanCounter();
 								mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
 								client.pendingStartScan = false;
@@ -304,7 +309,7 @@ public class ScanService extends Service implements ScanCommunication {
 					}
 					client.scanFinished(scanID);
 
-					scanCounter--;
+					decrementScanCounter();
 					if(scanCounter==0)
 						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
 					else
@@ -323,7 +328,7 @@ public class ScanService extends Service implements ScanCommunication {
 					log("NOTIFY_SCAN_PROBLEM: info=" + info);
 					client.scanProblem(scanID, info);
 
-					scanCounter--;
+					decrementScanCounter();
 					if(scanCounter==0)
 						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
 					else
@@ -374,5 +379,14 @@ public class ScanService extends Service implements ScanCommunication {
 		notification.setLatestEventInfo(this, getText(R.string.service_scan_name),
 				text, contentIntent);
 		return notification;
+	}
+
+	private void incrementScanCounter(){
+		scanCounter++;
+	}
+
+	private void decrementScanCounter(){
+		if(scanCounter>0)
+			scanCounter--;
 	}
 }

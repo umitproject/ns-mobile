@@ -109,16 +109,18 @@
                   android:layout_height="40dp"
                   android:layout_width="match_parent">
 
-        <TextView android:id="@+id/taskname"
+        <Button android:id="@+id/newscanbutton"
+                android:text="New Scan"
 
-                  android:layout_alignParentTop="true"
-                  android:layout_alignParentBottom="true"
-                  android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
 
-                  android:layout_height="match_parent"
-                  android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
 
-                  android:gravity="center_vertical"/>
+                android:gravity="center_vertical"/>
+
 
         <Button android:id="@+id/actionbutton"
                 android:text="Start"
@@ -131,6 +133,19 @@
                 android:layout_width="wrap_content"
 
                 android:gravity="center_vertical"/>
+
+        <TextView android:id="@+id/taskname"
+
+                  android:layout_alignParentTop="true"
+                  android:layout_alignParentBottom="true"
+                  android:layout_toLeftOf="@id/actionbutton"
+                  android:layout_toRightOf="@id/newscanbutton"
+
+                  android:layout_height="match_parent"
+                  android:layout_width="wrap_content"
+
+                  android:gravity="center_vertical"/>
+
 
     </RelativeLayout>
 

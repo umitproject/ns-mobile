@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.*;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -184,15 +185,23 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 
 			scanArguments.setText(cursor.getString(scanArgumentsColumn));
 			progress.setProgress(cursor.getInt(taskProgressColumn));
-			taskName.setText(cursor.getString(taskNameColumn));
+			String task = cursor.getString(taskNameColumn);
+			taskName.setText(task);
 
 			int clientID = cursor.getInt(clientIDColumn);
 			int scanID = cursor.getInt(scanIDColumn);
 
+
 			stopButton.setTag(R.id.clientIDkey,clientID);
 			stopButton.setTag(R.id.scanIDkey,scanID);
 
-			stopButton.setOnClickListener(stopClickListener);
+			if(TextUtils.equals(task,"Scan Finished")){
+				stopButton.setText("Clear");
+				stopButton.setOnClickListener(clearClickListener);
+			} else {
+				stopButton.setText("Stop");
+				stopButton.setOnClickListener(stopClickListener);
+			}
 
 			String clientAction = cursor.getString(clientActionColumn);
 			Uri contentUri = Uri.parse(Scanner.SCANS_URI.toString()+"/"+clientID+"/"+scanID);
@@ -224,6 +233,18 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 				int clientID = (Integer)view.getTag(R.id.clientIDkey);
 				int scanID = (Integer)view.getTag(R.id.scanIDkey);
 				scanOverviewActivity.rqstStopScan(clientID,scanID);
+			}
+		};
+
+		View.OnClickListener clearClickListener =  new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				Integer clientID = (Integer)view.getTag(R.id.clientIDkey);
+				Integer scanID = (Integer)view.getTag(R.id.scanIDkey);
+				Uri scanUri = Scanner.SCANS_URI.buildUpon()
+						.appendPath(clientID.toString())
+						.appendPath(scanID.toString()).build();
+				view.getContext().getContentResolver().delete(scanUri,null,null);
 			}
 		};
 
