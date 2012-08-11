@@ -109,8 +109,13 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		//Reload Activity parameters
 		if(savedInstanceState !=null){
-			String scanArgs = savedInstanceState.getString(scanArgumentsBundleKey,"");
-			String selectedProfileName = savedInstanceState.getString(selectedProfileBundleKey,"");
+			String scanArgs = savedInstanceState.getString(scanArgumentsBundleKey);
+			String selectedProfileName = savedInstanceState.getString(selectedProfileBundleKey);
+
+			if(scanArgs==null)
+				scanArgs="";
+			if(selectedProfileName==null)
+				selectedProfileName="";
 
 			int pos = profilesAdapter.getPosition(selectedProfileName);
 			if(pos>0){
