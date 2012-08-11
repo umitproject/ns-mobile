@@ -270,6 +270,15 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
 		progressBar.setProgress(100);
 
+		Cursor c = getContentResolver().query(scanUri,null,null,null,null);
+		if(c.getCount()>0){
+			c.moveToFirst();
+			String msg = c.getString(c.getColumnIndex(Scans.ERRORMESSAGE));
+			int toastLength = msg.startsWith("Error:") ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
+			Toast.makeText(this,msg,toastLength).show();
+			c.close();
+		}
+
 		//show results
 		h = getContentResolver().query(hostsUri,null,null,null,null);
 		hostsColumnIP = h.getColumnIndex(Hosts.IP);

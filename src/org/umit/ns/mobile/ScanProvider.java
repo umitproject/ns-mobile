@@ -67,6 +67,7 @@ public class ScanProvider extends ContentProvider {
 		scansProjection.put(Scans.TASK, Scans.TASK);
 		scansProjection.put(Scans.ROOT_ACCESS, Scans.ROOT_ACCESS);
 		scansProjection.put(Scans.SCAN_ARGUMENTS, Scans.SCAN_ARGUMENTS);
+		scansProjection.put(Scans.ERRORMESSAGE, Scans.ERRORMESSAGE);
 
 		hostsProjection = new HashMap<String, String>();
 		hostsProjection.put(Hosts._ID, Hosts._ID);
@@ -102,6 +103,7 @@ public class ScanProvider extends ContentProvider {
 					+ Scans.TASK_PROGRESS + " INTEGER,"
 					+ Scans.SCAN_STATE + " INTEGER,"
 					+ Scans.TASK + " TEXT,"
+					+ Scans.ERRORMESSAGE + " TEXT,"
 					+ Scans.HOSTS_TABLE_NAME + " TEXT"
 					+ ");");
 		}

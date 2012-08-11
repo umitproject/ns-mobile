@@ -67,6 +67,12 @@ public final class Scanner {
 		 */
 		public static final String TASK = "task";
 
+		/**
+		 * Error Message
+		 * <P>Type: TEXT</P>
+		 */
+		public static final String ERRORMESSAGE = "errormessage";
+
 		public static final String HOSTS_TABLE_NAME = "hoststablename";
 
 		public static final int SCAN_STATE_STARTED = 0;
