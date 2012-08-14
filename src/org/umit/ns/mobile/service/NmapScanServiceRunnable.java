@@ -24,8 +24,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 	private final Uri scanUri;
 	private final ContentResolver contentResolver;
 	private final String nativeInstallDir;
-	private final String stdOutFile;
-	private final String stdErrFile;
 	private final String scanArguments;
 
 	private volatile boolean stopRequested;
@@ -50,11 +48,7 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		this.rootAccess = hasRoot;
 		this.mService = new Messenger(service);
 		this.nativeInstallDir = nativeInstallDir;
-		this.stdOutFile =  scanResultsFile + "_o";
-		this.stdErrFile = scanResultsFile + "_e";
-		this.scanArguments = scanArguments + " -vv --stats-every 500ms -oX " + scanResultsFile
-				+ " > " + stdOutFile + " &> " + stdErrFile;
-
+		this.scanArguments = scanArguments + " -vv --stats-every 500ms -oX " + scanResultsFile;
 		this.stopRequested =false;
 	}
 
@@ -128,53 +122,21 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		}
 
 		BufferedReader stdOut;
-
-		//Try to open StdOutput
-		try{
-			stdOut = new BufferedReader(new FileReader(new File(stdOutFile)));
-		} catch (FileNotFoundException e) {
-			//in case of no output try to open stderr file
-			try {
-				BufferedReader stdErr = new BufferedReader(new FileReader(new File(stdErrFile)));
-				String errString = readToEnd(stdErr);
-
-				if(TextUtils.isEmpty(errString)){
-					throw new FileNotFoundException();
-				}
-
-				Log.d("UmitScanner.NmapScanServiceRunnable",errString);
-				tellService(NOTIFY_SCAN_PROBLEM,errString);
-				return;
-
-			} catch (FileNotFoundException eErr) {
-				//in case of no stdErr send the stdOut exception
-				Log.d("UmitScanner.NmapScanServiceRunnable",e.toString());
-				tellService(NOTIFY_SCAN_PROBLEM, e.getMessage());
-				return;
-			}
-		}
-
-		//If there is a stdErr, there must be something wrong
-		try {
-			BufferedReader stdErr = new BufferedReader(new FileReader(new File(stdErrFile)));
-			String errString = readToEnd(stdErr);
-			if( ! TextUtils.isEmpty(errString) ){
-				Log.d("UmitScanner.NmapScanServiceRunnable",errString);
-				tellService(NOTIFY_SCAN_PROBLEM,errString);
-				return;
-			}
-		} catch (FileNotFoundException e) {
-			// there is no spoon
-		}
+		BufferedReader stdErr;
+		stdOut = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		stdErr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
 		int read;
 		char[] buffer = new char[1024];
 		StringBuffer output = new StringBuffer();
+		String err;
 		StringBuilder keep = new StringBuilder();
+
 
 		try{
 			while ((read = stdOut.read(buffer)) > 0 && ! stopRequested) {
 				output.append(buffer, 0, read);
+
 				String [] splitOutput = output.toString().split("\n",-1);
 
 				if(splitOutput.length>0){
@@ -194,7 +156,18 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				output = new StringBuffer();
 			}
 
+			if( ! TextUtils.isEmpty(keep)){
+				matchTaskProgress(keep.toString());
+			}
+
 			p.waitFor();
+
+			int exitValue = p.exitValue();
+			if(exitValue!=0) {
+				err = readToEnd(stdErr);
+				Log.d("UmitScanner.ScanResults",err);
+				tellService(NOTIFY_SCAN_PROBLEM,err);
+			}
 
 			stdOut.close();
 			pOut.close();
@@ -202,10 +175,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 			if(stopRequested){
 				Log.d("UmitScanner", "Stop requested, stopping scan");
 				return;
-			}
-
-			if( ! TextUtils.isEmpty(keep)){
-				matchTaskProgress(keep.toString());
 			}
 
 		} catch(IOException e) {
@@ -220,10 +189,10 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 				return;
 			}
 		} catch (InterruptedException e) {
-		Log.d("UmitScanner", "InterruptedException (Probably Stopped) "+ e.toString());
-		p.destroy();
-		return;
-	}
+			Log.d("UmitScanner", "InterruptedException (Probably Stopped) "+ e.toString());
+			p.destroy();
+			return;
+		}
 
 		Log.d("UmitScannerRunnable", "Parsing results");
 
@@ -231,8 +200,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		tp.put(Scans.TASK,"Parsing Results");
 		tp.put(Scans.TASK_PROGRESS,100);
 		contentResolver.update(scanUri,tp,null,null);
-
-
 
 		//TODO test stopping scan while parsing
 		parser.parse();
@@ -248,8 +215,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		//scan finished
 
 		new File(scanResultsFile).delete();
-		new File(stdErrFile).delete();
-		new File(stdOutFile).delete();
 
 		tellService(NOTIFY_SCAN_FINISHED);
 	}

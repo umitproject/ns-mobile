@@ -265,6 +265,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
 		taskName.setText("");
 		progressBar.setProgress(0);
+
+		actionButton.setText("Start");
+		actionButton.setOnClickListener(startScan);
 	}
 
 	public void onNotifyFinished() {
@@ -279,9 +282,11 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		if(c.getCount()>0){
 			c.moveToFirst();
 			String msg = c.getString(c.getColumnIndex(Scans.ERRORMESSAGE));
-			int toastLength = msg.startsWith("Error:") ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
-			Toast.makeText(this,msg,toastLength).show();
-			c.close();
+			if(msg!=null){
+				int toastLength = msg.startsWith("Error:") ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
+				Toast.makeText(this,msg,toastLength).show();
+				c.close();
+			}
 		}
 
 		//show results

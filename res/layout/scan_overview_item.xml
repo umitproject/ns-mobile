@@ -21,6 +21,7 @@
             android:layout_toLeftOf="@id/StopButton"
             android:layout_alignParentLeft="true"
             android:textSize="15dp"
+            android:singleLine="true"
 
             android:paddingLeft="5dp"
             />
