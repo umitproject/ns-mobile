@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.sax.*;
 import android.sax.RootElement;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Xml;
 
 import org.umit.ns.mobile.provider.Scanner;
@@ -114,7 +115,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		try {
 			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			Log.d("UmitScanner",e.toString());
 		}
 	}
 

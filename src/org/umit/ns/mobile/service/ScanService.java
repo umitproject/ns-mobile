@@ -48,7 +48,7 @@ public class ScanService extends Service implements ScanCommunication {
 	public void onCreate() {
 		log("onCreate()");
 		super.onCreate();
-//		android.os.Debug.waitForDebugger();
+		android.os.Debug.waitForDebugger();
 
 		binderLocal = msgrLocal.getBinder();
 
