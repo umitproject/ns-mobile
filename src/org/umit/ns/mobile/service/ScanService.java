@@ -72,8 +72,7 @@ public class ScanService extends Service implements ScanCommunication {
 			mNM.notify(serviceNotificationID, getNotification(R.string.service_setup_native));
 		}
 
-		//Only useful to the programmers so nothing we can do about it runtime
-
+		//Only useful to the programmers so nothing we can do about it at runtime
 		if (0 != nativeInstallDir.compareTo(getFilesDir().toString()))
 			log("Critical fault! nmap_install_dir string resource not matching package:" +
 					getFilesDir().toString() + ":" + nativeInstallDir);
@@ -86,56 +85,27 @@ public class ScanService extends Service implements ScanCommunication {
 		log("onBind()");
 		if (!enabled)
 			return null;
-
-		int clientID = intent.getIntExtra("ClientID", -1);
-		if (clientID == -1) {
-			log("onBind() no ClientID in Intent. Finishing");
-			return null;
-		}
-		log("onBind()-got ClientID!");
-
-		Messenger messenger = intent.getParcelableExtra("Messenger");
-		if (messenger == null) {
-			log("onBind() no Messenger in Intent. Finishing");
-			return null;
-		}
-		log("onBind()-got Messenger!");
-
-		String action = intent.getStringExtra("Action");
-		if(action==null){
-			log("onBind() no Action in Intent. Finishing");
-			return null;
-		}
-		log("onBind()-got Action! Oh yeah! :D");
-
-
-		ClientAdapter client = clients.get(clientID);
-		if (client == null) {
-			client = new ClientAdapter(clientID, messenger,
-					scanResultsPath,contentResolver,action);
-			clients.put(clientID, client);
-		} else {
-			//Update the messenger and rebind (resend all messages in queue)
-			client.rebind(messenger);
-		}
-
-		startService(new Intent(this, ScanService.class));
 		return msgrLocal.getBinder();
+	}
 
+	@Override
+	public void onRebind (Intent intent){
+		log("onRebind()");
+		if (!enabled)
+			return;
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent) {
 		log("onUnbind()");
 		super.onUnbind(intent);
-		if (!enabled)
+		if (!enabled){
+			stopSelf();
 			return false;
+		}
 
 		int finishedScansCount = getContentResolver()
 				.query(Scanner.SCANS_URI,null,null,null,null).getCount();
-
-		if (clients.size() == 0 && scanCounter==0 && finishedScansCount==0)
-			stopSelf();
 
 		//Stop the service if there are no scans running
 		boolean scan_running = false;
@@ -146,10 +116,10 @@ public class ScanService extends Service implements ScanCommunication {
 			}
 		}
 
-		if (!scan_running)
+		if (! scan_running && finishedScansCount==0)
 			stopSelf();
 
-		return false;
+		return true;
 	}
 
 	@Override
@@ -158,6 +128,8 @@ public class ScanService extends Service implements ScanCommunication {
 		super.onDestroy();
 		if (!enabled)
 			return;
+
+		mNM.cancelAll();
 
 		for (ClientAdapter client : clients.values())
 			client.stopAllScans();
@@ -170,6 +142,45 @@ public class ScanService extends Service implements ScanCommunication {
 				return;
 
 			switch (msg.what) {
+				case REGISTER_CLIENT:{
+					log("REGISTER_CLIENT");
+					Bundle bundle = new Bundle((Bundle)msg.obj);
+
+					int clientID = bundle.getInt("ClientID",-1);
+					if (clientID == -1) {
+						log("REGISTER_CLIENT no ClientID in Intent. Finishing");
+						break;
+					}
+					log("REGISTER_CLIENT - got ClientID!");
+
+					Messenger messenger = bundle.getParcelable("Messenger");
+					if (messenger == null) {
+						log("REGISTER_CLIENT no Messenger in Intent. Finishing");
+						break;
+					}
+					log("REGISTER_CLIENT - got Messenger!");
+
+					String action = bundle.getString("Action");
+					if(action==null){
+						log("REGISTER_CLIENT no Action in Intent. Finishing");
+						break;
+					}
+					log("REGISTER_CLIENT - got Action! Oh yeah! :D");
+
+					ClientAdapter client = clients.get(clientID);
+					if (client == null) {
+						client = new ClientAdapter(clientID, messenger,
+								scanResultsPath,contentResolver,action);
+						clients.put(clientID, client);
+					} else {
+						//Update the messenger and rebind (resend all messages in queue)
+						client.rebind(messenger);
+					}
+
+					startService(new Intent( getApplicationContext() , ScanService.class));
+					break;
+				}
+
 				case RQST_START_SCAN: {
 					int clientID = msg.arg1;
 					ClientAdapter client = clients.get(clientID);
@@ -191,14 +202,20 @@ public class ScanService extends Service implements ScanCommunication {
 					String scanArguments = bundle.containsKey("ScanArguments") ?
 							bundle.getString("ScanArguments") :
 							null;
+					if(scanArguments==null)
+						return;
+
+					String scanProfile = bundle.containsKey("ScanProfile") ?
+							bundle.getString("ScanProfile") :
+							null;
 
 					if (rootAcqisitionFinished && nativeInstalled) {
-						client.newScan(scanArguments);
+						client.newScan(scanArguments,scanProfile);
 						client.startScan(rootAccess);
 						incrementScanCounter();
 						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 					} else {
-						client.newScan(scanArguments);
+						client.newScan(scanArguments,scanProfile);
 						client.pendingStartScan = true;
 					}
 
@@ -302,12 +319,6 @@ public class ScanService extends Service implements ScanCommunication {
 				case NOTIFY_SCAN_FINISHED: {
 					int scanID = msg.arg1;
 					log("NOTIFY_SCAN_FINISHED: ScanID=" + scanID);
-					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
-					if (client == null) {
-						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
-						break;
-					}
-					client.scanFinished(scanID);
 
 					decrementScanCounter();
 					if(scanCounter==0)
@@ -315,10 +326,24 @@ public class ScanService extends Service implements ScanCommunication {
 					else
 						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
+					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
+					if (client == null) {
+						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
+						break;
+					}
+					client.scanFinished(scanID);
+
 					break;
 				}
 				case NOTIFY_SCAN_PROBLEM: {
 					int scanID = msg.arg1;
+
+					decrementScanCounter();
+					if(scanCounter==0)
+						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
+					else
+						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
+
 					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
 					if (client == null) {
 						log("NOTIFY_SCAN_PROBLEM: could not find client by that scanID");
@@ -327,12 +352,6 @@ public class ScanService extends Service implements ScanCommunication {
 					String info = ((Bundle) msg.obj).getString("Info");
 					log("NOTIFY_SCAN_PROBLEM: info=" + info);
 					client.scanProblem(scanID, info);
-
-					decrementScanCounter();
-					if(scanCounter==0)
-						mNM.notify(serviceNotificationID,getNotification(R.string.service_ready));
-					else
-						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
 					break;
 				}

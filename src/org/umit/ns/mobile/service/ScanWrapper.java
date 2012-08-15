@@ -11,6 +11,7 @@ class ScanWrapper {
 	private final int clientID;
 	private final ContentResolver contentResolver;
 	protected final String arguments;
+	protected final String profile;
 	protected final String scanResultsFilename;
 
 	//Update regularly
@@ -32,9 +33,11 @@ class ScanWrapper {
 	                   int clientID,
 	                   ContentResolver contentResolver,
 	                   String scanArguments,
-	                   String scanResultsPath) {
+	                   String scanResultsPath,
+	                   String scanProfile) {
 
 		this.arguments = scanArguments;
+		this.profile = scanProfile;
 		this.scanID = scanID;
 		this.clientID = clientID;
 		this.contentResolver = contentResolver;

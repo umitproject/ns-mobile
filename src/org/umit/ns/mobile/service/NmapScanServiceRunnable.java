@@ -201,7 +201,6 @@ class NmapScanServiceRunnable implements Runnable, ScanCommunication {
 		tp.put(Scans.TASK_PROGRESS,100);
 		contentResolver.update(scanUri,tp,null,null);
 
-		//TODO test stopping scan while parsing
 		parser.parse();
 
 		Log.d("UmitScannerRunnable", "Scan Finished");

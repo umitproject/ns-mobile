@@ -1,5 +1,6 @@
 package org.umit.ns.mobile.service;
 
+import android.text.TextUtils;
 import org.umit.ns.mobile.api.ScanCommunication;
 import org.umit.ns.mobile.provider.Scanner;
 import org.umit.ns.mobile.provider.Scanner.Scans;
@@ -54,13 +55,13 @@ class ClientAdapter implements ScanCommunication {
 	}
 
 	//Parse ARGS; Create a new scan and put it in pendingScan, unique non-duplicate id.
-	protected void newScan(String scanArguments) {
+	protected void newScan(String scanArguments, String scanProfile) {
 		//generate unique scanID
 		int scanID = Math.abs(random.nextInt());
 		while (scanID_clientID.containsKey(scanID))
 			scanID = Math.abs(random.nextInt());
 
-		pendingScan = new ScanWrapper(scanID,ID,contentResolver,scanArguments, scanResultsPath);
+		pendingScan = new ScanWrapper(scanID,ID,contentResolver,scanArguments, scanResultsPath, scanProfile);
 	}
 
 	//Start scan in tmp and put it in list, notify Client, add to database
@@ -78,11 +79,14 @@ class ClientAdapter implements ScanCommunication {
 		tellClient(RESP_START_SCAN_OK, pendingScan.getScanID(), (rootAccess ? 1 : 0),
 				"ScanResultsFilename", null);
 
-		Uri uri = Uri.parse(Scanner.SCANS_URI + "/" + ID + "/" + pendingScan.getScanID());
+		Uri uri = Uri.parse(Scanner.SCANS_URI + "/" + this.ID + "/" + pendingScan.getScanID());
 		ContentValues values = new ContentValues();
 		values.put(Scans.CLIENT_ACTION, action);
 		values.put(Scans.ROOT_ACCESS, rootAccess ? 1 : 0);
-		values.put(Scans.SCAN_ARGUMENTS, pendingScan.arguments);
+		if(TextUtils.isEmpty(pendingScan.profile))
+			values.put(Scans.SCAN_ARGUMENTS, pendingScan.arguments.replace("./nmap ",""));
+		else
+			values.put(Scans.SCAN_ARGUMENTS, pendingScan.profile + ": "+ pendingScan.arguments.replace("./nmap ",""));
 		values.put(Scans.TASK_PROGRESS, 0);
 		values.put(Scans.SCAN_STATE, Scans.SCAN_STATE_STARTED);
 		contentResolver.insert(uri, values);

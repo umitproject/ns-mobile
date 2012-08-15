@@ -191,7 +191,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	public View.OnClickListener startScan = new View.OnClickListener() {
 		@Override
 		public void onClick(View view) {
-			rqstStartScan("./nmap "+ scanArgsTextView.getText().toString());
+			rqstStartScan("./nmap "+ scanArgsTextView.getText().toString(), profilesSpinner.getSelectedItem().toString());
 			InputMethodManager imm =
 					(InputMethodManager)view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);

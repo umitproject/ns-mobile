@@ -73,13 +73,14 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		intent.putExtra("ClientID", fakeClientID);
 		intent.putExtra("Action",getString(R.string.scanactivity_action));
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-		Log.d("UmitScanner.ScanOverviewActivity", "onCreate()-Bound to service");
+		Log.d("UmitScanner.ScanOverviewActivity", "onResume() - Bound to service");
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
 		if(mBound){
+			Log.d("UmitScanner.ScanOverviewActivity", "onPause() - Unbound from service");
 			unbindService(serviceConnection);
 		}
 		stopManagingCursor(cursor);

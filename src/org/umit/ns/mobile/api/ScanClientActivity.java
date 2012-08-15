@@ -23,7 +23,6 @@ import java.lang.*;import java.lang.Math;import java.lang.Object;import java.lan
 import java.util.List;
 import java.util.Random;
 
-//TODO Handle Runtime Changes
 public abstract class ScanClientActivity extends Activity implements ScanCommunication {
 
 	private Messenger msgrService;
@@ -31,8 +30,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	private final Messenger msgrLocal = new Messenger(new IncomingHandler());
 	private Random random = new Random();
 
-	//TODO keep when rebinding
-	private int clientID;
+	private Integer clientID;
 	private Scan scan;
 	private boolean wasConnected = false;
 
@@ -55,6 +53,13 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			msgrService = new Messenger(service);
 			mBound = true;
+
+			Bundle bundle = new Bundle();
+			bundle.putInt("ClientID",clientID);
+			bundle.putParcelable("Messenger", msgrLocal);
+			bundle.putString("Action", getString(R.string.scanactivity_action));
+
+			tellService(REGISTER_CLIENT,0,0,bundle,null);
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
@@ -114,17 +119,11 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 			scan.started = (scanState==Scanner.Scans.SCAN_STATE_STARTED);
 
 			Intent serviceIntent = new Intent("org.umit.ns.mobile.service.ScanService");
-			serviceIntent.putExtra("Messenger", msgrLocal);
-			serviceIntent.putExtra("ClientID", clID);
-			serviceIntent.putExtra("Action", getString(R.string.scanactivity_action));
 
 			bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 			log("onResume()- Rebound to service");
 		} else {
 			Intent serviceIntent = new Intent("org.umit.ns.mobile.service.ScanService");
-			serviceIntent.putExtra("Messenger", msgrLocal);
-			serviceIntent.putExtra("ClientID", clientID);
-			serviceIntent.putExtra("Action", getString(R.string.scanactivity_action));
 
 			bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 			log("onResume()-Bound to service");
@@ -135,8 +134,10 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	@Override
 	protected void onPause(){
 		super.onPause();
-		if(mBound)
+		if(mBound){
+			log("onPause() - unbound from Service.");
 			unbindService(serviceConnection);
+		}
 	}
 	@Override
 	public Object onRetainNonConfigurationInstance() {
@@ -148,11 +149,6 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (isFinishing()) {
-			//TODO Pending intent may take place here so it rebinds or not... we'll see
-		}
-
-
 	}
 
 	private class IncomingHandler extends Handler {
@@ -207,12 +203,14 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 	//========API
 
-	public final void rqstStartScan(String scanArguments) {
+	public final void rqstStartScan(String scanArguments, String scanProfile) {
 		if (!mBound)
 			return;
 
 		Bundle bundle = new Bundle();
 		bundle.putString("ScanArguments", scanArguments);
+		if(scanProfile!=null)
+			bundle.putString("ScanProfile",scanProfile);
 
 		tellService(RQST_START_SCAN, clientID, 0, bundle, null);
 	}
@@ -231,8 +229,6 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 		tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
 	}
-
-	//TODO remove unused methods and fields
 
 	protected abstract void onScanStart(int clientID, int scanID);
 
