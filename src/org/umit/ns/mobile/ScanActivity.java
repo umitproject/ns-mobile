@@ -313,7 +313,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		@Override
 		public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 			Integer state = (Integer)view.getTag();
-			if(state == Hosts.STATE_UP){
+			if(state!=null && state == Hosts.STATE_UP){
 				Uri singleHostDetailsUri = detailsUri.buildUpon().appendPath(((TextView)view).getText().toString()).build();
 				p = getContentResolver().query(singleHostDetailsUri,null,null,null,null);
 				startManagingCursor(p);
@@ -326,7 +326,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		@Override
 		public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
 			Integer state = (Integer)view.getTag();
-			if(state == Hosts.STATE_UP){
+			if(state !=null && state == Hosts.STATE_UP){
 				Uri singleHostDetailsUri = detailsUri.buildUpon().appendPath(((TextView)view).getText().toString()).build();
 				String hostDetailsAction = getString(R.string.hostdetailsactivity_action);
 				Intent intent = new Intent(hostDetailsAction, singleHostDetailsUri);
