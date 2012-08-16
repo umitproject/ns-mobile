@@ -326,8 +326,8 @@ public class ScanProvider extends ContentProvider {
 				if (rowID > 0) {
 
 					//If host is up create details table
-//					if (values.containsKey(Hosts.STATE) &&
-//							values.getAsInteger(Hosts.STATE) == Hosts.STATE_UP) {
+					if (values.containsKey(Hosts.STATE) &&
+							values.getAsInteger(Hosts.STATE) == Hosts.STATE_UP) {
 
 						db.execSQL("CREATE TABLE " + detailsTableName + " ("
 								+ Details._ID + " INTEGER PRIMARY KEY,"
@@ -336,7 +336,7 @@ public class ScanProvider extends ContentProvider {
 								+ Details.TYPE + " TEXT,"
 								+ Details.STATE + " INTEGER"
 								+ ");");
-//					}
+					}
 					getContext().getContentResolver().notifyChange(uri, null);
 					return uri;
 				}

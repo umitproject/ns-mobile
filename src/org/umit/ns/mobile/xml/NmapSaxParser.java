@@ -190,7 +190,9 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		@Override
 		public void end() {
 			writer.writeHost(h.IP, h.getContentValues());
-			writer.writeDetail(h.IP, hostInfo.name, hostInfo.getContentValues());
+
+			if(h.state == Hosts.STATE_UP)
+				writer.writeDetail(h.IP, hostInfo.name, hostInfo.getContentValues());
 		}
 	};
 

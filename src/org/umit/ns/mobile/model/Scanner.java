@@ -8,6 +8,9 @@ public final class Scanner {
 
 	public static final String AUTHORITY = "org.umit.ns.mobile.provider.Scanner";
 	public static final String DEFAULT_SORT_ORDER = "_id DESC";
+
+	public static final String HOSTS_BY_STATE_SORT_ORDER = "state DESC, _id DESC";
+
 	public static final String SCANS_TYPE = "vnd.android.cursor.dir/vnd.umit.scan";
 	public static final String HOSTS_TYPE = "vnd.android.cursor.dir/vnd.umit.host";
 	public static final String DETAILS_TYPE = "vnd.android.cursor.dir/vnd.umit.detail";

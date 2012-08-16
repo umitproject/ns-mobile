@@ -15,6 +15,8 @@ public final class Scanner {
 	public static final Uri HOSTS_URI = Uri.parse("content://" + AUTHORITY+"/hosts");
 	public static final Uri DETAILS_URI = Uri.parse("content://" + AUTHORITY+"/details");
 
+	public static final String HOSTS_BY_STATE_SORT_ORDER = "state DESC, _id DESC";
+
 	public static final class Scans implements BaseColumns {
 		private Scans() {
 		}

@@ -25,6 +25,7 @@ import org.umit.ns.mobile.model.ScanArgsConst;
 import org.umit.ns.mobile.model.ScanArgumentsArrayAdapter;
 import org.umit.ns.mobile.model.ScanArgumentsTokenizer;
 import org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView;
+import org.umit.ns.mobile.provider.Scanner;
 import org.umit.ns.mobile.provider.Scanner.Scans;
 import org.umit.ns.mobile.provider.Scanner.Hosts;
 import org.umit.ns.mobile.provider.Scanner.Details;
@@ -291,6 +292,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		//show results
 		h = getContentResolver().query(hostsUri,null,null,null,null);
+		h = getContentResolver().query(hostsUri,null,null,null, Scanner.HOSTS_BY_STATE_SORT_ORDER);
 		hostsColumnIP = h.getColumnIndex(Hosts.IP);
 		hostsColumnState = h.getColumnIndex(Hosts.STATE);
 		startManagingCursor(h);
