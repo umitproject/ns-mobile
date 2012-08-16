@@ -326,7 +326,12 @@ public class ScanService extends Service implements ScanCommunication {
 					else
 						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
-					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
+					Integer tmpClientID = ClientAdapter.getClientIDByScanID(scanID);
+					if (tmpClientID == null) {
+						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
+						break;
+					}
+					ClientAdapter client = clients.get(tmpClientID);
 					if (client == null) {
 						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
 						break;
@@ -344,7 +349,12 @@ public class ScanService extends Service implements ScanCommunication {
 					else
 						mNM.notify(serviceNotificationID, getNotification("Running "+scanCounter+" scans."));
 
-					ClientAdapter client = clients.get(ClientAdapter.getClientIDByScanID(scanID));
+					Integer tmpClientID = ClientAdapter.getClientIDByScanID(scanID);
+					if (tmpClientID == null) {
+						log("NOTIFY_SCAN_FINISHED: could not find client by that scanID");
+						break;
+					}
+					ClientAdapter client = clients.get(tmpClientID);
 					if (client == null) {
 						log("NOTIFY_SCAN_PROBLEM: could not find client by that scanID");
 						break;

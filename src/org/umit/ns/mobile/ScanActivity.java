@@ -41,6 +41,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	Button saveProfileButton;
 	Button deleteProfileButton;
 	Spinner profilesSpinner;
+
 	ListView hostsListView;
 	ListView portsListView;
 	TextView taskName;

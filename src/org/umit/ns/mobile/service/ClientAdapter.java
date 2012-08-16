@@ -159,7 +159,7 @@ class ClientAdapter implements ScanCommunication {
 	}
 
 	//Used in ScanService
-	protected static int getClientIDByScanID(int scanID) {
+	protected static Integer getClientIDByScanID(int scanID) {
 		return scanID_clientID.get(scanID);
 	}
 
