@@ -115,7 +115,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		try {
 			Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
 		} catch (Exception e) {
-			Log.d("UmitScanner",e.toString());
+			Log.d("UmitScanner.ParserFail",e.toString());
 		}
 	}
 
