@@ -448,15 +448,20 @@ public class ScanProvider extends ContentProvider {
 				count = db.update(hostsTableName, values,
 						Hosts.IP + "='" + hostIP+"'", whereArgs);
 
-				String detailsTableName = "d_" +clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+				//If host is up create details table
+				if (count > 0 && values.containsKey(Hosts.STATE) &&
+						(values.getAsInteger(Hosts.STATE) == Hosts.STATE_UP)) {
 
-				db.execSQL("CREATE TABLE IF NOT EXISTS " + detailsTableName + " ("
-						+ Details._ID + " INTEGER PRIMARY KEY,"
-						+ Details.NAME + " TEXT,"
-						+ Details.DATA + " TEXT,"
-						+ Details.TYPE + " TEXT,"
-						+ Details.STATE + " INTEGER"
-						+ ");");
+					String detailsTableName = "d_" +clientID + "_" + scanID + "_" + sth.convertStringToHex(hostIP);
+
+					db.execSQL("CREATE TABLE IF NOT EXISTS " + detailsTableName + " ("
+							+ Details._ID + " INTEGER PRIMARY KEY,"
+							+ Details.NAME + " TEXT,"
+							+ Details.DATA + " TEXT,"
+							+ Details.TYPE + " TEXT,"
+							+ Details.STATE + " INTEGER"
+							+ ");");
+				}
 				break;
 			}
 			case MATCH_URI_DETAIL: {
