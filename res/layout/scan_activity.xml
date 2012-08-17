@@ -9,11 +9,13 @@
             android:id="@+id/scanarguments"
            android:inputType="text"
            android:layout_alignParentTop="true"
-           android:hint="Scan Arguments"
+           android:hint="Insert target or '-' to expand arguments"
            android:layout_width="match_parent"
            android:layout_height="wrap_content"
             android:textSize="17sp"
-            android:completionThreshold="1"/>
+            android:completionThreshold="1"
+            android:singleLine="true"
+            android:textColorHint="#FF773333"/>
 
     <Button android:id="@+id/SaveProfileButton"
             android:text="Save"

@@ -116,6 +116,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 			if(scanArgs==null)
 				scanArgs="";
+
 			if(selectedProfileName==null)
 				selectedProfileName="";
 
@@ -124,7 +125,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 				profilesSpinner.setSelection(pos);
 			}
 
-			scanArgsTextView.setText(selectedProfileName);
+			scanArgsTextView.setText(scanArgs);
+
 		}
 	}
 
@@ -176,7 +178,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		stopManagingCursor(h);
 		stopManagingCursor(p);
 		stopManagingCursor(s);
-		this.getContentResolver().unregisterContentObserver(scanContentObserver);
+		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
 		if(isFinishing()){
 			Bundle outState = new Bundle();
 			outState.putString(scanArgumentsBundleKey ,scanArgsTextView.getText().toString());
@@ -262,9 +264,22 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 	protected void onNotifyProblem(String info) {
 		Log.e("UmitScanner", "Scan has crashed. Info: " + info);
-		Toast.makeText(getApplicationContext(), "Scanning problem: " + info, Toast.LENGTH_LONG).show();
+
+		//Show dialog for scan problem
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("Scanning Problem");
+		alert.setMessage(info);
+		alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				// Canceled.
+			}
+		});
+		alert.show();
+
 		//Unregister ContentObserver
 		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
+
+		//Clean view
 		taskName.setText("");
 		progressBar.setProgress(0);
 
@@ -285,8 +300,17 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			c.moveToFirst();
 			String msg = c.getString(c.getColumnIndex(Scans.ERRORMESSAGE));
 			if(msg!=null){
-				int toastLength = msg.startsWith("Error:") ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
-				Toast.makeText(this,msg,toastLength).show();
+				//Show dialog for scan info
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.setTitle("Scan Finished");
+				alert.setMessage(msg);
+				alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+				alert.show();
+
 				c.close();
 			}
 		}
@@ -431,7 +455,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		SharedPreferences sharedPreferences = getSharedPreferences("profiles",MODE_WORLD_WRITEABLE);
 		String test = sharedPreferences.getString(name,"No");
 		if(TextUtils.equals(test,"No")){
-			Toast.makeText(this,"A profile with that name doesn't exists.",Toast.LENGTH_SHORT).show();
+			Toast.makeText(this,"A profile with that name doesn't exists.",Toast.LENGTH_LONG).show();
 			return;
 		}
 		SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -447,7 +471,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		String test = sharedPreferences.getString(name,"No");
 
 		if( ! TextUtils.equals(test,"No") ){
-			Toast.makeText(this,"A profile with that name already exists.",Toast.LENGTH_SHORT).show();
+			Toast.makeText(this,"A profile with that name already exists.",Toast.LENGTH_LONG).show();
 			return;
 		}
 
@@ -503,7 +527,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 					else
 						keepArgs.append(existingArgs.substring(0,endPos));
 
-					keepArgs.append(' ').append(profileArgs);
+					if(! TextUtils.isEmpty(profileArgs))
+						keepArgs.append(' ').append(profileArgs);
+
 					scanArgsTextView.setText(keepArgs.toString());
 
 					int position = scanArgsTextView.length();
