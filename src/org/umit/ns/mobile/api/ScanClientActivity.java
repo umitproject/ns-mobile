@@ -33,6 +33,8 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 	private Integer clientID;
 	private Scan scan;
 	private boolean wasConnected = false;
+	private boolean rootAccess = false;
+	private boolean rootAccessReceived = false;
 
 	private class Scan {
 		public int ID;
@@ -97,7 +99,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		Intent intent = getIntent();
 		Uri content = intent.getData();
 		int clID,scID,scanState;
-		boolean rootAccess,started;
+		boolean started;
 
 		if(content != null) {
 			List<String> segments = content.getPathSegments();
@@ -113,6 +115,7 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 
 			scanState = s.getInt(scanStateColumn);
 			rootAccess = (s.getInt(rootAccessColumn) == Scanner.Scans.ROOT_ACCESS_YES);
+			rootAccessReceived = true;
 
 			clientID=clID;
 			scan = new Scan(clID,scID,rootAccess);
@@ -155,9 +158,15 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
+				case REGISTER_CLIENT_RESP:
+					rootAccess = (msg.arg1 == 1);
+					rootAccessReceived = true;
+					onRegisterClient(rootAccess);
+					break;
 				case RESP_START_SCAN_OK:
 					int scanID = msg.arg1;
-					boolean rootAccess = (msg.arg2 == 1);
+					rootAccess = (msg.arg2 == 1);
+					rootAccessReceived=true;
 
 					log("RESP_START_SCAN_OK");
 
@@ -201,7 +210,11 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		}
 	}
 
+
+
 	//========API
+
+	protected abstract void onRegisterClient(boolean rootAccess);
 
 	public final void rqstStartScan(String scanArguments, String scanProfile) {
 		if (!mBound)

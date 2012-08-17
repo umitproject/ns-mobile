@@ -48,6 +48,8 @@ class ClientAdapter implements ScanCommunication {
 		this.messenger = messenger;
 		this.contentResolver = contentResolver;
 		this.action = action;
+
+		tellClient(REGISTER_CLIENT_RESP, rootAccess?1:0,0,null,null);
 	}
 
 	protected void rebind(Messenger messenger) {

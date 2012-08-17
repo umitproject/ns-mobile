@@ -252,10 +252,6 @@ public class ScanService extends Service implements ScanCommunication {
 					rootAcqisitionFinished = true;
 					log("NOTIFY_ROOT_ACCESS=" + (rootAccess ? "Yes" : "No"));
 
-					if(! rootAccess)
-						Toast.makeText(getApplicationContext(),"Umit Network Scanner Service:\n" +
-								"No root access, some options will be disabled.", Toast.LENGTH_SHORT).show();
-
 					if (nativeInstalled) {
 						for (ClientAdapter client : clients.values()) {
 							if (client.pendingStartScan) {

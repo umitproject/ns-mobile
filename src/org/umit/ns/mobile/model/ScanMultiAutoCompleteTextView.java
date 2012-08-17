@@ -33,6 +33,10 @@ public class ScanMultiAutoCompleteTextView
 	@Override
 	protected void replaceText(CharSequence selectedText) {
 		CharSequence text = ARGS_MAP.get(selectedText);
+
+		if(ROOT_ARGS.contains(text))
+			return;
+
 		clearComposingText();
 
 		int end = getSelectionEnd();

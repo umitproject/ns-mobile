@@ -18,4 +18,5 @@ public interface ScanCommunication {
 	static final int NATIVE_SETUP_FAIL = 0;
 
 	static final int REGISTER_CLIENT = 10;
+	static final int REGISTER_CLIENT_RESP = 11;
 }

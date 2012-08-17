@@ -80,9 +80,14 @@ public class ScanArgumentsArrayAdapter<T> extends ArrayAdapter<T> implements Sca
 			plainArg = ARGS_MAP.get(item.toString());
 		}
 
-
-		if(ROOT_ARGS.contains( plainArg )){
-			text.setTextColor(RED_COLOR);
+		if(! mRootAccess){
+			if(ROOT_ARGS.contains( plainArg )){
+				text.setTextColor(RED_COLOR);
+				text.setEnabled(false);
+			} else {
+				text.setTextColor(BLACK_COLOR);
+				text.setEnabled(true);
+			}
 		} else {
 			text.setTextColor(BLACK_COLOR);
 		}

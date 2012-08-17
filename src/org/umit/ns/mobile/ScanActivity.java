@@ -69,6 +69,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	private static String scanArgumentsBundleKey = "ScanArgumentsBundleKey";
 	private static String selectedProfileBundleKey = "SelectedProfileBundleKey";
 
+	private boolean rootAccess;
+	private boolean rootAccessReceived;
+
 	@Override
 	protected void onNewIntent (Intent intent){
 		super.onNewIntent(intent);
@@ -90,13 +93,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		profilesSpinner = (Spinner) findViewById(R.id.profiles);
 		taskName = (TextView) findViewById(R.id.taskname);
 		progressBar = (ProgressBar) findViewById(R.id.progress);
-
-		//Set up ScanArguments input
-		//TODO update root access before this starts.
-		ScanArgumentsArrayAdapter<String> scanArgsAdapter =
-				new ScanArgumentsArrayAdapter<String>(this, R.layout.scan_args_list_1item, FULL_ARGS,false);
-		scanArgsTextView.setAdapter(scanArgsAdapter);
-		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
 
 		//Set up hosts and ports ListView adapters
 		hostsListView = (ListView) findViewById(R.id.hostsresults);
@@ -187,6 +183,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		}
 	}
 
+
+
 	@Override
 	protected void onStop() {
 		super.onStop();
@@ -236,6 +234,30 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			actionButton.setOnClickListener(startScan);
 		}
 	};
+
+	@Override
+	protected void onRegisterClient(boolean rootAccess) {
+		Log.d("UmitScanner.ScanActivity","onRegisterClient");
+		this.rootAccess = rootAccess;
+		this.rootAccessReceived = true;
+		//Set up ScanArguments input
+		ScanArgumentsArrayAdapter<String> scanArgsAdapter =
+				new ScanArgumentsArrayAdapter<String>(this, R.layout.scan_args_list_1item, FULL_ARGS,rootAccess);
+		scanArgsTextView.setAdapter(scanArgsAdapter);
+		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
+
+		if(! rootAccess){
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			alert.setTitle("No Root Access");
+			alert.setMessage("The scan arguments outlined in red require root access.");
+			alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton) {
+					// Canceled.
+				}
+			});
+			alert.show();
+		}
+	}
 
 	public void onScanStart(int clientID, int scanID) {
 
