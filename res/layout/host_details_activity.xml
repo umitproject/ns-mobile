@@ -19,17 +19,27 @@
               android:background="#ff220000"
             />
 
-    <TextView android:id="@+id/hostDetailsItem"
+    <ScrollView
+            android:id="@+id/scrollHostDetails"
+            android:layout_height="match_parent"
+            android:layout_width="100dp"
+            android:layout_weight=".50"
 
-              android:layout_height="match_parent"
-              android:layout_width="100dp"
-              android:layout_weight=".50"
+            android:scrollbars="vertical"
+            android:fillViewport="true"
 
-              android:layout_alignParentTop="true"
-              android:layout_alignParentRight="true"
-              android:layout_toRightOf="@id/hostDetails"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@id/hostDetails">
 
-              android:background="#ff110000"
-            />
+        <TextView android:id="@+id/hostDetailsItem"
+
+                  android:layout_height="match_parent"
+                  android:layout_width="match_parent"
+
+                  android:background="#ff110000"/>
+    </ScrollView>
+
+
 
 </RelativeLayout>
