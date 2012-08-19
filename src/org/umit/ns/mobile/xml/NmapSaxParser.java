@@ -68,12 +68,7 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 		port_service.setStartElementListener( port_service_listener );
 
 		Element port_service_cpe = port_service.getChild(PORT_SERVICE_CPE);
-		port_service_cpe.setEndTextElementListener( new EndTextElementListener() {
-			@Override
-			public void end(String s) {
-				p.data.append("CPE: " + s + "\n");
-			}
-		});
+		port_service_cpe.setEndTextElementListener( port_service_cpe_listener );
 
 		Element port_script = port.getChild(SCRIPT);
 		port_script.setStartElementListener( port_script_listener );
@@ -156,6 +151,13 @@ public class NmapSaxParser extends BaseNmapXmlParser {
 			detail.data.append(output);
 			detail.state=Details.STATE_PORT_UNKNOWN;
 			writer.writeDetail(prescript.IP, detail.name, detail.getContentValues());
+		}
+	};
+
+	EndTextElementListener port_service_cpe_listener =  new EndTextElementListener() {
+		@Override
+		public void end(String s) {
+			p.data.append("CPE: " + s + "\n");
 		}
 	};
 
