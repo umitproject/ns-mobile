@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Selection;
@@ -28,6 +29,7 @@ import org.umit.ns.mobile.provider.Scanner.Scans;
 import org.umit.ns.mobile.provider.Scanner.Hosts;
 import org.umit.ns.mobile.provider.Scanner.Details;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -275,16 +277,33 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			hostsAdapter.changeCursor(null);
 			stopManagingCursor(h);
 
+			portsListView.removeHeaderView(textViewNoPorts);
 			portsAdapter.changeCursor(null);
 			stopManagingCursor(p);
 
 			//Clear the database
-			getContentResolver().delete(scanUri,null,null);
+			new ClearDatabaseTask().execute(scanUri);
 
 			actionButton.setText("Start");
 			actionButton.setOnClickListener(startScan);
 		}
 	};
+
+	private class ClearDatabaseTask extends AsyncTask<Uri, Integer, Integer> {
+		protected Integer doInBackground(Uri... uris) {
+			int count = uris.length;
+			for (int i = 0; i < count; i++) {
+				getContentResolver().delete(uris[i],null,null);
+				// Escape early if cancel() is called
+				if (isCancelled()) break;
+			}
+			return 0;
+		}
+		protected void onProgressUpdate(Integer... progress) {
+		}
+		protected void onPostExecute(Integer result) {
+		}
+	}
 
 	@Override
 	protected void onRegisterClient(boolean rootAccess) {
