@@ -296,22 +296,6 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 
 	}
 
-	private class ClearDatabaseTask extends AsyncTask<Uri, Integer, Integer> {
-		protected Integer doInBackground(Uri... uris) {
-			int count = uris.length;
-			for (int i = 0; i < count; i++) {
-				getContentResolver().delete(uris[i],null,null);
-				// Escape early if cancel() is called
-				if (isCancelled()) break;
-			}
-			return 0;
-		}
-		protected void onProgressUpdate(Integer... progress) {
-		}
-		protected void onPostExecute(Integer result) {
-		}
-	}
-
 	public final void rqstStopScan(int clientID, int scanID) {
 		if (!mBound)
 			return;
