@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.*;
+import android.util.Log;
 import android.widget.Toast;
 import org.umit.ns.mobile.R;
 import org.umit.ns.mobile.ScanOverviewActivity;
@@ -361,6 +362,21 @@ public class ScanService extends Service implements ScanCommunication {
 
 					break;
 				}
+
+				case STOP_SCAN_SERVICE:
+					int clientID = msg.arg1;
+					ClientAdapter client = clients.get(clientID);
+					if(client == null){
+						Log.d("UmitScanner.STOP_SCAN_SERVICE","Request from invalid client");
+						break;
+					}
+
+					for(ClientAdapter cl : clients.values()){
+						client.stopAllScans();
+					}
+					mNM.cancelAll();
+					stopSelf();
+					break;
 
 				default:
 					super.handleMessage(msg);

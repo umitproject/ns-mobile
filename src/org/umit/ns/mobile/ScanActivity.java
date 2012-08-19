@@ -13,9 +13,7 @@ import android.text.Editable;
 import android.text.Selection;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 
@@ -197,6 +195,50 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	@Override
 	protected void onStop() {
 		super.onStop();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.layout.scan_activity_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+			case R.id.menu_about:
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.setIcon(R.drawable.icon);
+				alert.setTitle("Umit Project");
+
+				alert.setMessage("Umit Network Scanner for Android");
+
+				alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+				alert.setPositiveButton("Visit Web Site", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialogInterface, int i) {
+						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setData(Uri.parse("http://dev.umitproject.org"));
+						startActivity(intent);
+					}
+				});
+				alert.show();
+				return true;
+
+			case R.id.menu_exit:
+				stopScanService();
+				finish();
+				return true;
+
+			default:
+				return super.onOptionsItemSelected(item);
+		}
 	}
 
 	public View.OnClickListener startScan = new View.OnClickListener() {

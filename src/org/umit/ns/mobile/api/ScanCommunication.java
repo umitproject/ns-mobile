@@ -19,4 +19,6 @@ public interface ScanCommunication {
 
 	static final int REGISTER_CLIENT = 10;
 	static final int REGISTER_CLIENT_RESP = 11;
+
+	static final int STOP_SCAN_SERVICE = 12;
 }

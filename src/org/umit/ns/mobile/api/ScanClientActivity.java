@@ -243,6 +243,13 @@ public abstract class ScanClientActivity extends Activity implements ScanCommuni
 		tellService(RQST_STOP_SCAN, scan.clientID, scan.ID, null, null);
 	}
 
+	public final void stopScanService() {
+		if(!mBound)
+			return;
+
+		tellService(STOP_SCAN_SERVICE,clientID,0,null,null);
+	}
+
 	protected abstract void onScanStart(int clientID, int scanID);
 
 	protected abstract void onScanStop();

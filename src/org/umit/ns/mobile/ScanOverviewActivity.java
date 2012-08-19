@@ -1,17 +1,13 @@
 package org.umit.ns.mobile;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.app.AlertDialog;
+import android.content.*;
 import android.net.Uri;
 import android.os.*;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import org.umit.ns.mobile.api.ScanCommunication;
 import org.umit.ns.mobile.provider.Scanner;
@@ -69,10 +65,8 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		super.onResume();
 		//Bind to service
 		Intent intent = new Intent("org.umit.ns.mobile.service.ScanService");
-		intent.putExtra("Messenger", fakeMsgrLocal);
-		intent.putExtra("ClientID", fakeClientID);
-		intent.putExtra("Action",getString(R.string.scanactivity_action));
 		bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+
 		Log.d("UmitScanner.ScanOverviewActivity", "onResume() - Bound to service");
 	}
 
@@ -91,10 +85,61 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		super.onStop();
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.layout.scan_activity_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+			case R.id.menu_about:
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.setIcon(R.drawable.icon);
+				alert.setTitle("Umit Project");
+
+				alert.setMessage("Umit Network Scanner for Android");
+
+				alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+				alert.setPositiveButton("Visit Web Site", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialogInterface, int i) {
+						Intent intent = new Intent(Intent.ACTION_VIEW);
+						intent.setData(Uri.parse("http://dev.umitproject.org"));
+						startActivity(intent);
+					}
+				});
+				alert.show();
+				return true;
+
+			case R.id.menu_exit:
+				tellService(STOP_SCAN_SERVICE,fakeClientID,0,null,null);
+				finish();
+				return true;
+
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+
 	private ServiceConnection serviceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			msgrService = new Messenger(service);
 			mBound = true;
+
+			//Register the fake client
+			Bundle bundle = new Bundle();
+			bundle.putInt("ClientID",fakeClientID);
+			bundle.putParcelable("Messenger", fakeMsgrLocal);
+			bundle.putString("Action", getString(R.string.scanactivity_action));
+			tellService(REGISTER_CLIENT,0,0,bundle,null);
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
