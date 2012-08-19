@@ -5,5 +5,5 @@
           android:title="About" />
     <item android:id="@+id/menu_exit"
           android:icon="@android:drawable/ic_menu_close_clear_cancel"
-          android:title="Stop Scanning and Exit" />
+          android:title="Stop all scans and Exit" />
 </menu>
