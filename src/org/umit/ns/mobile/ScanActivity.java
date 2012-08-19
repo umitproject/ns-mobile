@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextUtils;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,6 +73,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	private boolean rootAccess;
 	private boolean rootAccessReceived;
 
+	TextView tvNoPorts;
+
 	@Override
 	protected void onNewIntent (Intent intent){
 		super.onNewIntent(intent);
@@ -124,6 +127,11 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			scanArgsTextView.setText(scanArgs);
 
 		}
+
+		tvNoPorts = new TextView(getApplicationContext());
+		tvNoPorts.setText("No ports found.");
+		int RED_COLOR = 0xFF550000;
+		tvNoPorts.setBackgroundColor(RED_COLOR);
 	}
 
 	@Override
@@ -350,21 +358,31 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		String[] portsFromColumns = {Details.NAME };
 		int[] portsToViews = {R.id.port_listview_item};
-		portsAdapter = new SimpleCursorAdapter(this,R.layout.port_item,
+		portsAdapter = new SimpleCursorAdapter(getApplicationContext() ,R.layout.port_item,
 				null,portsFromColumns,portsToViews);
-		portsListView.setAdapter(portsAdapter);
-		portsListView.setEnabled(true);
+
 	}
 
 	AdapterView.OnItemClickListener hostClickListener = new AdapterView.OnItemClickListener() {
 		@Override
 		public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 			Integer state = (Integer)view.getTag();
+			portsListView.setAdapter(null);
+			portsListView.removeHeaderView(tvNoPorts);
 			if(state!=null && state == Hosts.STATE_UP){
+
 				Uri singleHostDetailsUri = detailsUri.buildUpon().appendPath(((TextView)view).getText().toString()).build();
 				p = getContentResolver().query(singleHostDetailsUri,null,null,null,null);
+
 				startManagingCursor(p);
 				portsAdapter.changeCursor(p);
+
+				if(p.getCount()<=1){
+					portsListView.addHeaderView(tvNoPorts);
+				}
+
+				portsListView.setAdapter(portsAdapter);
+				portsListView.setEnabled(true);
 			}
 		}
 	};
