@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextUtils;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +33,7 @@ import org.umit.ns.mobile.provider.Scanner.Details;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.Inflater;
 
 public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	ScanMultiAutoCompleteTextView scanArgsTextView;
@@ -73,7 +73,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	private boolean rootAccess;
 	private boolean rootAccessReceived;
 
-	TextView tvNoPorts;
+	TextView textViewNoPorts;
 
 	@Override
 	protected void onNewIntent (Intent intent){
@@ -128,10 +128,11 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		}
 
-		tvNoPorts = new TextView(getApplicationContext());
-		tvNoPorts.setText("No ports found.");
+		final LayoutInflater inflater = LayoutInflater.from(this);
+		textViewNoPorts = (TextView)inflater.inflate(R.layout.port_item, null);
+		textViewNoPorts.setText("No ports found.");
 		int RED_COLOR = 0xFF550000;
-		tvNoPorts.setBackgroundColor(RED_COLOR);
+		textViewNoPorts.setBackgroundColor(RED_COLOR);
 	}
 
 	@Override
@@ -368,7 +369,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 			Integer state = (Integer)view.getTag();
 			portsListView.setAdapter(null);
-			portsListView.removeHeaderView(tvNoPorts);
+			portsListView.removeHeaderView(textViewNoPorts);
 			if(state!=null && state == Hosts.STATE_UP){
 
 				Uri singleHostDetailsUri = detailsUri.buildUpon().appendPath(((TextView)view).getText().toString()).build();
@@ -378,7 +379,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 				portsAdapter.changeCursor(p);
 
 				if(p.getCount()<=1){
-					portsListView.addHeaderView(tvNoPorts);
+					portsListView.addHeaderView(textViewNoPorts);
 				}
 
 				portsListView.setAdapter(portsAdapter);
