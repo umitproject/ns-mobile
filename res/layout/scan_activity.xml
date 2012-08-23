@@ -5,17 +5,31 @@
                 android:padding="5dp"
                 android:keepScreenOn="true">
 
+    <Button android:id="@+id/actionbutton"
+            android:text="Start"
+
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+
+            android:gravity="center_vertical"/>
+
     <org.umit.ns.mobile.model.ScanMultiAutoCompleteTextView
             android:id="@+id/scanarguments"
            android:inputType="text"
            android:layout_alignParentTop="true"
+           android:layout_toLeftOf="@id/actionbutton"
+
            android:hint="Insert target or '-' to expand arguments"
-           android:layout_width="match_parent"
+           android:layout_width="wrap_content"
            android:layout_height="wrap_content"
             android:textSize="17sp"
             android:completionThreshold="1"
             android:singleLine="true"
             android:textColorHint="#FF773333"/>
+
 
     <Button android:id="@+id/SaveProfileButton"
             android:text="Save"
@@ -76,8 +90,8 @@
                 android:gravity="center_vertical"/>
 
 
-        <Button android:id="@+id/actionbutton"
-                android:text="Start"
+        <Button android:id="@+id/clearbutton"
+                android:text="Clear"
 
                 android:layout_alignParentTop="true"
                 android:layout_alignParentBottom="true"
@@ -93,7 +107,7 @@
 
                      android:layout_alignBottom="@id/newscanbutton"
                      android:layout_alignTop="@id/newscanbutton"
-                     android:layout_toLeftOf="@id/actionbutton"
+                     android:layout_toLeftOf="@id/clearbutton"
                      android:layout_toRightOf="@id/newscanbutton"
 
                      android:layout_height="match_parent"
@@ -109,7 +123,7 @@
 
                   android:layout_alignParentTop="true"
                   android:layout_alignParentBottom="true"
-                  android:layout_toLeftOf="@id/actionbutton"
+                  android:layout_toLeftOf="@id/clearbutton"
                   android:layout_toRightOf="@id/newscanbutton"
 
                   android:layout_height="match_parent"

@@ -41,6 +41,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	Button newScanButton;
 	Button saveProfileButton;
 	Button deleteProfileButton;
+	Button clearButton;
 	Spinner profilesSpinner;
 
 	ListView hostsListView;
@@ -70,10 +71,14 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	private static String scanArgumentsBundleKey = "ScanArgumentsBundleKey";
 	private static String selectedProfileBundleKey = "SelectedProfileBundleKey";
 
+	private static String NULL_PROFILE = "No Profile Selected";
+
 	private boolean rootAccess;
 	private boolean rootAccessReceived;
+	private boolean firstTime;
 
 	TextView textViewNoPorts;
+
 
 	@Override
 	protected void onNewIntent (Intent intent){
@@ -88,6 +93,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 
 		actionButton = (Button) findViewById(R.id.actionbutton);
 		actionButton.setOnClickListener(startScan);
+
+		clearButton = (Button) findViewById(R.id.clearbutton);
+		clearButton.setEnabled(false);
 
 		newScanButton = (Button) findViewById(R.id.newscanbutton);
 		newScanButton.setOnClickListener( newScanClickListener );
@@ -106,8 +114,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		portsListView = (ListView) findViewById(R.id.portsresults);
 		portsListView.setEnabled(false);
 
-		loadScanProfiles();
-
 		//Reload Activity parameters
 		if(savedInstanceState !=null){
 			String scanArgs = savedInstanceState.getString(scanArgumentsBundleKey);
@@ -125,7 +131,6 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 			}
 
 			scanArgsTextView.setText(scanArgs);
-
 		}
 
 		final LayoutInflater inflater = LayoutInflater.from(this);
@@ -133,6 +138,14 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		textViewNoPorts.setText("No ports found.");
 		int RED_COLOR = 0xFF550000;
 		textViewNoPorts.setBackgroundColor(RED_COLOR);
+
+		SharedPreferences sharedPreferences = getSharedPreferences("firstTimeStart",MODE_PRIVATE);
+		firstTime = sharedPreferences.getBoolean("firstTime",true);
+		if(firstTime){
+			SharedPreferences.Editor editor = sharedPreferences.edit();
+			editor.putBoolean("firstTime",false);
+			editor.commit();
+		}
 	}
 
 	@Override
@@ -271,6 +284,9 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	public View.OnClickListener clearResults = new View.OnClickListener() {
 		@Override
 		public void onClick(View view) {
+			actionButton.setEnabled(true);
+			clearButton.setEnabled(false);
+
 			taskName.setText("");
 			progressBar.setProgress(0);
 
@@ -316,17 +332,25 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		scanArgsTextView.setAdapter(scanArgsAdapter);
 		scanArgsTextView.setTokenizer(new ScanArgumentsTokenizer());
 
+		String originalTitle = getTitle().toString();
 		if(! rootAccess){
-			AlertDialog.Builder alert = new AlertDialog.Builder(this);
-			alert.setTitle("No Root Access");
-			alert.setMessage("The scan arguments outlined in red require root access.");
-			alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int whichButton) {
-					// Canceled.
-				}
-			});
-			alert.show();
+			if(firstTime){
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.setTitle("No Root Access");
+				alert.setMessage("The scan arguments outlined in red require root access.");
+				alert.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+				alert.show();
+			}
+			setTitle(originalTitle + " - No Root"	);
+		} else {
+			setTitle(originalTitle + " - Root");
 		}
+
+		loadScanProfiles();
 	}
 
 	public void onScanStart(int clientID, int scanID) {
@@ -380,8 +404,12 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 	}
 
 	public void onNotifyFinished() {
-		actionButton.setText("Clear");
-		actionButton.setOnClickListener(clearResults);
+		actionButton.setText("Start");
+		actionButton.setOnClickListener(startScan);
+		actionButton.setEnabled(false);
+
+		clearButton.setEnabled(true);
+		clearButton.setOnClickListener(clearResults);
 
 		//Unregister ContentObserver
 		this.getApplicationContext().getContentResolver().unregisterContentObserver(scanContentObserver);
@@ -562,8 +590,8 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		}
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		editor.remove(name);
-		if(TextUtils.equals(name,""))
-			editor.putString("","");
+		if(TextUtils.equals(name,NULL_PROFILE))
+			editor.putString(NULL_PROFILE,"");
 		editor.commit();
 		loadScanProfiles();
 	}
@@ -591,15 +619,19 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		String test = sharedPreferences.getString("Intense scan","No");
 		if(TextUtils.equals(test,"No")){
 			SharedPreferences.Editor editor = sharedPreferences.edit();
-			editor.putString("","");
-			editor.putString("Intense scan","-T4 -A ");
-			editor.putString("Intense scan plus UDP","-sS -sU -T4 -A ");
-			editor.putString("Intense scan, all TCP ports","-p 1-65535 -T4 -A ");
-			editor.putString("Intense scan, no ping","-T4 -A -Pn ");
+			editor.putString(NULL_PROFILE,"");
 			editor.putString("Ping scan","-sn ");
 			editor.putString("Quick scan","-T4 -F ");
-			editor.putString("Quick scan plus","-sV -T4 -O -F --version-light ");
-			editor.putString("Slow, comprehensive scan", "-sS -sU -T4 -A -v -PE -PP -PS80,443 -PA3389 -PU40125 -PY -g 53 --script \"default or (discovery and safe)\" ");
+
+			if(rootAccessReceived && rootAccess){
+				editor.putString("Intense scan","-T4 -A ");
+				editor.putString("Intense scan plus UDP","-sS -sU -T4 -A ");
+				editor.putString("Intense scan, all TCP ports","-p 1-65535 -T4 -A ");
+				editor.putString("Intense scan, no ping","-T4 -A -Pn ");
+				editor.putString("Quick scan plus","-sV -T4 -O -F --version-light ");
+				editor.putString("Slow, comprehensive scan", "-sS -sU -T4 -A -v -PE -PP -PS80,443 -PA3389 -PU40125 -PY -g 53 --script \"default or (discovery and safe)\" ");
+			}
+
 			editor.commit();
 		}
 		profiles = sharedPreferences.getAll();
@@ -612,6 +644,7 @@ public class ScanActivity extends ScanClientActivity implements ScanArgsConst{
 		profilesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		profilesSpinner.setAdapter(profilesAdapter);
 
+		profilesSpinner.setSelection(profilesAdapter.getPosition(NULL_PROFILE));
 		profilesSpinner.setOnItemSelectedListener(
 			new AdapterView.OnItemSelectedListener() {
 				@Override

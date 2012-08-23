@@ -193,6 +193,7 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 		  ProgressBar progress = (ProgressBar) view.findViewById(R.id.Progress);
 			TextView taskName = (TextView) view.findViewById(R.id.TaskName);
 			Button stopButton = (Button) view.findViewById(R.id.StopButton);
+			Button loadButton = (Button) view.findViewById(R.id.LoadButton);
 
 			scanArguments.setText(cursor.getString(scanArgumentsColumn));
 			progress.setProgress(cursor.getInt(taskProgressColumn));
@@ -208,13 +209,9 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 			String clientAction = cursor.getString(clientActionColumn);
 			Uri contentUri = Uri.parse(Scanner.SCANS_URI.toString()+"/"+clientID+"/"+scanID);
 
-			scanArguments.setTag(R.id.clientActionkey, clientAction);
-			scanArguments.setTag(R.id.scanContentkey, contentUri);
-			scanArguments.setOnClickListener(scanActivityInitiator);
-
-			progress.setTag(R.id.clientActionkey, clientAction);
-			progress.setTag(R.id.scanContentkey, contentUri);
-			progress.setOnClickListener(scanActivityInitiator);
+			loadButton.setTag(R.id.clientActionkey, clientAction);
+			loadButton.setTag(R.id.scanContentkey, contentUri);
+			loadButton.setOnClickListener(scanActivityInitiator);
 
 			return view;
 		}
@@ -228,6 +225,7 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 			ProgressBar progress = (ProgressBar) view.findViewById(R.id.Progress);
 			TextView taskName = (TextView) view.findViewById(R.id.TaskName);
 			Button stopButton = (Button) view.findViewById(R.id.StopButton);
+			Button loadButton = (Button) view.findViewById(R.id.LoadButton);
 
 			scanArguments.setText(cursor.getString(scanArgumentsColumn));
 			progress.setProgress(cursor.getInt(taskProgressColumn));
@@ -252,13 +250,9 @@ public class ScanOverviewActivity extends Activity implements ScanCommunication 
 			String clientAction = cursor.getString(clientActionColumn);
 			Uri contentUri = Uri.parse(Scanner.SCANS_URI.toString()+"/"+clientID+"/"+scanID);
 
-			scanArguments.setTag(R.id.clientActionkey,clientAction);
-			scanArguments.setTag(R.id.scanContentkey,contentUri);
-			scanArguments.setOnClickListener(scanActivityInitiator);
-
-			progress.setTag(R.id.clientActionkey,clientAction);
-			progress.setTag(R.id.scanContentkey,contentUri);
-			progress.setOnClickListener(scanActivityInitiator);
+			loadButton.setTag(R.id.clientActionkey, clientAction);
+			loadButton.setTag(R.id.scanContentkey, contentUri);
+			loadButton.setOnClickListener(scanActivityInitiator);
 		}
 
 		View.OnClickListener scanActivityInitiator = new View.OnClickListener() {

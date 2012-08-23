@@ -13,12 +13,19 @@
             android:layout_alignParentRight="true"
             />
 
+    <Button android:id="@+id/LoadButton"
+            android:text="Load"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_toLeftOf="@id/StopButton"
+            />
+
     <TextView
             android:id="@+id/ScanArguments"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
 
-            android:layout_toLeftOf="@id/StopButton"
+            android:layout_toLeftOf="@id/LoadButton"
             android:layout_alignParentLeft="true"
             android:textSize="15dp"
             android:singleLine="true"
@@ -34,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/ScanArguments"
-            android:layout_toLeftOf="@id/StopButton"
+            android:layout_toLeftOf="@id/LoadButton"
             android:layout_alignParentLeft="true"
             android:paddingLeft="5dp">
 
